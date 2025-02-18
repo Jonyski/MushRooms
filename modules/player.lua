@@ -5,13 +5,18 @@ require "modules/utils"
 require "table"
 
 ----------------------------------------
+-- Variáveis
+----------------------------------------
+players = {}
+
+----------------------------------------
 -- Classe Player
 ----------------------------------------
 Player = {}
 Player.__index = Player
 
 -- Construtor
-function Player.new(id, name, assets, spawn_pos, controls)
+function Player.new(id, name, assets, spawn_pos, controls, color)
 	local player = setmetatable({}, Player)
 
 	-- atributos que variam
@@ -20,12 +25,13 @@ function Player.new(id, name, assets, spawn_pos, controls)
 	player.assets = assets     -- caminho até a pasta contendo os assets do jogador
 	player.pos = spawn_pos     -- posição para spawnar o jogador
 	player.controls = controls -- os comandos para controlar o boneco, no formato {up = "", left = "", down = "", right = "", action = ""}
+	player.color = color
 	-- atributos fixos na instanciação
 	player.vel = 200                        -- velocidade em pixels por segundo
 	player.size = {height = 32, width = 32} -- em pixels
 	player.movementDirections = {}          -- tabela com as direções de movimento atualmente ativas
 	
-	return player 
+	return player
 end
 
 function Player:checkMovement(key, type)
@@ -50,9 +56,6 @@ function Player:checkMovement(key, type)
 			self.movementDirections[tableFind(self.movementDirections, RIGHT)] = nil
 		end
 	end
-	for k, v in pairs(self.movementDirections) do
-		print(k..": ".."v")
-	end
 end
 
 function Player:move(dt)
@@ -60,7 +63,6 @@ function Player:move(dt)
 	
 	local directions = {}
 	for k, v in pairs(self.movementDirections) do
-		print(v)
 		table.insert(directions, v)
 	end
 	
@@ -95,6 +97,48 @@ function Player:move(dt)
 	end
 	if tableFind(directions, RIGHT) then
 		self.pos.x = self.pos.x + displacement
+	end
+end
+
+----------------------------------------
+-- Funções Goblais
+----------------------------------------
+function newPlayer()
+	-- limit of players reached
+	if #players >= 4 then return false end
+
+	if #players == 0 then
+		player1 = Player.new(1,
+		                     "Mush",
+		                     "assets/player1/",
+		                     {x = window.width / 2, y = window.height / 2},
+		                     {up = "w", left = "a", down = "s", right = "d", action = "space"},
+							 {r = 1.0, g = 0.7, b = 0.7, a = 1.0})
+		table.insert(players, player1)
+	elseif #players == 1 then
+		player2 = Player.new(2,
+		                     "Shroom",
+		                     "assets/player2/",
+		                     {x = player1.pos.x + 75, y = player1.pos.y},
+		                     {up = "up", left = "left", down = "down", right = "right", action = "rshift"},
+							 {r = 0.7, g = 0.7, b = 1.0, a = 1.0})
+		table.insert(players, player2)
+	elseif #players == 2 then
+		player3 = Player.new(3,
+		                     "Musho",
+		                     "assets/player3/",
+		                     {x = player1.pos.x + 75, y = player1.pos.y},
+		                     {up = "t", left = "f", down = "g", right = "h", action = "y"},
+							 {r = 1.0, g = 0.7, b = 1.0, a = 1.0})
+		table.insert(players, player3)
+	else
+		player4 = Player.new(4,
+		                     "Mushy",
+		                     "assets/player4/",
+		                     {x = player1.pos.x + 75, y = player1.pos.y},
+		                     {up = "i", left = "j", down = "k", right = "l", action = "o"},
+							 {r = 0.7, g = 1.0, b = 1.0, a = 1.0})
+		table.insert(players, player4)
 	end
 end
 

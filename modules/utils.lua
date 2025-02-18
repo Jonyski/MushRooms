@@ -17,10 +17,8 @@ UP_LEFT    = 7
 ----------------------------------------
 
 function tableFind(table, value)
-	print(value)
 	for k, v in pairs(table) do
 		if v == value then
-			print(k)
 			return k
 		end
 	end

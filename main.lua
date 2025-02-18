@@ -7,9 +7,7 @@ require "modules/player"
 ----------------------------------------
 -- Variáveis Globais
 ----------------------------------------
-local window = {}
-local players = {}
-local player1 = {}
+window = {}
 
 ----------------------------------------
 -- Callbacks
@@ -18,6 +16,15 @@ function love.keypressed(key, scancode, isrepeat)
 	for _, p in pairs(players) do
 		p:checkMovement(key, "press")
 	end
+	-- esc closes the game
+	if key == "escape" then
+		love.event.quit()
+	end
+	-- n adds a new player to the game
+	if key == "n" then
+		newPlayer()
+	end
+
 end
 
 function love.keyreleased(key, scancode, isrepeat)
@@ -32,12 +39,7 @@ end
 function love.load()
 	window.width = 800
 	window.height = 800
-	player1 = Player.new(1,
-	                     "mush",
-	                     "assets/player1/",
-	                     {x = window.width / 2, y = window.height / 2},
-	                     {up = "w", left = "a", down = "s", right = "d", action = "space"})
-	table.insert(players, player1)
+	newPlayer()
 
 	-- love's state-setting methods
 	love.window.setMode(window.width, window.height)
@@ -47,7 +49,6 @@ end
 -- Atualização
 ----------------------------------------
 function love.update(dt)
-	player1:move(dt)
 	for _, p in pairs(players) do
 		p:move(dt)
 	end
@@ -59,6 +60,7 @@ end
 function love.draw()
 	love.graphics.clear(0.2, 0.2, 0.4, 1.0)
 	for _, p in pairs(players) do
-		love.graphics.circle("fill", p.pos.x, p.pos.y, 10)
+		love.graphics.setColor(p.color.r, p.color.g, p.color.b, p.color.a)
+		love.graphics.circle("fill", p.pos.x, p.pos.y, 20)
 	end
 end

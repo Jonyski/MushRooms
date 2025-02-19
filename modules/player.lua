@@ -104,7 +104,7 @@ end
 -- Funções Goblais
 ----------------------------------------
 function newPlayer()
-	-- limit of players reached
+	-- limite de jogadores alcançado
 	if #players >= 4 then return false end
 
 	if #players == 0 then
@@ -133,7 +133,7 @@ function newPlayer()
 		table.insert(players, player3)
 	else
 		player4 = Player.new(4,
-		                     "Mushy",
+		                     "Roomy",
 		                     "assets/player4/",
 		                     {x = player1.pos.x + 75, y = player1.pos.y},
 		                     {up = "i", left = "j", down = "k", right = "l", action = "o"},

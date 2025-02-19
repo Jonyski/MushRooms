@@ -4,6 +4,7 @@
 require "table"
 require "modules/player"
 require "modules/room"
+require "modules/camera"
 
 ----------------------------------------
 -- Variáveis Globais
@@ -43,6 +44,7 @@ function love.load()
 	window.cx = 400 -- centro no eixo x
 	window.cy = 400 -- centro no eixo y
 	newPlayer()
+	newCamera()
 	createInitialRooms()
 
 	-- love's state-setting methods
@@ -55,6 +57,9 @@ end
 function love.update(dt)
 	for _, p in pairs(players) do
 		p:move(dt)
+	end
+	for _, c in pairs(cameras) do
+		c:updatePosition()
 	end
 end
 
@@ -69,13 +74,13 @@ function love.draw()
 			local r = rooms[i][j]
 			love.graphics.setColor(r.color.r, r.color.g, r.color.b, r.color.a)
 			local roomWorldPos = {x = r.pos.x * 400 + 5 + window.cx, y = r.pos.y * 400 + 5 + window.cy}
-			local roomViewPos = {x = roomWorldPos.x - player1.pos.x, y = roomWorldPos.y - player1.pos.y}
+			local roomViewPos = {x = roomWorldPos.x - cameras[1].cx, y = roomWorldPos.y - cameras[1].cy}
 			love.graphics.rectangle("fill", roomViewPos.x, roomViewPos.y, r.dimensions.width, r.dimensions.height, 5, 5)
 		end
 	end
 	-- personagens
 	for _, p in pairs(players) do
-		pViewPos = {x = p.pos.x - players[1].pos.x + window.cx, y = p.pos.y - players[1].pos.y + window.cy}
+		pViewPos = {x = p.pos.x - cameras[1].cx + window.cx, y = p.pos.y - cameras[1].cy + window.cy}
 		love.graphics.setColor(p.color.r, p.color.g, p.color.b, p.color.a)
 		love.graphics.circle("fill", pViewPos.x, pViewPos.y, 20)
 	end

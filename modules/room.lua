@@ -29,6 +29,10 @@ function Room.new(pos, dimensions, type, color)
 	return room
 end
 
+
+----------------------------------------
+-- Funções Globais
+----------------------------------------
 function newRoom(pos, dimensions, type)
 	if not rooms[pos.y] then
 		rooms:insert(pos.y, BiList.new())

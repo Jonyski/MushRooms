@@ -140,6 +140,7 @@ function newPlayer()
 							 {r = 0.7, g = 1.0, b = 1.0, a = 1.0})
 		table.insert(players, player4)
 	end
+	newCamera()
 end
 
 return Player

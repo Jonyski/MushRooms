@@ -29,7 +29,6 @@ function Room.new(pos, dimensions, type, color)
 	return room
 end
 
-
 ----------------------------------------
 -- Funções Globais
 ----------------------------------------

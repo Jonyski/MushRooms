@@ -2,6 +2,7 @@
 -- Importações de Módulos
 ----------------------------------------
 require "table"
+require "modules/game"
 require "modules/player"
 require "modules/room"
 require "modules/camera"
@@ -35,6 +36,19 @@ function love.keyreleased(key, scancode, isrepeat)
 	end
 end
 
+function love.resize(w, h)
+	window.width = w
+	window.height = h
+	window.cx = w / 2
+	window.cy = h / 2
+	for i, c in pairs(cameras) do
+		cameras[i] = nil
+	end
+	for i = 1, #players do
+		newCamera()
+	end
+end
+
 ----------------------------------------
 -- Inicialização
 ----------------------------------------
@@ -44,11 +58,10 @@ function love.load()
 	window.cx = 400 -- centro no eixo x
 	window.cy = 400 -- centro no eixo y
 	newPlayer()
-	newCamera()
 	createInitialRooms()
 
 	-- love's state-setting methods
-	love.window.setMode(window.width, window.height)
+	love.window.setMode(window.width, window.height, {resizable = true})
 end
 
 ----------------------------------------
@@ -67,21 +80,12 @@ end
 -- Renderização
 ----------------------------------------
 function love.draw()
-	love.graphics.clear(0.2, 0.2, 0.4, 1.0)
-	-- salas
-	for i = rooms.minIndex, rooms.maxIndex do
-		for j = rooms[i].minIndex, rooms[i].maxIndex do
-			local r = rooms[i][j]
-			love.graphics.setColor(r.color.r, r.color.g, r.color.b, r.color.a)
-			local roomWorldPos = {x = r.pos.x * 400 + 5 + window.cx, y = r.pos.y * 400 + 5 + window.cy}
-			local roomViewPos = {x = roomWorldPos.x - cameras[1].cx, y = roomWorldPos.y - cameras[1].cy}
-			love.graphics.rectangle("fill", roomViewPos.x, roomViewPos.y, r.dimensions.width, r.dimensions.height, 5, 5)
-		end
-	end
-	-- personagens
-	for _, p in pairs(players) do
-		pViewPos = {x = p.pos.x - cameras[1].cx + window.cx, y = p.pos.y - cameras[1].cy + window.cy}
-		love.graphics.setColor(p.color.r, p.color.g, p.color.b, p.color.a)
-		love.graphics.circle("fill", pViewPos.x, pViewPos.y, 20)
+	for i, c in pairs(cameras) do
+		love.graphics.setCanvas(c.canvas)
+		love.graphics.clear(0.2, 0.2, 0.4, 1.0)
+		renderRooms(i)
+		renderPlayers(i)
+		love.graphics.setCanvas()
+		love.graphics.draw(c.canvas, c.canvasPos.x, c.canvasPos.y)
 	end
 end

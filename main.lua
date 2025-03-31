@@ -2,9 +2,9 @@
 -- Importações de Módulos
 ----------------------------------------
 require "table"
+require "modules/room"
 require "modules/game"
 require "modules/player"
-require "modules/room"
 require "modules/camera"
 
 ----------------------------------------
@@ -57,8 +57,8 @@ function love.load()
 	window.height = 800
 	window.cx = 400 -- centro no eixo x
 	window.cy = 400 -- centro no eixo y
+	createInitialRoom()
 	newPlayer()
-	createInitialRooms()
 
 	-- love's state-setting methods
 	love.window.setMode(window.width, window.height, {resizable = true})

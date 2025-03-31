@@ -16,7 +16,7 @@ Player = {}
 Player.__index = Player
 
 -- Construtor
-function Player.new(id, name, assets, spawn_pos, controls, color)
+function Player.new(id, name, assets, spawn_pos, controls, color, room)
 	local player = setmetatable({}, Player)
 
 	-- atributos que variam
@@ -25,12 +25,12 @@ function Player.new(id, name, assets, spawn_pos, controls, color)
 	player.assets = assets     -- caminho até a pasta contendo os assets do jogador
 	player.pos = spawn_pos     -- posição para spawnar o jogador
 	player.controls = controls -- os comandos para controlar o boneco, no formato {up = "", left = "", down = "", right = "", action = ""}
-	player.color = color
+	player.color = color       -- cor que representa o jogador
+	player.room = room         -- sala na qual o jogador está atualmente
 	-- atributos fixos na instanciação
 	player.vel = 200                        -- velocidade em pixels por segundo
 	player.size = {height = 32, width = 32} -- em pixels
 	player.movementDirections = {}          -- tabela com as direções de movimento atualmente ativas
-	
 	return player
 end
 
@@ -98,7 +98,35 @@ function Player:move(dt)
 	if tableFind(directions, RIGHT) then
 		self.pos.x = self.pos.x + displacement
 	end
+
+	self:updateRoom()
 end
+
+function Player:updateRoom()
+	local roomX = self.room.pos.x
+	local roomY = self.room.pos.y
+
+	-- o jogador foi para a sala à esquerda
+	if self.pos.x < self.room.hitbox.p1.x then
+		self.room = rooms[roomY][roomX - 1]
+	end
+	-- o jogador foi para a sala à direita
+	if self.pos.x > self.room.hitbox.p2.x then
+		self.room = rooms[roomY][roomX + 1]
+	end
+	-- o jogador foi para a sala acima
+	if self.pos.y < self.room.hitbox.p1.y then
+		self.room = rooms[roomY - 1][roomX]
+	end
+	-- o jogador foi para a sala abaixo
+	if self.pos.y > self.room.hitbox.p2.y then
+		self.room = rooms[roomY + 1][roomX]
+	end
+
+	self.room:setExplored()
+end
+
+
 
 ----------------------------------------
 -- Funções Goblais
@@ -112,32 +140,36 @@ function newPlayer()
 		                     "Mush",
 		                     "assets/player1/",
 		                     {x = window.width / 2, y = window.height / 2},
-		                     {up = "w", left = "a", down = "s", right = "d", action = "space"},
-							 {r = 1.0, g = 0.7, b = 0.7, a = 1.0})
+		                     {up = "w", left = "a", down = "s", right = "d", act1 = "space", act2 = "lshift"},
+							 {r = 1.0, g = 0.7, b = 0.7, a = 1.0},
+							 rooms[0][0])
 		table.insert(players, player1)
 	elseif #players == 1 then
 		player2 = Player.new(2,
 		                     "Shroom",
 		                     "assets/player2/",
 		                     {x = player1.pos.x + 75, y = player1.pos.y},
-		                     {up = "up", left = "left", down = "down", right = "right", action = "rshift"},
-							 {r = 0.7, g = 0.7, b = 1.0, a = 1.0})
+		                     {up = "up", left = "left", down = "down", right = "right", act1 = "rctrl", act2 = "rshift"},
+							 {r = 0.7, g = 0.7, b = 1.0, a = 1.0},
+							 players[1].room)
 		table.insert(players, player2)
 	elseif #players == 2 then
 		player3 = Player.new(3,
 		                     "Musho",
 		                     "assets/player3/",
 		                     {x = player1.pos.x + 75, y = player1.pos.y},
-		                     {up = "t", left = "f", down = "g", right = "h", action = "y"},
-							 {r = 1.0, g = 0.7, b = 1.0, a = 1.0})
+		                     {up = "t", left = "f", down = "g", right = "h", act1 = "r", act2 = "y"},
+							 {r = 1.0, g = 0.7, b = 1.0, a = 1.0},
+							 players[1].room)
 		table.insert(players, player3)
 	else
 		player4 = Player.new(4,
 		                     "Roomy",
 		                     "assets/player4/",
 		                     {x = player1.pos.x + 75, y = player1.pos.y},
-		                     {up = "i", left = "j", down = "k", right = "l", action = "o"},
-							 {r = 0.7, g = 1.0, b = 1.0, a = 1.0})
+		                     {up = "i", left = "j", down = "k", right = "l", act1 = "u", act2 = "o"},
+							 {r = 0.7, g = 1.0, b = 1.0, a = 1.0},
+							 players[1].room)
 		table.insert(players, player4)
 	end
 	newCamera()

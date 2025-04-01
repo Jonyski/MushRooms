@@ -2,6 +2,7 @@
 -- Importações de Módulos
 ----------------------------------------
 require "modules/utils"
+require "modules/animation"
 require "table"
 
 ----------------------------------------
@@ -31,6 +32,10 @@ function Player.new(id, name, assets, spawn_pos, controls, color, room)
 	player.vel = 200                        -- velocidade em pixels por segundo
 	player.size = {height = 32, width = 32} -- em pixels
 	player.movementDirections = {}          -- tabela com as direções de movimento atualmente ativas
+	player.state = IDLE
+	player.spriteSheets = {}
+	player.animations = {}
+
 	return player
 end
 
@@ -126,6 +131,17 @@ function Player:updateRoom()
 	self.room:setExplored()
 end
 
+function Player:addAnimations()
+	local source = love.filesystem.getSource()
+	-- idle animation
+	local idlePath = "assets/animations/"..string.lower(self.name).."/idle.png"
+	local idleQuadSize = {width = 32, height = 32}
+	local idleAnimation = newAnimation(idlePath, 2, idleQuadSize, 0.5, true, idleQuadSize)
+	self.animations[IDLE] = idleAnimation
+	self.spriteSheets[IDLE] = love.graphics.newImage(idlePath)
+	self.spriteSheets[IDLE]:setFilter("nearest", "nearest")
+end
+
 
 
 ----------------------------------------
@@ -143,6 +159,7 @@ function newPlayer()
 		                     {up = "w", left = "a", down = "s", right = "d", act1 = "space", act2 = "lshift"},
 							 {r = 1.0, g = 0.7, b = 0.7, a = 1.0},
 							 rooms[0][0])
+		player1:addAnimations()
 		table.insert(players, player1)
 	elseif #players == 1 then
 		player2 = Player.new(2,

@@ -14,7 +14,7 @@ rooms = BiList.new()
 ----------------------------------------
 Room = {}
 Room.__index = Room
-Room.stdDimensions = {width = 600, height = 600}
+Room.stdDim = {width = 600, height = 600}
 
 function Room.new(pos, dimensions, hitbox, type, color)
 	local room = setmetatable({}, Room)
@@ -40,7 +40,7 @@ function Room:setExplored()
 			rooms:insert(pos.y, BiList.new())
 		end
 		if not rooms[pos.y][pos.x] then
-			newRoom(pos, Room.stdDimensions, math.random(0, 2))
+			newRoom(pos, Room.stdDim, love.math.random(0, 2))
 		end
 	end
 end
@@ -73,8 +73,8 @@ function newRoom(pos, dimensions, type)
 		color = {r = 0.97, g = 0.34, b = 0.61, a = 1.0}
 	end
 
-	local p1 = {x = pos.x * 600 + 100,
-                y = pos.y * 600 + 100}
+	local p1 = {x = pos.x * Room.stdDim.width + 100,
+                y = pos.y * Room.stdDim.height + 100}
     local p2 = {x = p1.x + dimensions.width,
 				y = p1.y + dimensions.height}
 	local hitbox = {p1 = p1, p2 = p2}
@@ -83,16 +83,19 @@ function newRoom(pos, dimensions, type)
 	rooms[pos.y]:insert(pos.x, r)
 end
 
-function createInitialRoom()
-	newRoom({x = 0, y = 0}, Room.stdDimensions, 0)
+function createInitialRooms()
+	newRoom({x = 0, y = 0}, Room.stdDim, 0)
+	rooms[0][0]:setExplored()
 end
 
 -- calcula as posições dos pontos superior esquerdo e inferior direito da sala
 -- nas coordenadas de mundo
 function calculateRoomLimits(r)
-	local p1 = {x = r.pos.x * 610 + 100,
-	            y = r.pos.y * 610 + 100}
+	local p1 = {x = r.pos.x * Room.stdDim.width + 100,
+	            y = r.pos.y * Room.stdDim.height + 100}
 	local p2 = {x = p1.x + r.dimensions.width,
 				y = p1.y + r.dimensions.height}
 	return {p1 = p1, p2 = p2}
 end
+
+return Room

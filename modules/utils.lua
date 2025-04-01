@@ -12,6 +12,12 @@ DOWN_LEFT  = 5
 LEFT       = 6
 UP_LEFT    = 7
 
+-- estados de personagem
+IDLE = "idle"
+WALKING = "walking"
+DEFENDING = "defending"
+ATTACKING = "attacking"
+
 ----------------------------------------
 -- Classes Utilitárias
 ----------------------------------------

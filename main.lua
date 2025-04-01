@@ -6,6 +6,7 @@ require "modules/room"
 require "modules/game"
 require "modules/player"
 require "modules/camera"
+require "modules/animation"
 
 ----------------------------------------
 -- Variáveis Globais
@@ -57,10 +58,10 @@ function love.load()
 	window.height = 800
 	window.cx = 400 -- centro no eixo x
 	window.cy = 400 -- centro no eixo y
-	createInitialRoom()
+	createInitialRooms()
 	newPlayer()
 
-	-- love's state-setting methods
+	-- métodos de estado do love
 	love.window.setMode(window.width, window.height, {resizable = true})
 end
 
@@ -70,6 +71,11 @@ end
 function love.update(dt)
 	for _, p in pairs(players) do
 		p:move(dt)
+		--local state = p.state
+		--local animations = p.animations
+		--local animation = animations[state]
+		--animation:update(dt)
+		p.animations[p.state]:update(dt)
 	end
 	for _, c in pairs(cameras) do
 		c:updatePosition()

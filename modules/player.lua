@@ -10,6 +10,11 @@ require "table"
 ----------------------------------------
 players = {}
 
+IDLE = "idle"
+WALKING = "walking"
+DEFENDING = "defending"
+ATTACKING = "attacking"
+
 ----------------------------------------
 -- Classe Player
 ----------------------------------------
@@ -29,7 +34,7 @@ function Player.new(id, name, assets, spawn_pos, controls, color, room)
 	player.color = color       -- cor que representa o jogador
 	player.room = room         -- sala na qual o jogador está atualmente
 	-- atributos fixos na instanciação
-	player.vel = 200                        -- velocidade em pixels por segundo
+	player.vel = 280                        -- velocidade em pixels por segundo
 	player.size = {height = 32, width = 32} -- em pixels
 	player.movementDirections = {}          -- tabela com as direções de movimento atualmente ativas
 	player.state = IDLE
@@ -169,6 +174,7 @@ function newPlayer()
 		                     {up = "up", left = "left", down = "down", right = "right", act1 = "rctrl", act2 = "rshift"},
 							 {r = 0.7, g = 0.7, b = 1.0, a = 1.0},
 							 players[1].room)
+		player2:addAnimations()
 		table.insert(players, player2)
 	elseif #players == 2 then
 		player3 = Player.new(3,
@@ -178,6 +184,7 @@ function newPlayer()
 		                     {up = "t", left = "f", down = "g", right = "h", act1 = "r", act2 = "y"},
 							 {r = 1.0, g = 0.7, b = 1.0, a = 1.0},
 							 players[1].room)
+		player3:addAnimations()
 		table.insert(players, player3)
 	else
 		player4 = Player.new(4,
@@ -187,6 +194,7 @@ function newPlayer()
 		                     {up = "i", left = "j", down = "k", right = "l", act1 = "u", act2 = "o"},
 							 {r = 0.7, g = 1.0, b = 1.0, a = 1.0},
 							 players[1].room)
+		player4:addAnimations()
 		table.insert(players, player4)
 	end
 	newCamera()

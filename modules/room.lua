@@ -14,9 +14,9 @@ rooms = BiList.new()
 ----------------------------------------
 Room = {}
 Room.__index = Room
-Room.stdDim = {width = 600, height = 600}
+Room.stdDim = {width = 1536, height = 1536}
 
-function Room.new(pos, dimensions, hitbox, type, color)
+function Room.new(pos, dimensions, hitbox, type, color, sprites)
 	local room = setmetatable({}, Room)
 
 	-- atributos que variam
@@ -25,6 +25,7 @@ function Room.new(pos, dimensions, hitbox, type, color)
 	room.hitbox = hitbox
 	room.type = type
 	room.color = color
+	room.sprites = sprites
 	-- atributos fixos na instanciação
 	room.explored = false
 
@@ -66,20 +67,22 @@ function newRoom(pos, dimensions, type)
 	
 	local color = {}
 	if type == 0 then
-		color = {r = 1.0, g = 0.69, b = 0.47, a = 1.0}
+		color = {r = 0.7, g = 0.7, b = 1.0, a = 1.0}
 	elseif type == 1 then
-		color = {r = 0.96, g = 0.95, b = 0.42, a = 1.0}
+		color = {r = 1.0, g = 0.7, b = 0.7, a = 1.0}
 	elseif type == 2 then
-		color = {r = 0.97, g = 0.34, b = 0.61, a = 1.0}
+		color = {r = 0.7, g = 0.7, b = 0.7, a = 1.0}
 	end
 
-	local p1 = {x = pos.x * Room.stdDim.width + 100,
-                y = pos.y * Room.stdDim.height + 100}
+	local p1 = {x = pos.x * Room.stdDim.width - 365,
+                y = pos.y * Room.stdDim.height - 360}
     local p2 = {x = p1.x + dimensions.width,
 				y = p1.y + dimensions.height}
 	local hitbox = {p1 = p1, p2 = p2}
-
-	local r = Room.new(pos, dimensions, hitbox, type, color)
+	local sprites = {}
+	sprites.floor = love.graphics.newImage("assets/sprites/rooms/testRoom.png")
+	sprites.floor:setFilter("nearest", "nearest")
+	local r = Room.new(pos, dimensions, hitbox, type, color, sprites)
 	rooms[pos.y]:insert(pos.x, r)
 end
 

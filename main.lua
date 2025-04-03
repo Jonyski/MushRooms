@@ -88,7 +88,7 @@ end
 function love.draw()
 	for i, c in pairs(cameras) do
 		love.graphics.setCanvas(c.canvas)
-		love.graphics.clear(0.2, 0.2, 0.4, 1.0)
+		love.graphics.clear(0.0, 0.0, 0.0, 1.0)
 		renderRooms(i)
 		renderPlayers(i)
 		love.graphics.setCanvas()

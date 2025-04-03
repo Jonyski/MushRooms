@@ -6,10 +6,12 @@ function renderRooms(cam)
 		for j = rooms[i].minIndex, rooms[i].maxIndex do
 			local r = rooms[i][j]
 			if not r then goto nextroom end
+			
 			love.graphics.setColor(r.color.r, r.color.g, r.color.b, r.color.a)
 			local roomViewPos = {x = r.hitbox.p1.x - cameras[cam].cx + cameras[cam].viewport.width / 2,
 			                     y = r.hitbox.p1.y - cameras[cam].cy + cameras[cam].viewport.height / 2}
-			love.graphics.rectangle("fill", roomViewPos.x, roomViewPos.y, r.dimensions.width, r.dimensions.height, 5, 5)
+			love.graphics.draw(r.sprites.floor, roomViewPos.x, roomViewPos.y, 0, 6, 6)
+			--love.graphics.rectangle("fill", roomViewPos.x, roomViewPos.y, r.dimensions.width, r.dimensions.height, 5, 5)
 
 			love.graphics.setColor(1, 1, 1, 1)
 			::nextroom::
@@ -22,7 +24,6 @@ function renderPlayers(cam)
 		pViewPos = {x = p.pos.x - cameras[cam].cx + cameras[cam].viewport.width / 2,
 		            y = p.pos.y - cameras[cam].cy + cameras[cam].viewport.height / 2}
 		love.graphics.setColor(p.color.r, p.color.g, p.color.b, p.color.a)
-		love.graphics.circle("fill", pViewPos.x, pViewPos.y, 20)
 		local animation = p.animations[p.state]
 		local quad = animation.frames[animation.currFrame]
 		local offset = {x = animation.frameDim.width / 2, y = animation.frameDim.height / 2}
@@ -30,8 +31,7 @@ function renderPlayers(cam)
 		love.graphics.draw(p.spriteSheets[p.state], quad, pViewPos.x, pViewPos.y, 0, 3, 3, offset.x, offset.y)
 
 		-- debugging visual --------------
-		love.graphics.setColor(0, 0, 0, 1)
-		love.graphics.print(p.name, pViewPos.x - 35, pViewPos.y - 50, 0, 2, 2, 0, 0, 0, 0)
+		
 		----------------------------------
 
 		love.graphics.setColor(1, 1, 1, 1)

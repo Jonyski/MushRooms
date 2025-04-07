@@ -11,7 +11,10 @@ require "table"
 players = {}
 
 IDLE = "idle"
-WALKING = "walking"
+WALKING_UP = "walking up"
+WALKING_DOWN = "walking down"
+WALKING_LEFT = "walking left"
+WALKING_RIGHT = "walking right"
 DEFENDING = "defending"
 ATTACKING = "attacking"
 
@@ -37,11 +40,52 @@ function Player.new(id, name, assets, spawn_pos, controls, color, room)
 	player.vel = 280                        -- velocidade em pixels por segundo
 	player.size = {height = 32, width = 32} -- em pixels
 	player.movementDirections = {}          -- tabela com as direções de movimento atualmente ativas
-	player.state = IDLE
-	player.spriteSheets = {}
-	player.animations = {}
+	player.state = IDLE                     -- define o estado atual do jogador, estreitamente relacionado às animações
+	player.spriteSheets = {}                -- no tipo imagem do love
+	player.animations = {}                  -- as chaves são estados e os valores são Animações
 
 	return player
+end
+
+function Player:addAnimations()
+	local source = "assets/animations/"..string.lower(self.name)
+	local quadSize = {width = 32, height = 32}
+	-- animação idle
+	local idlePath = source.."/idle.png"
+	local idleAnimation = newAnimation(idlePath, 2, quadSize, 0.5, true, 1, quadSize)
+	self.animations[IDLE] = idleAnimation
+	self.spriteSheets[IDLE] = love.graphics.newImage(idlePath)
+	self.spriteSheets[IDLE]:setFilter("nearest", "nearest")
+	-- animação defesa
+	local defPath = source.."/defense.png"
+	local defAnimation = newAnimation(defPath, 15, quadSize, 0.05, true, 12, quadSize)
+	self.animations[DEFENDING] = defAnimation
+	self.spriteSheets[DEFENDING] = love.graphics.newImage(defPath)
+	self.spriteSheets[DEFENDING]:setFilter("nearest", "nearest")
+	-- animação andar para cima
+	local wUpPath = source.."/idle.png"
+	local wUpAnimation = newAnimation(wUpPath, 2, quadSize, 0.25, true, 1, quadSize)
+	self.animations[WALKING_UP] = wUpAnimation
+	self.spriteSheets[WALKING_UP] = love.graphics.newImage(wUpPath)
+	self.spriteSheets[WALKING_UP]:setFilter("nearest", "nearest")
+	-- animação andar para baixo
+	local wDownPath = source.."/walk_down.png"
+	local wDownAnimation = newAnimation(wDownPath, 2, quadSize, 0.25, true, 1, quadSize)
+	self.animations[WALKING_DOWN] = wDownAnimation
+	self.spriteSheets[WALKING_DOWN] = love.graphics.newImage(wDownPath)
+	self.spriteSheets[WALKING_DOWN]:setFilter("nearest", "nearest")
+	-- animação andar para esquerda
+	local wLeftPath = source.."/walk_left.png"
+	local wLeftAnimation = newAnimation(wLeftPath, 2, quadSize, 0.25, true, 1, quadSize)
+	self.animations[WALKING_LEFT] = wLeftAnimation
+	self.spriteSheets[WALKING_LEFT] = love.graphics.newImage(wLeftPath)
+	self.spriteSheets[WALKING_LEFT]:setFilter("nearest", "nearest")
+	-- animação andar para direita
+	local wRightPath = source.."/walk_right.png"
+	local wRightAnimation = newAnimation(wRightPath, 2, quadSize, 0.25, true, 1, quadSize)
+	self.animations[WALKING_RIGHT] = wRightAnimation
+	self.spriteSheets[WALKING_RIGHT] = love.graphics.newImage(wRightPath)
+	self.spriteSheets[WALKING_RIGHT]:setFilter("nearest", "nearest")
 end
 
 function Player:checkMovement(key, type)
@@ -85,17 +129,17 @@ function Player:move(dt)
 		directions[tableFind(directions, RIGHT)] = nil
 	end
 
-	-- player isn't moving
+	-- o jogador não está se movendo
 	if #directions == 0 then return end
-	-- player is moving in one direction
+	-- o jogador está se movendo em uma direção
 	if #directions == 1 then
 		displacement = dt * self.vel
-	-- player is moving diagonally
+	-- o jogador está se movendo na diagonal
 	elseif #directions == 2 then
 		displacement = dt * self.vel / 1.41421
 	end
 
-	-- update player's position
+	-- atualiza a posição do jogador
 	if tableFind(directions, UP) then
 		self.pos.y = self.pos.y - displacement
 	end
@@ -136,18 +180,42 @@ function Player:updateRoom()
 	self.room:setExplored()
 end
 
-function Player:addAnimations()
-	local source = love.filesystem.getSource()
-	-- idle animation
-	local idlePath = "assets/animations/"..string.lower(self.name).."/idle.png"
-	local idleQuadSize = {width = 32, height = 32}
-	local idleAnimation = newAnimation(idlePath, 2, idleQuadSize, 0.5, true, idleQuadSize)
-	self.animations[IDLE] = idleAnimation
-	self.spriteSheets[IDLE] = love.graphics.newImage(idlePath)
-	self.spriteSheets[IDLE]:setFilter("nearest", "nearest")
+function Player:updateState()
+	local prevState = self.state
+	if love.keyboard.isDown(self.controls.act2) then
+		self.state = DEFENDING
+	else
+		local u = tableFind(self.movementDirections, UP) -- a tecla para cima está pressionada
+		local d = tableFind(self.movementDirections, DOWN) -- a tecla para baixo está pressionada
+		local l = tableFind(self.movementDirections, LEFT) -- a tecla para a esquerda está pressionada
+		local r = tableFind(self.movementDirections, RIGHT) -- a tecla para a direita está pressionada
+		
+		if l and r then
+			l = false
+			r = false
+		end
+		if u and d then
+			u = false
+			d = false
+		end
+
+		if u then
+			self.state = WALKING_UP
+		elseif r then
+			self.state = WALKING_RIGHT
+		elseif l then
+			self.state = WALKING_LEFT
+		elseif d then
+			self.state = WALKING_DOWN
+		elseif not u and not d and not l and not r then
+			self.state = IDLE
+		end
+	end
+	-- resetando a animação anterior, caso o estado tenha mudado
+	if self.state ~= prevState then
+		self.animations[prevState]:reset()
+	end
 end
-
-
 
 ----------------------------------------
 -- Funções Goblais

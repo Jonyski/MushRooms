@@ -17,9 +17,6 @@ window = {}
 -- Callbacks
 ----------------------------------------
 function love.keypressed(key, scancode, isrepeat)
-	for _, p in pairs(players) do
-		p:checkMovement(key, "press")
-	end
 	-- esc closes the game
 	if key == "escape" then
 		love.event.quit()
@@ -29,6 +26,9 @@ function love.keypressed(key, scancode, isrepeat)
 		newPlayer()
 	end
 
+	for _, p in pairs(players) do
+		p:checkMovement(key, "press")
+	end
 end
 
 function love.keyreleased(key, scancode, isrepeat)
@@ -71,11 +71,9 @@ end
 function love.update(dt)
 	for _, p in pairs(players) do
 		p:move(dt)
-		--local state = p.state
-		--local animations = p.animations
-		--local animation = animations[state]
-		--animation:update(dt)
 		p.animations[p.state]:update(dt)
+		p:updateState()
+		print(p.state)
 	end
 	for _, c in pairs(cameras) do
 		c:updatePosition()

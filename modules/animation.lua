@@ -9,13 +9,14 @@ require "table"
 Animation = {}
 Animation.__index = Animation
 
-function Animation.new(frames, frameDur, looping, frameDim)
+function Animation.new(frames, frameDur, looping, loopFrame, frameDim)
 	local animation = setmetatable({}, Animation)
 
 	-- atributos que variam
 	animation.frames = frames
 	animation.frameDur = frameDur
 	animation.looping = looping
+	animation.loopFrame = loopFrame
 	animation.frameDim = frameDim
 	-- atributos fixos na instanciação
 	animation.currFrame = 1
@@ -33,10 +34,14 @@ function Animation:update(dt)
         self.timer = 0
         self.currFrame = self.currFrame + 1
         if self.currFrame > #self.frames then
-        	-- volta pro primeiro frame se a animação for loop
-            self.currFrame = self.looping and 1 or #self.frames
+        	-- volta pro primeiro frame de loop se a animação for ciclica
+            self.currFrame = self.looping and self.loopFrame or #self.frames
         end
     end
+end
+
+function Animation:reset()
+	self.currFrame = 1
 end
 
 
@@ -44,7 +49,7 @@ end
 ----------------------------------------
 -- Funções Globais
 ----------------------------------------
-function newAnimation(path, length, quadSize, frameDur, looping, frameDim)
+function newAnimation(path, length, quadSize, frameDur, looping, loopFrame, frameDim)
 	local sheetImg = love.graphics.newImage(path)
 	local frames = {}
 	local gap = 4
@@ -64,7 +69,7 @@ function newAnimation(path, length, quadSize, frameDur, looping, frameDim)
 	end
 
 	::createanimation::
-	return Animation.new(frames, frameDur, looping, frameDim)
+	return Animation.new(frames, frameDur, looping, loopFrame, frameDim)
 end
 
 return Animation

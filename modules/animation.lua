@@ -13,22 +13,19 @@ function Animation.new(frames, frameDur, looping, loopFrame, frameDim)
 	local animation = setmetatable({}, Animation)
 
 	-- atributos que variam
-	animation.frames = frames
-	animation.frameDur = frameDur
-	animation.looping = looping
-	animation.loopFrame = loopFrame
-	animation.frameDim = frameDim
+	animation.frames = frames       -- número de frames na animação
+	animation.frameDur = frameDur   -- duração de cada frame em segundos
+	animation.looping = looping     -- se a animação é ciclica ou não
+	animation.loopFrame = loopFrame -- a partir de qual frame a animação é ciclica
+	animation.frameDim = frameDim   -- dimensões de cada frame
 	-- atributos fixos na instanciação
-	animation.currFrame = 1
-	animation.timer = 0
-	animation.isPlaying = true
+	animation.currFrame = 1         -- frame atual
+	animation.timer = 0             -- tempo decorrido desde a última mudança de frame	
 	
 	return animation
 end
 
 function Animation:update(dt)
-    if not self.isPlaying then return end
-
     self.timer = self.timer + dt
     if self.timer > self.frameDur then
         self.timer = 0

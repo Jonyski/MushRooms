@@ -17,10 +17,10 @@ Camera.__index = Camera
 
 function Camera.new(pos, viewport, canvas, canvasPos)
 	local camera = setmetatable({}, Camera)
-	camera.pos = pos
-	camera.viewport = viewport
-	camera.canvas = canvas
-	camera.canvasPos = canvasPos
+	camera.pos = pos             -- posição da camera
+	camera.viewport = viewport   -- tamanho da câmera (o espaço que ela enxerga)
+	camera.canvas = canvas       -- canvas associado à câmera
+	camera.canvasPos = canvasPos -- posição do canvas associado à câmera
 	camera.cx = (pos.x + viewport.width) / 2
 	camera.cy = (pos.y + viewport.height) / 2
 	return camera

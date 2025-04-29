@@ -25,14 +25,13 @@ Player = {}
 Player.__index = Player
 
 -- Construtor
-function Player.new(id, name, assets, spawn_pos, controls, color, room)
+function Player.new(id, name, spawn_pos, controls, color, room)
 	local player = setmetatable({}, Player)
 
 	-- atributos que variam
 	player.id = id             -- número do jogador
 	player.name = name         -- nome do jogador
-	player.assets = assets     -- caminho até a pasta contendo os assets do jogador
-	player.pos = spawn_pos     -- posição para spawnar o jogador
+	player.pos = spawn_pos     -- posição do jogador (inicializa para a posição do spawn)
 	player.controls = controls -- os comandos para controlar o boneco, no formato {up = "", left = "", down = "", right = "", action = ""}
 	player.color = color       -- cor que representa o jogador
 	player.room = room         -- sala na qual o jogador está atualmente
@@ -63,26 +62,26 @@ function Player:addAnimations()
 	self.spriteSheets[DEFENDING] = love.graphics.newImage(defPath)
 	self.spriteSheets[DEFENDING]:setFilter("nearest", "nearest")
 	-- animação andar para cima
-	local wUpPath = source.."/idle.png"
-	local wUpAnimation = newAnimation(wUpPath, 2, quadSize, 0.25, true, 1, quadSize)
+	local wUpPath = source.."/walk_up.png"
+	local wUpAnimation = newAnimation(wUpPath, 4, quadSize, 0.25, true, 1, quadSize)
 	self.animations[WALKING_UP] = wUpAnimation
 	self.spriteSheets[WALKING_UP] = love.graphics.newImage(wUpPath)
 	self.spriteSheets[WALKING_UP]:setFilter("nearest", "nearest")
 	-- animação andar para baixo
 	local wDownPath = source.."/walk_down.png"
-	local wDownAnimation = newAnimation(wDownPath, 2, quadSize, 0.25, true, 1, quadSize)
+	local wDownAnimation = newAnimation(wDownPath, 4, quadSize, 0.25, true, 1, quadSize)
 	self.animations[WALKING_DOWN] = wDownAnimation
 	self.spriteSheets[WALKING_DOWN] = love.graphics.newImage(wDownPath)
 	self.spriteSheets[WALKING_DOWN]:setFilter("nearest", "nearest")
 	-- animação andar para esquerda
 	local wLeftPath = source.."/walk_left.png"
-	local wLeftAnimation = newAnimation(wLeftPath, 2, quadSize, 0.25, true, 1, quadSize)
+	local wLeftAnimation = newAnimation(wLeftPath, 4, quadSize, 0.25, true, 1, quadSize)
 	self.animations[WALKING_LEFT] = wLeftAnimation
 	self.spriteSheets[WALKING_LEFT] = love.graphics.newImage(wLeftPath)
 	self.spriteSheets[WALKING_LEFT]:setFilter("nearest", "nearest")
 	-- animação andar para direita
 	local wRightPath = source.."/walk_right.png"
-	local wRightAnimation = newAnimation(wRightPath, 2, quadSize, 0.25, true, 1, quadSize)
+	local wRightAnimation = newAnimation(wRightPath, 4, quadSize, 0.25, true, 1, quadSize)
 	self.animations[WALKING_RIGHT] = wRightAnimation
 	self.spriteSheets[WALKING_RIGHT] = love.graphics.newImage(wRightPath)
 	self.spriteSheets[WALKING_RIGHT]:setFilter("nearest", "nearest")
@@ -227,7 +226,6 @@ function newPlayer()
 	if #players == 0 then
 		player1 = Player.new(1,
 		                     "Mush",
-		                     "assets/player1/",
 		                     {x = window.width / 2, y = window.height / 2},
 		                     {up = "w", left = "a", down = "s", right = "d", act1 = "space", act2 = "lshift"},
 							 {r = 1.0, g = 0.7, b = 0.7, a = 1.0},
@@ -237,7 +235,6 @@ function newPlayer()
 	elseif #players == 1 then
 		player2 = Player.new(2,
 		                     "Shroom",
-		                     "assets/player2/",
 		                     {x = player1.pos.x + 75, y = player1.pos.y},
 		                     {up = "up", left = "left", down = "down", right = "right", act1 = "rctrl", act2 = "rshift"},
 							 {r = 0.7, g = 0.7, b = 1.0, a = 1.0},
@@ -247,7 +244,6 @@ function newPlayer()
 	elseif #players == 2 then
 		player3 = Player.new(3,
 		                     "Musho",
-		                     "assets/player3/",
 		                     {x = player1.pos.x + 75, y = player1.pos.y},
 		                     {up = "t", left = "f", down = "g", right = "h", act1 = "r", act2 = "y"},
 							 {r = 1.0, g = 0.7, b = 1.0, a = 1.0},
@@ -257,7 +253,6 @@ function newPlayer()
 	else
 		player4 = Player.new(4,
 		                     "Roomy",
-		                     "assets/player4/",
 		                     {x = player1.pos.x + 75, y = player1.pos.y},
 		                     {up = "i", left = "j", down = "k", right = "l", act1 = "u", act2 = "o"},
 							 {r = 0.7, g = 1.0, b = 1.0, a = 1.0},

@@ -20,14 +20,14 @@ function Room.new(pos, dimensions, hitbox, type, color, sprites)
 	local room = setmetatable({}, Room)
 
 	-- atributos que variam
-	room.pos = pos
-	room.dimensions = dimensions
-	room.hitbox = hitbox
-	room.type = type
-	room.color = color
-	room.sprites = sprites
+	room.pos = pos               -- posição da sala na array de salas
+	room.dimensions = dimensions -- largura e altura da sala
+	room.hitbox = hitbox         -- pontos superior esquerdo (p1) e inferior direito (p2) da sala
+	room.type = type             -- tipo de sala
+	room.color = color           -- cor da sala
+	room.sprites = sprites       -- os sprites da sala em camadas
 	-- atributos fixos na instanciação
-	room.explored = false
+	room.explored = false        -- se algum jogador já entrou na sala ou não
 
 	return room
 end

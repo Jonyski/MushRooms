@@ -73,7 +73,6 @@ function love.update(dt)
 		p:move(dt)
 		p.animations[p.state]:update(dt)
 		p:updateState()
-		print(p.state)
 	end
 	for _, c in pairs(cameras) do
 		c:updatePosition()

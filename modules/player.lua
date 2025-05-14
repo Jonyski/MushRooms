@@ -217,7 +217,7 @@ function Player:updateState()
 end
 
 ----------------------------------------
--- Funções Goblais
+-- Funções Globais
 ----------------------------------------
 function newPlayer()
 	-- limite de jogadores alcançado

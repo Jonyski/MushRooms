@@ -1,3 +1,5 @@
+require "modules/camera"
+
 ----------------------------------------
 -- Funções Globais
 ----------------------------------------
@@ -30,6 +32,18 @@ function renderPlayers(cam)
 		love.graphics.setColor(1, 1, 1, 1) -- mudar depois para efeitos de iluminação
 		love.graphics.draw(p.spriteSheets[p.state], quad, pViewPos.x, pViewPos.y, 0, 3, 3, offset.x, offset.y)
 		
+		-- reseta a cor de renderização
+		love.graphics.setColor(1, 1, 1, 1)
+	end
+end
+
+function renderEnemies(cam)
+	for _, e in pairs(enemies) do
+		eViewPos = {x = e.pos.x - cameras[cam].cx + cameras[cam].viewport.width / 2,
+		            y = e.pos.y - cameras[cam].cy + cameras[cam].viewport.height / 2}
+		love.graphics.setColor(e.color.r, e.color.g, e.color.b, e.color.a)
+		love.graphics.rectangle("fill", eViewPos.x, eViewPos.y, e.size.width, e.size.height)
+
 		-- reseta a cor de renderização
 		love.graphics.setColor(1, 1, 1, 1)
 	end

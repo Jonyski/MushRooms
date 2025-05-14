@@ -7,12 +7,13 @@ require "modules/game"
 require "modules/player"
 require "modules/camera"
 require "modules/animation"
+require "modules/enemy"
 
 ----------------------------------------
 -- Variáveis Globais
 ----------------------------------------
 window = {}
-
+sec_timer = {}
 ----------------------------------------
 -- Callbacks
 ----------------------------------------
@@ -58,6 +59,7 @@ function love.load()
 	window.height = 800
 	window.cx = 400 -- centro no eixo x
 	window.cy = 400 -- centro no eixo y
+	sec_timer = {prev = 0, curr = 0}
 	createInitialRooms()
 	newPlayer()
 
@@ -77,6 +79,20 @@ function love.update(dt)
 	for _, c in pairs(cameras) do
 		c:updatePosition()
 	end
+
+	sec_timer.curr = sec_timer.curr + dt
+	if sec_timer.curr - sec_timer.prev >= 1 then
+		sec_timer.prev = sec_timer.prev + 1
+		if math.random() < 0.2 then
+			newEnemy(NUCLEAR_CAT, {x = 800, y = 800})
+		elseif math.random() < 0.2 then
+			newEnemy(SPIDER_DUCK, {x = 800, y = 800})
+		end
+	end
+	for _, e in pairs(enemies) do
+		e:move(dt)
+	end
+
 end
 
 ----------------------------------------
@@ -88,6 +104,7 @@ function love.draw()
 		love.graphics.clear(0.0, 0.0, 0.0, 1.0)
 		renderRooms(i)
 		renderPlayers(i)
+		renderEnemies(i)
 		love.graphics.setCanvas()
 		love.graphics.draw(c.canvas, c.canvasPos.x, c.canvasPos.y)
 	end

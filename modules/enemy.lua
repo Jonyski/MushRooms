@@ -1,19 +1,31 @@
+require "./modules/player"
+require "table"
+----------------------------------------
+-- Variáveis
+----------------------------------------
+NUCLEAR_CAT = 1
+SPIDER_DUCK = 2
+
+enemies = {}
+
 ----------------------------------------
 -- Classe Enemy
 ----------------------------------------
 Enemy = {}
 Enemy.__index = Enemy
 
-function Enemy.new(name, spawnPos, color, move, attack)
+function Enemy.new(name, spawnPos, velocity, color, move, attack)
 	local enemy = setmetatable({}, Enemy)
 	
 	-- atributos que variam
 	enemy.name = name     -- nome do inimigo
 	enemy.pos = spawnPos  -- posição do inimigo
+	enemy.vel = velocity  -- velocidade de movimento do inimigo
 	enemy.color = color   -- cor do inimigo
 	enemy.move = move     -- função de movimento do inimigo
 	enemy.attack = attack -- função de ataque do inimigo
 	-- atributos fixos na instanciação
+	enemy.size = {height = 32, width = 32}
 	enemy.movementDirections = {} -- tabela com as direções de movimento atualmente ativas
 	enemy.state = IDLE            -- define o estado atual do inimigo, estreitamente relacionado às animações
 	enemy.spriteSheets = {}       -- no tipo imagem do love
@@ -23,5 +35,55 @@ function Enemy.new(name, spawnPos, color, move, attack)
 end
 
 ----------------------------------------
+-- Funções e Enums de Movimento
+----------------------------------------
+function Enemy:moveFollowPlayer(dt)
+	if self.pos.x < players[1].pos.x then
+		self.pos.x = self.pos.x + self.vel * dt
+	else
+		self.pos.x = self.pos.x - self.vel * dt
+	end
+
+	if self.pos.y < players[1].pos.y then
+		self.pos.y = self.pos.y + self.vel * dt
+	else
+		self.pos.y = self.pos.y - self.vel * dt
+	end
+end
+
+----------------------------------------
+-- Funções e Enums de Ataque
+----------------------------------------
+function Enemy:simpleAttack()
+	if math.abs(self.pos.x - players[1].pos.x) < 75 and
+	   math.abs(self.pos.y - players[1].pos.y) < 75 then
+	   	print("Gatinho ataca")
+	end
+end
+
+----------------------------------------
 -- Funções Globais
 ----------------------------------------
+function newEnemy(name, spawnPos)
+	if name == NUCLEAR_CAT then
+		newNuclearCat(spawnPos)
+	elseif name == SPIDER_DUCK then
+		newSpiderDuck(spawnPos)
+	end
+end
+
+function newNuclearCat(spawnPos)
+	local color = {r = 0.9, g = 0.4, b = 0.4, a = 1.0}
+	local movementFunc = Enemy.moveFollowPlayer
+	local attackFunc = Enemy.simpleAttack
+	local enemy = Enemy.new("Nuclear Cat", spawnPos, 180, color, movementFunc, attackFunc)
+	table.insert(enemies, enemy)
+end
+
+function newSpiderDuck(spawnPos)
+	local color = {r = 0.9, g = 0.9, b = 0.1, a = 1.0}
+	local movementFunc = Enemy.moveFollowPlayer
+	local attackFunc = Enemy.simpleAttack
+	local enemy = Enemy.new("Spider Duck", spawnPos, 180, color, movementFunc, attackFunc)
+	table.insert(enemies, enemy)
+end

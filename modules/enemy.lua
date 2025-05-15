@@ -26,6 +26,7 @@ function Enemy.new(name, spawnPos, velocity, color, move, attack)
 	enemy.attack = attack -- função de ataque do inimigo
 	-- atributos fixos na instanciação
 	enemy.size = {height = 32, width = 32}
+	enemy.cooldown = 0
 	enemy.movementDirections = {} -- tabela com as direções de movimento atualmente ativas
 	enemy.state = IDLE            -- define o estado atual do inimigo, estreitamente relacionado às animações
 	enemy.spriteSheets = {}       -- no tipo imagem do love
@@ -38,27 +39,32 @@ end
 -- Funções e Enums de Movimento
 ----------------------------------------
 function Enemy:moveFollowPlayer(dt)
-	if self.pos.x < players[1].pos.x then
-		self.pos.x = self.pos.x + self.vel * dt
-	else
-		self.pos.x = self.pos.x - self.vel * dt
-	end
+	local dx = players[1].pos.x - self.pos.x
+	local dy = players[1].pos.y - self.pos.y
+	local distance = math.sqrt(dx * dx + dy * dy)
 
-	if self.pos.y < players[1].pos.y then
-		self.pos.y = self.pos.y + self.vel * dt
-	else
-		self.pos.y = self.pos.y - self.vel * dt
+	if distance > 100 then
+		dx = dx / distance
+		dy = dy / distance
+
+		self.pos.x = self.pos.x + dx * self.vel * dt
+		self.pos.y = self.pos.y + dy * self.vel * dt
 	end
 end
 
 ----------------------------------------
 -- Funções e Enums de Ataque
 ----------------------------------------
-function Enemy:simpleAttack()
-	if math.abs(self.pos.x - players[1].pos.x) < 75 and
-	   math.abs(self.pos.y - players[1].pos.y) < 75 then
-	   	print("Gatinho ataca")
+function Enemy:simpleAttack(dt)
+	if self.cooldown <= 0 then
+		if math.abs(self.pos.x - players[1].pos.x) < 75 and
+	   	   math.abs(self.pos.y - players[1].pos.y) < 75 then
+	   		print("Gatinho ataca")
+	   		self.cooldown = 3
+	   		return
+		end
 	end
+	self.cooldown = self.cooldown - dt
 end
 
 ----------------------------------------

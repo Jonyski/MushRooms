@@ -91,6 +91,7 @@ function love.update(dt)
 	end
 	for _, e in pairs(enemies) do
 		e:move(dt)
+		e:attack(dt)
 	end
 
 end

@@ -23,7 +23,7 @@ end
 
 function renderPlayers(cam)
 	for _, p in pairs(players) do
-		pViewPos = {x = p.pos.x - cameras[cam].cx + cameras[cam].viewport.width / 2,
+		local pViewPos = {x = p.pos.x - cameras[cam].cx + cameras[cam].viewport.width / 2,
 		            y = p.pos.y - cameras[cam].cy + cameras[cam].viewport.height / 2}
 		love.graphics.setColor(p.color.r, p.color.g, p.color.b, p.color.a)
 		local animation = p.animations[p.state]
@@ -39,10 +39,11 @@ end
 
 function renderEnemies(cam)
 	for _, e in pairs(enemies) do
-		eViewPos = {x = e.pos.x - cameras[cam].cx + cameras[cam].viewport.width / 2,
+		local eViewPos = {x = e.pos.x - cameras[cam].cx + cameras[cam].viewport.width / 2,
 		            y = e.pos.y - cameras[cam].cy + cameras[cam].viewport.height / 2}
 		love.graphics.setColor(e.color.r, e.color.g, e.color.b, e.color.a)
-		love.graphics.rectangle("fill", eViewPos.x, eViewPos.y, e.size.width, e.size.height)
+		local offset = {x = e.size.width/2, y = e.size.height/2}
+		love.graphics.rectangle("fill", eViewPos.x, eViewPos.y, e.size.width, e.size.height, 0, 1, 1, offset.x, offset.y)
 
 		-- reseta a cor de renderização
 		love.graphics.setColor(1, 1, 1, 1)

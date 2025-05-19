@@ -42,6 +42,8 @@ function Player.new(id, name, spawn_pos, controls, color, room)
 	player.state = IDLE                     -- define o estado atual do jogador, estreitamente relacionado às animações
 	player.spriteSheets = {}                -- no tipo imagem do love
 	player.animations = {}                  -- as chaves são estados e os valores são Animações
+	player.weapons = {}                     -- lista das armas que o jogador possui
+	player.weapon = nil                     -- arma equipada
 
 	return player
 end
@@ -213,6 +215,31 @@ function Player:updateState()
 	-- resetando a animação anterior, caso o estado tenha mudado
 	if self.state ~= prevState then
 		self.animations[prevState]:reset()
+	end
+end
+
+function Player:checkAction1(key)
+	if key == self.controls.act1 then
+		self:attack()
+	end
+end
+
+function Player:collectWeapon(weapon) 
+	table.insert(self.weapons, weapon)
+end
+
+function Player:equipWeapon(weapon)
+	-- itera pelas armas do jogador procurando pela que ele quer equipar
+	for i, w in pairs(self.weapons) do
+		if w.type == weapon then
+			self.weapon = w
+		end
+	end
+end
+
+function Player:attack()
+	if self.weapon then
+		self.weapon:attack()
 	end
 end
 

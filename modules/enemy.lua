@@ -1,10 +1,11 @@
 require "./modules/player"
 require "table"
+
 ----------------------------------------
--- Variáveis
+-- Variáveis e Enums
 ----------------------------------------
-NUCLEAR_CAT = 1
-SPIDER_DUCK = 2
+NUCLEAR_CAT = "Nuclear Cat"
+SPIDER_DUCK = "Spider Duck"
 
 enemies = {}
 
@@ -14,11 +15,11 @@ enemies = {}
 Enemy = {}
 Enemy.__index = Enemy
 
-function Enemy.new(name, spawnPos, velocity, color, move, attack)
+function Enemy.new(type, spawnPos, velocity, color, move, attack)
 	local enemy = setmetatable({}, Enemy)
 	
 	-- atributos que variam
-	enemy.name = name     -- nome do inimigo
+	enemy.type = type     -- nome do tipo de inimigo
 	enemy.pos = spawnPos  -- posição do inimigo
 	enemy.vel = velocity  -- velocidade de movimento do inimigo
 	enemy.color = color   -- cor do inimigo
@@ -36,7 +37,7 @@ function Enemy.new(name, spawnPos, velocity, color, move, attack)
 end
 
 ----------------------------------------
--- Funções e Enums de Movimento
+-- Funções de Movimento
 ----------------------------------------
 function Enemy:moveFollowPlayer(dt)
 	local dx = players[1].pos.x - self.pos.x
@@ -53,13 +54,13 @@ function Enemy:moveFollowPlayer(dt)
 end
 
 ----------------------------------------
--- Funções e Enums de Ataque
+-- Funções de Ataque
 ----------------------------------------
 function Enemy:simpleAttack(dt)
 	if self.cooldown <= 0 then
 		if math.abs(self.pos.x - players[1].pos.x) < 75 and
 	   	   math.abs(self.pos.y - players[1].pos.y) < 75 then
-	   		print("Gatinho ataca")
+	   		print(self.type.." ataca")
 	   		self.cooldown = 3
 	   		return
 		end
@@ -70,10 +71,10 @@ end
 ----------------------------------------
 -- Funções Globais
 ----------------------------------------
-function newEnemy(name, spawnPos)
-	if name == NUCLEAR_CAT then
+function newEnemy(type, spawnPos)
+	if type == NUCLEAR_CAT then
 		newNuclearCat(spawnPos)
-	elseif name == SPIDER_DUCK then
+	elseif type == SPIDER_DUCK then
 		newSpiderDuck(spawnPos)
 	end
 end
@@ -82,7 +83,7 @@ function newNuclearCat(spawnPos)
 	local color = {r = 0.9, g = 0.4, b = 0.4, a = 1.0}
 	local movementFunc = Enemy.moveFollowPlayer
 	local attackFunc = Enemy.simpleAttack
-	local enemy = Enemy.new("Nuclear Cat", spawnPos, 180, color, movementFunc, attackFunc)
+	local enemy = Enemy.new(NUCLEAR_CAT, spawnPos, 180, color, movementFunc, attackFunc)
 	table.insert(enemies, enemy)
 end
 
@@ -90,6 +91,6 @@ function newSpiderDuck(spawnPos)
 	local color = {r = 0.9, g = 0.9, b = 0.1, a = 1.0}
 	local movementFunc = Enemy.moveFollowPlayer
 	local attackFunc = Enemy.simpleAttack
-	local enemy = Enemy.new("Spider Duck", spawnPos, 180, color, movementFunc, attackFunc)
+	local enemy = Enemy.new(SPIDER_DUCK, spawnPos, 180, color, movementFunc, attackFunc)
 	table.insert(enemies, enemy)
 end

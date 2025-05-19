@@ -8,6 +8,7 @@ require "modules/player"
 require "modules/camera"
 require "modules/animation"
 require "modules/enemy"
+require "modules/weapon"
 
 ----------------------------------------
 -- Variáveis Globais
@@ -29,6 +30,7 @@ function love.keypressed(key, scancode, isrepeat)
 
 	for _, p in pairs(players) do
 		p:checkMovement(key, "press")
+		p:checkAction1(key)
 	end
 end
 
@@ -62,6 +64,8 @@ function love.load()
 	sec_timer = {prev = 0, curr = 0}
 	createInitialRooms()
 	newPlayer()
+	players[1]:collectWeapon(newWeapon(KATANA))
+	players[1]:equipWeapon(KATANA)
 
 	-- métodos de estado do love
 	love.window.setMode(window.width, window.height, {resizable = true})
@@ -80,20 +84,24 @@ function love.update(dt)
 		c:updatePosition()
 	end
 
+	-- trecho de debug de inimigos ----------------------------
 	sec_timer.curr = sec_timer.curr + dt
 	if sec_timer.curr - sec_timer.prev >= 1 then
 		sec_timer.prev = sec_timer.prev + 1
-		if math.random() < 0.2 then
-			newEnemy(NUCLEAR_CAT, {x = 800, y = 800})
-		elseif math.random() < 0.2 then
-			newEnemy(SPIDER_DUCK, {x = 800, y = 800})
+		local r = math.random()
+		local randSpawnPos = {x = math.random(players[1].pos.x - 500, players[1].pos.x + 500),
+			                  y = math.random(players[1].pos.y - 500, players[1].pos.y + 500)}
+		if r < 0.2 then
+			newEnemy(NUCLEAR_CAT, randSpawnPos)
+		elseif r < 0.4 then
+			newEnemy(SPIDER_DUCK, randSpawnPos)
 		end
 	end
 	for _, e in pairs(enemies) do
 		e:move(dt)
 		e:attack(dt)
 	end
-
+	----------------------------------------------------------
 end
 
 ----------------------------------------

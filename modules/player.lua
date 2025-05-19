@@ -154,6 +154,7 @@ function Player:move(dt)
 		self.pos.x = self.pos.x + displacement
 	end
 
+	self.weapon:updateOrientation(directions)
 	self:updateRoom()
 end
 

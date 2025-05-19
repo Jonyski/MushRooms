@@ -49,3 +49,19 @@ function renderEnemies(cam)
 		love.graphics.setColor(1, 1, 1, 1)
 	end
 end
+
+function renderWeapons(cam)
+	for _, e in pairs(players) do
+		local wViewPos = {x = e.pos.x - cameras[cam].cx + cameras[cam].viewport.width / 2,
+		            y = e.pos.y - cameras[cam].cy + cameras[cam].viewport.height / 2}
+		love.graphics.push()
+		love.graphics.translate(wViewPos.x, wViewPos.y)
+		love.graphics.rotate(e.weapon.rotation)
+		local color = e.weapon.color
+		love.graphics.setColor(color.r, color.g, color.b, color.a)
+		love.graphics.rectangle("fill", 0, -e.weapon.size.height / 2, e.weapon.size.width, e.weapon.size.height)
+		love.graphics.pop()
+		-- reseta a cor de renderização
+		love.graphics.setColor(1, 1, 1, 1)
+	end
+end

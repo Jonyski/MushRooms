@@ -64,8 +64,11 @@ function love.load()
 	sec_timer = {prev = 0, curr = 0}
 	createInitialRooms()
 	newPlayer()
+
+	-- bloco de teste de armas -------------------------
 	players[1]:collectWeapon(newWeapon(KATANA))
 	players[1]:equipWeapon(KATANA)
+	----------------------------------------------------
 
 	-- métodos de estado do love
 	love.window.setMode(window.width, window.height, {resizable = true})
@@ -112,6 +115,7 @@ function love.draw()
 		love.graphics.setCanvas(c.canvas)
 		love.graphics.clear(0.0, 0.0, 0.0, 1.0)
 		renderRooms(i)
+		renderWeapons(i)
 		renderPlayers(i)
 		renderEnemies(i)
 		love.graphics.setCanvas()

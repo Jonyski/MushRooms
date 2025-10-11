@@ -1,18 +1,4 @@
 ----------------------------------------
--- Enums Utilitários
-----------------------------------------
-
--- direções
-UP         = 0
-UP_RIGHT   = 1
-RIGHT      = 2
-DOWN_RIGHT = 3
-DOWN       = 4
-DOWN_LEFT  = 5
-LEFT       = 6
-UP_LEFT    = 7
-
-----------------------------------------
 -- Classes Utilitárias
 ----------------------------------------
 BiList = {}
@@ -27,14 +13,18 @@ function BiList.new()
 end
 
 function BiList:insertRight(el)
-	if el == nil then return end
+	if el == nil then
+		return
+	end
 	self.maxIndex = self.maxIndex + 1
 	self[self.maxIndex] = el
 	self.length = self.length + 1
 end
 
 function BiList:insertLeft(el)
-	if el == nil then return end
+	if el == nil then
+		return
+	end
 	self.minIndex = self.minIndex - 1
 	self[self.minIndex] = el
 	self.length = self.length + 1
@@ -42,7 +32,9 @@ end
 
 -- cuidado, esta função pode doixar buracos na lista
 function BiList:insert(index, el)
-	if el == nil then return end
+	if el == nil then
+		return
+	end
 	self[index] = el
 	if index > self.maxIndex then
 		self.maxIndex = index
@@ -51,7 +43,6 @@ function BiList:insert(index, el)
 	end
 	self.length = self.length + 1
 end
-
 
 ----------------------------------------
 -- Funções Utilitárias

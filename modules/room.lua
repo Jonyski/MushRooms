@@ -14,19 +14,20 @@ rooms = BiList.new()
 ----------------------------------------
 Room = {}
 Room.__index = Room
-Room.stdDimensions = {width = 600, height = 600}
+Room.stdDim = {width = 1536, height = 1536}
 
-function Room.new(pos, dimensions, hitbox, type, color)
+function Room.new(pos, dimensions, hitbox, type, color, sprites)
 	local room = setmetatable({}, Room)
 
 	-- atributos que variam
-	room.pos = pos
-	room.dimensions = dimensions
-	room.hitbox = hitbox
-	room.type = type
-	room.color = color
+	room.pos = pos               -- posição da sala na array de salas
+	room.dimensions = dimensions -- largura e altura da sala
+	room.hitbox = hitbox         -- pontos superior esquerdo (p1) e inferior direito (p2) da sala
+	room.type = type             -- tipo de sala
+	room.color = color           -- cor da sala
+	room.sprites = sprites       -- os sprites da sala em camadas
 	-- atributos fixos na instanciação
-	room.explored = false
+	room.explored = false        -- se algum jogador já entrou na sala ou não
 
 	return room
 end
@@ -40,7 +41,7 @@ function Room:setExplored()
 			rooms:insert(pos.y, BiList.new())
 		end
 		if not rooms[pos.y][pos.x] then
-			newRoom(pos, Room.stdDimensions, math.random(0, 2))
+			newRoom(pos, Room.stdDim, love.math.random(0, 2))
 		end
 	end
 end
@@ -66,33 +67,38 @@ function newRoom(pos, dimensions, type)
 	
 	local color = {}
 	if type == 0 then
-		color = {r = 1.0, g = 0.69, b = 0.47, a = 1.0}
+		color = {r = 0.7, g = 0.7, b = 1.0, a = 1.0}
 	elseif type == 1 then
-		color = {r = 0.96, g = 0.95, b = 0.42, a = 1.0}
+		color = {r = 1.0, g = 0.7, b = 0.7, a = 1.0}
 	elseif type == 2 then
-		color = {r = 0.97, g = 0.34, b = 0.61, a = 1.0}
+		color = {r = 0.7, g = 0.7, b = 0.7, a = 1.0}
 	end
 
-	local p1 = {x = pos.x * 600 + 100,
-                y = pos.y * 600 + 100}
+	local p1 = {x = pos.x * Room.stdDim.width - 365,
+                y = pos.y * Room.stdDim.height - 360}
     local p2 = {x = p1.x + dimensions.width,
 				y = p1.y + dimensions.height}
 	local hitbox = {p1 = p1, p2 = p2}
-
-	local r = Room.new(pos, dimensions, hitbox, type, color)
+	local sprites = {}
+	sprites.floor = love.graphics.newImage("assets/sprites/rooms/testRoom.png")
+	sprites.floor:setFilter("nearest", "nearest")
+	local r = Room.new(pos, dimensions, hitbox, type, color, sprites)
 	rooms[pos.y]:insert(pos.x, r)
 end
 
-function createInitialRoom()
-	newRoom({x = 0, y = 0}, Room.stdDimensions, 0)
+function createInitialRooms()
+	newRoom({x = 0, y = 0}, Room.stdDim, 0)
+	rooms[0][0]:setExplored()
 end
 
 -- calcula as posições dos pontos superior esquerdo e inferior direito da sala
 -- nas coordenadas de mundo
 function calculateRoomLimits(r)
-	local p1 = {x = r.pos.x * 610 + 100,
-	            y = r.pos.y * 610 + 100}
+	local p1 = {x = r.pos.x * Room.stdDim.width + 100,
+	            y = r.pos.y * Room.stdDim.height + 100}
 	local p2 = {x = p1.x + r.dimensions.width,
 				y = p1.y + r.dimensions.height}
 	return {p1 = p1, p2 = p2}
 end
+
+return Room

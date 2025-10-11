@@ -1,14 +1,14 @@
 ----------------------------------------
 -- Importações de Módulos
 ----------------------------------------
-require "table"
-require "modules/room"
-require "modules/game"
-require "modules/player"
-require "modules/camera"
-require "modules/animation"
-require "modules/enemy"
-require "modules/weapon"
+require("table")
+require("modules/room")
+require("modules/game")
+require("modules/player")
+require("modules/camera")
+require("modules/animation")
+require("modules/enemy")
+require("modules/weapon")
 
 ----------------------------------------
 -- Variáveis Globais
@@ -27,16 +27,10 @@ function love.keypressed(key, scancode, isrepeat)
 	if key == "n" then
 		newPlayer()
 	end
-
-	for _, p in pairs(players) do
-		p:checkMovement(key, "press")
-		p:checkAction1(key)
-	end
-end
-
-function love.keyreleased(key, scancode, isrepeat)
-	for _, p in pairs(players) do
-		p:checkMovement(key, "release")
+	if not isrepeat then
+		for _, p in pairs(players) do
+			p:checkAction1(key)
+		end
 	end
 end
 
@@ -45,10 +39,10 @@ function love.resize(w, h)
 	window.height = h
 	window.cx = w / 2
 	window.cy = h / 2
-	for i, c in pairs(cameras) do
+	for i, _ in pairs(cameras) do
 		cameras[i] = nil
 	end
-	for i = 1, #players do
+	for _ = 1, #players do
 		newCamera()
 	end
 end
@@ -61,7 +55,7 @@ function love.load()
 	window.height = 800
 	window.cx = 400 -- centro no eixo x
 	window.cy = 400 -- centro no eixo y
-	sec_timer = {prev = 0, curr = 0}
+	sec_timer = { prev = 0, curr = 0 }
 	createInitialRooms()
 	newPlayer()
 
@@ -71,7 +65,7 @@ function love.load()
 	----------------------------------------------------
 
 	-- métodos de estado do love
-	love.window.setMode(window.width, window.height, {resizable = true})
+	love.window.setMode(window.width, window.height, { resizable = true })
 end
 
 ----------------------------------------
@@ -92,8 +86,10 @@ function love.update(dt)
 	if sec_timer.curr - sec_timer.prev >= 1 then
 		sec_timer.prev = sec_timer.prev + 1
 		local r = math.random()
-		local randSpawnPos = {x = math.random(players[1].pos.x - 500, players[1].pos.x + 500),
-			                  y = math.random(players[1].pos.y - 500, players[1].pos.y + 500)}
+		local randSpawnPos = {
+			x = math.random(players[1].pos.x - 500, players[1].pos.x + 500),
+			y = math.random(players[1].pos.y - 500, players[1].pos.y + 500),
+		}
 		if r < 0.2 then
 			newEnemy(NUCLEAR_CAT, randSpawnPos)
 		elseif r < 0.4 then

@@ -25,12 +25,11 @@ function Weapon.new(type, damage, ammo, cadence, cooldown, range, attack, color,
     weapon.attackParticles = particles
     -- atributos fixos na instanciação
     weapon.size = { height = 20, width = 64 }
-    weapon.target = nil     -- inimigo para o qual a arma está mirando
-    weapon.orientation = RIGHT -- orientação da arma
-    weapon.rotation = 0     -- rotação da arma em radianos
-    weapon.state = IDLE     -- estado atual da arma
+    weapon.target = nil   -- inimigo para o qual a arma está mirando
+    weapon.rotation = 0   -- rotação da arma em radianos
+    weapon.state = IDLE   -- estado atual da arma
     weapon.spriteSheets = {} -- no tipo imagem do love
-    weapon.animations = {}  -- as chaves são estados e os valores são Animações
+    weapon.animations = {} -- as chaves são estados e os valores são Animações
 
     return weapon
 end
@@ -67,7 +66,14 @@ end
 
 function newKatana()
     local color = { r = 0.9, g = 0.9, b = 0.9, a = 1.0 }
-    return Weapon.new(KATANA, 30, math.huge, 1, 0, 120, Weapon.meleeAtack, color)
+    local katana = Weapon.new(KATANA, 30, math.huge, 1, 0, 120, Weapon.meleeAtack, color)
+    local idlePath = "assets/sprites/weapons/katana.png"
+    local quadSize = { width = 64, height = 64 }
+    local idleAnimation = newAnimation(idlePath, 1, quadSize, 1, true, 1, quadSize)
+    katana.animations[IDLE] = idleAnimation
+    katana.spriteSheets[IDLE] = love.graphics.newImage(idlePath)
+    katana.spriteSheets[IDLE]:setFilter("nearest", "nearest")
+    return katana
 end
 
 function newSlingShot()

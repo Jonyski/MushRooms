@@ -75,6 +75,7 @@ function love.update(dt)
 	for _, p in pairs(players) do
 		p:move(dt)
 		p.animations[p.state]:update(dt)
+		p.weapon.animations[p.weapon.state]:update(dt)
 		p:updateState()
 	end
 	for _, c in pairs(cameras) do

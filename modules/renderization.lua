@@ -43,7 +43,7 @@ function renderEntities(cam)
 		if p.weapon then
 			local w = p.weapon
 			table.insert(drawList, {
-				y = p.pos.y, -- mesma altura do jogador
+				y = p.pos.y + w.zIndexRef, -- mesma altura do jogador, mas deslocado para frente ou para trás
 				draw = function()
 					w:draw(camera, p)
 				end,

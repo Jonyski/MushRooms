@@ -30,9 +30,15 @@ function love.keypressed(key, scancode, isrepeat)
 	end
 	if not isrepeat then
 		for _, p in pairs(players) do
-			p:checkAction1(key)
+			p:checkAction1(key, "pressed")
 		end
 	end
+end
+
+function love.keyreleased(key)
+		for _, p in pairs(players) do
+			p:checkAction1(key, "released")
+		end
 end
 
 function love.resize(w, h)
@@ -62,6 +68,7 @@ function love.load()
 
 	-- bloco de teste de armas -------------------------
 	players[1]:collectWeapon(newWeapon(SLING_SHOT))
+	players[1]:collectWeapon(newWeapon(KATANA))
 	players[1]:equipWeapon(SLING_SHOT)
 	----------------------------------------------------
 

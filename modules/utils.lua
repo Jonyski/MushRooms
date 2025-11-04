@@ -55,3 +55,12 @@ function tableFind(table, value)
 	end
 	return nil
 end
+
+function tableIndexOf(table, value)
+	for i, v in ipairs(table) do
+		if v == value then
+			return i
+		end
+	end
+	return nil
+end

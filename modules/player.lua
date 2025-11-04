@@ -238,4 +238,29 @@ function newPlayer()
 	newCamera()
 end
 
+function Player:draw(pViewPos)
+	local animation = self.animations[self.state]
+	local quad = animation.frames[animation.currFrame]
+	local offset = {
+		x = animation.frameDim.width / 2,
+		y = animation.frameDim.height / 2
+	}
+	
+	love.graphics.setColor(self.color.r, self.color.g, self.color.b, self.color.a)
+	love.graphics.draw(
+		self.spriteSheets[self.state],
+		quad,
+		pViewPos.x,
+		pViewPos.y,
+		0,
+		3,
+		3,
+		offset.x,
+		offset.y
+	)
+
+	-- reseta a cor de renderização
+	love.graphics.setColor(1, 1, 1, 1)
+end
+
 return Player

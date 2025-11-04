@@ -54,6 +54,28 @@ function Weapon:slowProjectileAttack()
 end
 
 ----------------------------------------
+-- Funções de Renderização
+----------------------------------------
+function Weapon:draw(wViewPos)
+    local animation = self.animations[self.state]
+    local quad = animation.frames[animation.currFrame]
+    local flipY = (self.rotation/math.pi < -0.5 and self.rotation/math.pi >= -1.5) and -1 or 1 -- inverte arma no segundo e terceiro quadrantes
+    
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(
+        self.spriteSheets[self.state],
+        quad,
+        wViewPos.x,
+        wViewPos.y,
+        self.rotation,
+        3,
+        3 * flipY,
+        animation.frameDim.width / 2 - 5,
+        animation.frameDim.height / 2 - 5
+    )
+end
+
+----------------------------------------
 -- Funções Globais
 ----------------------------------------
 function newWeapon(type)

@@ -68,6 +68,30 @@ function Enemy:simpleAttack(dt)
 end
 
 ----------------------------------------
+-- Funções de Renderização
+----------------------------------------
+function Enemy:draw(eViewPos)
+	love.graphics.setColor(self.color.r, self.color.g, self.color.b, self.color.a)
+	local offset = {
+		x = self.size.width / 2,
+		y = self.size.height / 2
+	}
+	love.graphics.rectangle(
+		"fill",
+		eViewPos.x,
+		eViewPos.y,
+		self.size.width,
+		self.size.height,
+		0,
+		1,
+		1,
+		offset.x,
+		offset.y
+	)
+	love.graphics.setColor(1, 1, 1, 1)
+end
+
+----------------------------------------
 -- Funções Globais
 ----------------------------------------
 function newEnemy(type, spawnPos)

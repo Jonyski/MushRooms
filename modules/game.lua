@@ -25,6 +25,59 @@ function renderRooms(cam)
 	end
 end
 
+
+----------------------------------------
+-- Funções de Renderização Global
+----------------------------------------
+function renderWorld(cam)
+	local camera = cameras[cam]
+	local drawList = {}
+
+	-- Adiciona jogadores
+	for _, p in pairs(players) do
+		local pViewPos = viewPos(p.pos, camera)
+
+		table.insert(drawList, {
+			y = p.pos.y, -- referência para ordenação
+			draw = function() p:draw(pViewPos) end
+		})
+
+		-- Adiciona a arma do jogador (se houver)
+		if p.weapon then
+			local w = p.weapon
+			local wViewPos = viewPos(p.pos, camera)
+			
+			table.insert(drawList, {
+				y = p.pos.y, -- mesma altura do jogador
+				draw = function() w:draw(wViewPos) end
+			})
+		end
+	end
+
+	-- Adiciona inimigos
+	for _, e in pairs(enemies) do
+		local eViewPos = viewPos(e.pos, camera)
+
+		table.insert(drawList, {
+			y = e.pos.y,
+			draw = function() e:draw(eViewPos) end
+		})
+	end
+
+	-- Ordena por posição Y
+	table.sort(drawList, function(a, b)
+		return a.y < b.y
+	end)
+
+	-- Desenha na ordem correta
+	for _, item in ipairs(drawList) do
+		item.draw()
+	end
+end
+
+----------------------------------------
+-- Funções de Renderização (pre-world)
+----------------------------------------
 function renderPlayers(cam)
 	for _, p in pairs(players) do
 		local pViewPos = {

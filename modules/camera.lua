@@ -88,3 +88,10 @@ function newCamera()
 		end
 	end
 end
+
+function viewPos(entityPos, camera)
+	return {
+		x = entityPos.x - camera.cx + camera.viewport.width / 2,
+		y = entityPos.y - camera.cy + camera.viewport.height / 2
+	}
+end

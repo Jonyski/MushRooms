@@ -76,6 +76,8 @@ end
 
 function Player:move(dt)
 	self.movementVec = { x = 0, y = 0 }
+
+	if self.state == DEFENDING then return end
 	if love.keyboard.isDown(self.controls.up) then
 		self.movementVec.y = self.movementVec.y - dt * self.vel
 	end

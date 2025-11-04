@@ -81,16 +81,16 @@ function Player:move(dt)
 		return
 	end
 	if love.keyboard.isDown(self.controls.up) then
-		self.movementVec.y = self.movementVec.y - dt * self.vel
+		self.movementVec.y = -1
 	end
 	if love.keyboard.isDown(self.controls.down) then
-		self.movementVec.y = self.movementVec.y + dt * self.vel
+		self.movementVec.y = 1
 	end
 	if love.keyboard.isDown(self.controls.left) then
-		self.movementVec.x = self.movementVec.x - dt * self.vel
+		self.movementVec.x = -1
 	end
 	if love.keyboard.isDown(self.controls.right) then
-		self.movementVec.x = self.movementVec.x + dt * self.vel
+		self.movementVec.x = 1
 	end
 
 	if self.movementVec.x == 0 and self.movementVec.y == 0 then
@@ -100,10 +100,8 @@ function Player:move(dt)
 	-- Normalizando para impedir movimentos na diagonal de serem mais rápidos
 	normalize(self.movementVec)
 	-- Levando o dt e a velocidade do cogumelo em consideração
-	self.movementVec.x = self.movementVec.x * dt * self.vel
-	self.movementVec.y = self.movementVec.y * dt * self.vel
-	self.pos.x = self.pos.x + self.movementVec.x
-	self.pos.y = self.pos.y + self.movementVec.y
+	self.pos.x = self.pos.x + self.movementVec.x * dt * self.vel
+	self.pos.y = self.pos.y + self.movementVec.y * dt * self.vel
 
 	if self.weapon then
 		self.weapon:updateOrientation({ x = self.movementVec.x, y = self.movementVec.y })

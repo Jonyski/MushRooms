@@ -15,15 +15,16 @@ require("modules/weapon")
 ----------------------------------------
 window = {}
 sec_timer = {}
+
 ----------------------------------------
 -- Callbacks
 ----------------------------------------
 function love.keypressed(key, scancode, isrepeat)
-	-- esc closes the game
+	-- esc fecha o jogo
 	if key == "escape" then
 		love.event.quit()
 	end
-	-- n adds a new player to the game
+	-- n adiciona um player ao jogo
 	if key == "n" then
 		newPlayer()
 	end
@@ -75,7 +76,9 @@ function love.update(dt)
 	for _, p in pairs(players) do
 		p:move(dt)
 		p.animations[p.state]:update(dt)
-		p.weapon.animations[p.weapon.state]:update(dt)
+		if p.weapon then
+			p.weapon.animations[p.weapon.state]:update(dt)
+		end
 		p:updateState()
 	end
 	for _, c in pairs(cameras) do

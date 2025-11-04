@@ -7,10 +7,11 @@ require("modules/vec")
 require("table")
 
 ----------------------------------------
--- Variáveis
+-- Variáveis e Enums
 ----------------------------------------
 players = {}
 
+-- Cada estado está relacionado a uma animação do cogumelinho
 IDLE = "idle"
 WALKING_UP = "walking up"
 WALKING_DOWN = "walking down"
@@ -30,65 +31,47 @@ function Player.new(id, name, spawn_pos, controls, color, room)
 	local player = setmetatable({}, Player)
 
 	-- atributos que variam
-	player.id = id                         -- número do jogador
-	player.name = name                     -- nome do jogador
-	player.pos = spawn_pos                 -- posição do jogador (inicializa para a posição do spawn)
-	player.controls =
-	controls                               -- os comandos para controlar o boneco, no formato {up = "", left = "", down = "", right = "", action = ""}
-	player.color = color                   -- cor que representa o jogador
-	player.room = room                     -- sala na qual o jogador está atualmente
+	player.id = id -- número do jogador
+	player.name = name -- nome do jogador
+	player.pos = spawn_pos -- posição do jogador (inicializa para a posição do spawn)
+	player.controls = controls -- os comandos para controlar o boneco, no formato {up = "", left = "", down = "", right = "", action = ""}
+	player.color = color -- cor que representa o jogador
+	player.room = room -- sala na qual o jogador está atualmente
 	-- atributos fixos na instanciação
-	player.vel = 280                       -- velocidade em pixels por segundo
+	player.vel = 280 -- velocidade em pixels por segundo
 	player.size = { height = 32, width = 32 } -- em pixels
-	player.movementVec = { x = 0, y = 0 }  -- vetor de direção e magnitude do movimento do jogador
-	player.state = IDLE                    -- define o estado atual do jogador, estreitamente relacionado às animações
-	player.spriteSheets = {}               -- no tipo imagem do love
-	player.animations = {}                 -- as chaves são estados e os valores são Animações
-	player.weapons = {}                    -- lista das armas que o jogador possui
-	player.weapon = nil                    -- arma equipada
+	player.movementVec = { x = 0, y = 0 } -- vetor de direção e magnitude do movimento do jogador
+	player.state = IDLE -- define o estado atual do jogador, estreitamente relacionado às animações
+	player.spriteSheets = {} -- no tipo imagem do love
+	player.animations = {} -- as chaves são estados e os valores são Animações
+	player.weapons = {} -- lista das armas que o jogador possui
+	player.weapon = nil -- arma equipada
 
 	return player
 end
 
 function Player:addAnimations()
-	local source = "assets/animations/" .. string.lower(self.name)
-	local quadSize = { width = 32, height = 32 }
 	-- animação idle
-	local idlePath = source .. "/idle.png"
-	local idleAnimation = newAnimation(idlePath, 2, quadSize, 0.5, true, 1, quadSize)
-	self.animations[IDLE] = idleAnimation
-	self.spriteSheets[IDLE] = love.graphics.newImage(idlePath)
-	self.spriteSheets[IDLE]:setFilter("nearest", "nearest")
+	self:addAnimation(IDLE, 2, 0.5, true, 1)
 	-- animação defesa
-	local defPath = source .. "/defense.png"
-	local defAnimation = newAnimation(defPath, 15, quadSize, 0.05, true, 12, quadSize)
-	self.animations[DEFENDING] = defAnimation
-	self.spriteSheets[DEFENDING] = love.graphics.newImage(defPath)
-	self.spriteSheets[DEFENDING]:setFilter("nearest", "nearest")
+	self:addAnimation(DEFENDING, 15, 0.05, true, 12)
 	-- animação andar para cima
-	local wUpPath = source .. "/walk_up.png"
-	local wUpAnimation = newAnimation(wUpPath, 4, quadSize, 0.25, true, 1, quadSize)
-	self.animations[WALKING_UP] = wUpAnimation
-	self.spriteSheets[WALKING_UP] = love.graphics.newImage(wUpPath)
-	self.spriteSheets[WALKING_UP]:setFilter("nearest", "nearest")
+	self:addAnimation(WALKING_UP, 4, 0.25, true, 1)
 	-- animação andar para baixo
-	local wDownPath = source .. "/walk_down.png"
-	local wDownAnimation = newAnimation(wDownPath, 4, quadSize, 0.25, true, 1, quadSize)
-	self.animations[WALKING_DOWN] = wDownAnimation
-	self.spriteSheets[WALKING_DOWN] = love.graphics.newImage(wDownPath)
-	self.spriteSheets[WALKING_DOWN]:setFilter("nearest", "nearest")
+	self:addAnimation(WALKING_DOWN, 4, 0.25, true, 1)
 	-- animação andar para esquerda
-	local wLeftPath = source .. "/walk_left.png"
-	local wLeftAnimation = newAnimation(wLeftPath, 4, quadSize, 0.25, true, 1, quadSize)
-	self.animations[WALKING_LEFT] = wLeftAnimation
-	self.spriteSheets[WALKING_LEFT] = love.graphics.newImage(wLeftPath)
-	self.spriteSheets[WALKING_LEFT]:setFilter("nearest", "nearest")
+	self:addAnimation(WALKING_LEFT, 4, 0.25, true, 1)
 	-- animação andar para direita
-	local wRightPath = source .. "/walk_right.png"
-	local wRightAnimation = newAnimation(wRightPath, 4, quadSize, 0.25, true, 1, quadSize)
-	self.animations[WALKING_RIGHT] = wRightAnimation
-	self.spriteSheets[WALKING_RIGHT] = love.graphics.newImage(wRightPath)
-	self.spriteSheets[WALKING_RIGHT]:setFilter("nearest", "nearest")
+	self:addAnimation(WALKING_RIGHT, 4, 0.25, true, 1)
+end
+
+function Player:addAnimation(action, numFrames, frameDur, looping, loopFrame)
+	local path = "assets/animations/players/" .. string.lower(self.name) .. "/" .. action:gsub(" ", "_") .. ".png"
+	local quadSize = { width = 32, height = 32 }
+	local animation = newAnimation(path, numFrames, quadSize, frameDur, looping, loopFrame, quadSize)
+	self.animations[action] = animation
+	self.spriteSheets[action] = love.graphics.newImage(path)
+	self.spriteSheets[action]:setFilter("nearest", "nearest")
 end
 
 function Player:move(dt)
@@ -110,13 +93,17 @@ function Player:move(dt)
 		return
 	end
 
+	-- Normalizando para impedir movimentos na diagonal de serem mais rápidos
 	normalize(self.movementVec)
+	-- Levando o dt e a velocidade do cogumelo em consideração
 	self.movementVec.x = self.movementVec.x * dt * self.vel
 	self.movementVec.y = self.movementVec.y * dt * self.vel
 	self.pos.x = self.pos.x + self.movementVec.x
 	self.pos.y = self.pos.y + self.movementVec.y
 
-	self.weapon:updateOrientation({ x = self.movementVec.x, y = self.movementVec.y })
+	if self.weapon then
+		self.weapon:updateOrientation({ x = self.movementVec.x, y = self.movementVec.y })
+	end
 	self:updateRoom()
 end
 
@@ -202,10 +189,12 @@ function newPlayer()
 	end
 
 	if #players == 0 then
+		-- o +365 e +350 são números mágicos para centralizar o player 1 na sala inicial
+		local firstSpawnPoint = { x = window.width / 2 + 365, y = window.height / 2 + 350 }
 		player1 = Player.new(
 			1,
 			"Mush",
-			{ x = window.width / 2, y = window.height / 2 },
+			firstSpawnPoint,
 			{ up = "w", left = "a", down = "s", right = "d", act1 = "space", act2 = "lshift" },
 			{ r = 1.0, g = 0.7, b = 0.7, a = 1.0 },
 			rooms[0][0]

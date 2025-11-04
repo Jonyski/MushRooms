@@ -71,14 +71,15 @@ end
 
 function renderWeapons(cam)
 	for _, p in pairs(players) do
+		if not p.weapon then
+			goto nextplayer
+		end
 		-- colocando nosso frame de referência no centro do jogador
 		local wViewPos = {
 			x = p.pos.x - cameras[cam].cx + cameras[cam].viewport.width / 2,
 			y = p.pos.y - cameras[cam].cy + cameras[cam].viewport.height / 2,
 		}
 		local w = p.weapon
-		love.graphics.push()
-		love.graphics.translate(wViewPos.x, wViewPos.y)
 
 		-- selecionando a animação e renderizando seu frame
 		local animation = w.animations[w.state]
@@ -86,15 +87,16 @@ function renderWeapons(cam)
 		love.graphics.draw(
 			w.spriteSheets[w.state],
 			quad,
-			0,
-			0,
+			wViewPos.x,
+			wViewPos.y,
 			w.rotation,
 			3,
 			3,
 			animation.frameDim.width / 2 - 5, -- o -5 é para a rotação não acontecer exatamente no centro da arma
 			animation.frameDim.height / 2 - 5
 		)
-		love.graphics.pop()
 		love.graphics.setColor(1, 1, 1, 1)
+
+		::nextplayer::
 	end
 end

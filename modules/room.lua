@@ -75,8 +75,8 @@ function newRoom(pos, dimensions, type)
 	end
 
 	local p1 = {
-		x = pos.x * Room.stdDim.width - 365,
-		y = pos.y * Room.stdDim.height - 360,
+		x = pos.x * Room.stdDim.width,
+		y = pos.y * Room.stdDim.height,
 	}
 	local p2 = {
 		x = p1.x + dimensions.width,
@@ -99,8 +99,8 @@ end
 -- nas coordenadas de mundo
 function calculateRoomLimits(r)
 	local p1 = {
-		x = r.pos.x * Room.stdDim.width + 100,
-		y = r.pos.y * Room.stdDim.height + 100,
+		x = r.pos.x * Room.stdDim.width - 265,
+		y = r.pos.y * Room.stdDim.height - 260,
 	}
 	local p2 = {
 		x = p1.x + r.dimensions.width,

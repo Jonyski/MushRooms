@@ -20,13 +20,14 @@ function Camera.new(pos, viewport, canvas, canvasPos)
 	camera.pos = pos -- posição da camera
 	camera.viewport = viewport -- tamanho da câmera (o espaço que ela enxerga)
 	camera.canvas = canvas -- canvas associado à câmera
-	camera.canvasPos = canvasPos -- posição do canvas associado à câmera
+	camera.canvasPos = canvasPos -- posição do canvas na tela
 	camera.cx = (pos.x + viewport.width) / 2
 	camera.cy = (pos.y + viewport.height) / 2
 	return camera
 end
 
 function Camera:updatePosition()
+	-- TODO: câmera única quando os jogadores estão próximos
 	if #cameras == 1 then
 		local pos = { x = 0, y = 0 }
 		for _, p in pairs(players) do
@@ -38,8 +39,9 @@ function Camera:updatePosition()
 		self.cx = self.pos.x + self.viewport.width / 2
 		self.cy = self.pos.y + self.viewport.height / 2
 	else
+		-- A câmera segue os jogadores
 		local i = tableFind(cameras, self)
-		self.pos.x = players[i].pos.x - self.viewport.width / #players
+		self.pos.x = players[i].pos.x - self.viewport.width / 2
 		self.pos.y = players[i].pos.y - self.viewport.height / 2
 		self.cx = players[i].pos.x
 		self.cy = players[i].pos.y
@@ -69,8 +71,8 @@ function newCamera()
 				{ x = (i - 1) * (window.width / numOfCams), y = 0 }
 			)
 			table.insert(cameras, camera)
-		else -- in case of 4 cameras
-			local camPositions = {
+		else -- no caso de 4 câmeras
+			local canvasPositions = {
 				{ x = 0, y = 0 },
 				{ x = window.width / 2, y = 0 },
 				{ x = 0, y = window.height / 2 },
@@ -80,7 +82,7 @@ function newCamera()
 				{ x = 0, y = 0 },
 				{ width = window.width / 2, height = window.height / 2 },
 				love.graphics.newCanvas(window.width / 2, window.height / 2),
-				camPositions[i]
+				canvasPositions[i]
 			)
 			table.insert(cameras, camera)
 		end

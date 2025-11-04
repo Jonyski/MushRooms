@@ -60,8 +60,8 @@ function love.load()
 	newPlayer()
 
 	-- bloco de teste de armas -------------------------
-	players[1]:collectWeapon(newWeapon(KATANA))
-	players[1]:equipWeapon(KATANA)
+	players[1]:collectWeapon(newWeapon(SLING_SHOT))
+	players[1]:equipWeapon(SLING_SHOT)
 	----------------------------------------------------
 
 	-- métodos de estado do love

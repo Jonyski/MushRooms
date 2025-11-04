@@ -1,5 +1,5 @@
-require "./modules/player"
-require "table"
+require("modules/player")
+require("table")
 
 ----------------------------------------
 -- Variáveis e Enums
@@ -17,21 +17,21 @@ Enemy.__index = Enemy
 
 function Enemy.new(type, spawnPos, velocity, color, move, attack)
 	local enemy = setmetatable({}, Enemy)
-	
+
 	-- atributos que variam
-	enemy.type = type     -- nome do tipo de inimigo
-	enemy.pos = spawnPos  -- posição do inimigo
-	enemy.vel = velocity  -- velocidade de movimento do inimigo
-	enemy.color = color   -- cor do inimigo
-	enemy.move = move     -- função de movimento do inimigo
+	enemy.type = type -- nome do tipo de inimigo
+	enemy.pos = spawnPos -- posição do inimigo
+	enemy.vel = velocity -- velocidade de movimento do inimigo
+	enemy.color = color -- cor do inimigo
+	enemy.move = move -- função de movimento do inimigo
 	enemy.attack = attack -- função de ataque do inimigo
 	-- atributos fixos na instanciação
-	enemy.size = {height = 32, width = 32}
+	enemy.size = { height = 32, width = 32 }
 	enemy.cooldown = 0
 	enemy.movementDirections = {} -- tabela com as direções de movimento atualmente ativas
-	enemy.state = IDLE            -- define o estado atual do inimigo, estreitamente relacionado às animações
-	enemy.spriteSheets = {}       -- no tipo imagem do love
-	enemy.animations = {}         -- as chaves são estados e os valores são Animações
+	enemy.state = IDLE -- define o estado atual do inimigo, estreitamente relacionado às animações
+	enemy.spriteSheets = {} -- no tipo imagem do love
+	enemy.animations = {} -- as chaves são estados e os valores são Animações
 
 	return enemy
 end
@@ -58,11 +58,10 @@ end
 ----------------------------------------
 function Enemy:simpleAttack(dt)
 	if self.cooldown <= 0 then
-		if math.abs(self.pos.x - players[1].pos.x) < 75 and
-	   	   math.abs(self.pos.y - players[1].pos.y) < 75 then
-	   		print(self.type.." ataca")
-	   		self.cooldown = 3
-	   		return
+		if math.abs(self.pos.x - players[1].pos.x) < 75 and math.abs(self.pos.y - players[1].pos.y) < 75 then
+			print(self.type .. " ataca")
+			self.cooldown = 3
+			return
 		end
 	end
 	self.cooldown = self.cooldown - dt
@@ -80,7 +79,7 @@ function newEnemy(type, spawnPos)
 end
 
 function newNuclearCat(spawnPos)
-	local color = {r = 0.9, g = 0.4, b = 0.4, a = 1.0}
+	local color = { r = 0.9, g = 0.4, b = 0.4, a = 1.0 }
 	local movementFunc = Enemy.moveFollowPlayer
 	local attackFunc = Enemy.simpleAttack
 	local enemy = Enemy.new(NUCLEAR_CAT, spawnPos, 180, color, movementFunc, attackFunc)
@@ -88,7 +87,7 @@ function newNuclearCat(spawnPos)
 end
 
 function newSpiderDuck(spawnPos)
-	local color = {r = 0.9, g = 0.9, b = 0.1, a = 1.0}
+	local color = { r = 0.9, g = 0.9, b = 0.1, a = 1.0 }
 	local movementFunc = Enemy.moveFollowPlayer
 	local attackFunc = Enemy.simpleAttack
 	local enemy = Enemy.new(SPIDER_DUCK, spawnPos, 180, color, movementFunc, attackFunc)

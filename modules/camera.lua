@@ -48,6 +48,13 @@ function Camera:updatePosition()
 	end
 end
 
+function Camera:viewPos(entityPos)
+	return {
+		x = entityPos.x - self.cx + self.viewport.width / 2,
+		y = entityPos.y - self.cy + self.viewport.height / 2,
+	}
+end
+
 ----------------------------------------
 -- Funções Globais
 ----------------------------------------
@@ -87,11 +94,4 @@ function newCamera()
 			table.insert(cameras, camera)
 		end
 	end
-end
-
-function viewPos(entityPos, camera)
-	return {
-		x = entityPos.x - camera.cx + camera.viewport.width / 2,
-		y = entityPos.y - camera.cy + camera.viewport.height / 2
-	}
 end

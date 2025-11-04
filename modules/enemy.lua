@@ -70,16 +70,17 @@ end
 ----------------------------------------
 -- Funções de Renderização
 ----------------------------------------
-function Enemy:draw(eViewPos)
+function Enemy:draw(camera)
+	local viewPos = camera:viewPos(self.pos)
 	love.graphics.setColor(self.color.r, self.color.g, self.color.b, self.color.a)
 	local offset = {
 		x = self.size.width / 2,
-		y = self.size.height / 2
+		y = self.size.height / 2,
 	}
 	love.graphics.rectangle(
 		"fill",
-		eViewPos.x,
-		eViewPos.y,
+		viewPos.x,
+		viewPos.y,
 		self.size.width,
 		self.size.height,
 		0,

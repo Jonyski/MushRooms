@@ -14,20 +14,20 @@ function Weapon.new(type, damage, ammo, cadence, cooldown, range, attack, color,
 	local weapon = setmetatable({}, Weapon)
 
 	-- atributos que variam
-	weapon.type = type -- nome do tipo de arma
-	weapon.damage = damage -- dano
-	weapon.ammo = ammo -- número de munições
+	weapon.type = type      -- nome do tipo de arma
+	weapon.damage = damage  -- dano
+	weapon.ammo = ammo      -- número de munições
 	weapon.cadence = cadence -- número máximo de ataques por segundo
 	weapon.cooldown = cooldown -- tempo de recarga
-	weapon.range = range -- alcance
-	weapon.attack = attack -- método de ataque
-	weapon.color = color -- cor da arma
+	weapon.range = range    -- alcance
+	weapon.attack = attack  -- método de ataque
+	weapon.color = color    -- cor da arma
 	weapon.attackParticles = particles
 	-- atributos fixos na instanciação
 	weapon.size = { height = 20, width = 64 }
-	weapon.target = nil -- inimigo para o qual a arma está mirando
-	weapon.rotation = 0 -- rotação da arma em radianos
-	weapon.state = IDLE -- estado atual da arma
+	weapon.target = nil   -- inimigo para o qual a arma está mirando
+	weapon.rotation = 0   -- rotação da arma em radianos
+	weapon.state = IDLE   -- estado atual da arma
 	weapon.spriteSheets = {} -- no tipo imagem do love
 	weapon.animations = {} -- as chaves são estados e os valores são Animações
 
@@ -57,11 +57,17 @@ end
 -- Funções de Renderização
 ----------------------------------------
 function Weapon:draw(camera, owner)
+	-- Não renderiza armas de jogadores se defendendo
+	if owner.state == DEFENDING then
+		return
+	end
+
 	local wViewPos = camera:viewPos(owner.pos)
 
 	local animation = self.animations[self.state]
 	local quad = animation.frames[animation.currFrame]
-	local flipY = (self.rotation / math.pi < -0.5 and self.rotation / math.pi >= -1.5) and -1 or 1 -- inverte arma no segundo e terceiro quadrantes
+	local flipY = (self.rotation / math.pi < -0.5 and self.rotation / math.pi >= -1.5) and -1 or
+	1                                                                                           -- inverte arma no segundo e terceiro quadrantes
 
 	love.graphics.setColor(1, 1, 1, 1)
 	love.graphics.draw(

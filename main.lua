@@ -80,6 +80,7 @@ function love.update(dt)
 			p.weapon.animations[p.weapon.state]:update(dt)
 		end
 		p:updateState()
+		p.particles:update(dt)
 	end
 	for _, c in pairs(cameras) do
 		c:updatePosition()

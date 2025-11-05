@@ -4,6 +4,8 @@
 require("modules/utils")
 require("modules/animation")
 require("modules/vec")
+require("modules/particles")
+require("modules/colors")
 require("table")
 
 ----------------------------------------
@@ -27,26 +29,27 @@ Player = {}
 Player.__index = Player
 
 -- Construtor
-function Player.new(id, name, spawn_pos, controls, color, room)
+function Player.new(id, name, spawn_pos, controls, colors, room)
 	local player = setmetatable({}, Player)
 
 	-- atributos que variam
-	player.id = id -- número do jogador
-	player.name = name -- nome do jogador
-	player.pos = spawn_pos -- posição do jogador (inicializa para a posição do spawn)
-	player.controls = controls -- os comandos para controlar o boneco, no formato {up = "", left = "", down = "", right = "", action = ""}
-	player.color = color -- cor que representa o jogador
-	player.room = room -- sala na qual o jogador está atualmente
+	player.id = id                         -- número do jogador
+	player.name = name                     -- nome do jogador
+	player.pos = spawn_pos                 -- posição do jogador (inicializa para a posição do spawn)
+	player.controls =
+	controls                               -- os comandos para controlar o boneco, no formato {up = "", left = "", down = "", right = "", action = ""}
+	player.colors = colors                 -- paleta de cores do jogador
+	player.room = room                     -- sala na qual o jogador está atualmente
 	-- atributos fixos na instanciação
-	player.vel = 280 -- velocidade em pixels por segundo
+	player.vel = 280                       -- velocidade em pixels por segundo
 	player.size = { height = 32, width = 32 } -- em pixels
-	player.movementVec = { x = 0, y = 0 } -- vetor de direção e magnitude do movimento do jogador
-	player.state = IDLE -- define o estado atual do jogador, estreitamente relacionado às animações
-	player.spriteSheets = {} -- no tipo imagem do love
-	player.animations = {} -- as chaves são estados e os valores são Animações
-	player.weapons = {} -- lista das armas que o jogador possui
-	player.weapon = nil -- arma equipada
-
+	player.movementVec = { x = 0, y = 0 }  -- vetor de direção e magnitude do movimento do jogador
+	player.state = IDLE                    -- define o estado atual do jogador, estreitamente relacionado às animações
+	player.spriteSheets = {}               -- no tipo imagem do love
+	player.animations = {}                 -- as chaves são estados e os valores são Animações
+	player.particles = {}                  -- efeitos de partícula emitidos pelo player
+	player.weapons = {}                    -- lista das armas que o jogador possui
+	player.weapon = nil                    -- arma equipada
 	return player
 end
 
@@ -72,6 +75,11 @@ function Player:addAnimation(action, numFrames, frameDur, looping, loopFrame)
 	self.animations[action] = animation
 	self.spriteSheets[action] = love.graphics.newImage(path)
 	self.spriteSheets[action]:setFilter("nearest", "nearest")
+end
+
+function Player:addParticles()
+	-- Efeito de partícula do player se defendendo
+	self.particles[DEFENDING] = newDefenseParticles(self.colors[1], self.colors[3])
 end
 
 function Player:move(dt)
@@ -138,6 +146,9 @@ end
 function Player:updateState()
 	local prevState = self.state
 	if love.keyboard.isDown(self.controls.act2) then
+		if prevState ~= DEFENDING then
+			self.particles[DEFENDING]:start()
+		end
 		self.state = DEFENDING
 	else
 		if self.movementVec.y < 0 then
@@ -154,8 +165,15 @@ function Player:updateState()
 	end
 	-- resetando a animação anterior, caso o estado tenha mudado
 	if self.state ~= prevState then
+		if prevState == DEFENDING then
+			self.particles[DEFENDING]:stop()
+		end
 		self.animations[prevState]:reset()
 	end
+end
+
+function Player:updateParticles(dt)
+	self.particles[DEFENDING]:update(dt)
 end
 
 function Player:checkAction1(key)
@@ -192,6 +210,9 @@ function Player:draw(camera)
 		y = animation.frameDim.height / 2,
 	}
 	love.graphics.draw(self.spriteSheets[self.state], quad, viewPos.x, viewPos.y, 0, 3, 3, offset.x, offset.y)
+	for _, v in pairs(self.particles) do
+		love.graphics.draw(v, viewPos.x, viewPos.y)
+	end
 end
 
 ----------------------------------------
@@ -211,10 +232,11 @@ function newPlayer()
 			"Mush",
 			firstSpawnPoint,
 			{ up = "w", left = "a", down = "s", right = "d", act1 = "space", act2 = "lshift" },
-			{ r = 1.0, g = 0.7, b = 0.7, a = 1.0 },
+			getP1ColorPalette(),
 			rooms[0][0]
 		)
 		player1:addAnimations()
+		player1:addParticles()
 		table.insert(players, player1)
 	elseif #players == 1 then
 		player2 = Player.new(
@@ -222,10 +244,11 @@ function newPlayer()
 			"Shroom",
 			{ x = player1.pos.x + 75, y = player1.pos.y },
 			{ up = "up", left = "left", down = "down", right = "right", act1 = "rctrl", act2 = "rshift" },
-			{ r = 0.7, g = 0.7, b = 1.0, a = 1.0 },
+			getP2ColorPalette(),
 			players[1].room
 		)
 		player2:addAnimations()
+		player2:addParticles()
 		table.insert(players, player2)
 	elseif #players == 2 then
 		player3 = Player.new(
@@ -233,10 +256,11 @@ function newPlayer()
 			"Musho",
 			{ x = player1.pos.x + 75, y = player1.pos.y },
 			{ up = "t", left = "f", down = "g", right = "h", act1 = "r", act2 = "y" },
-			{ r = 1.0, g = 0.7, b = 1.0, a = 1.0 },
+			getP3ColorPalette(),
 			players[1].room
 		)
 		player3:addAnimations()
+		player3:addParticles()
 		table.insert(players, player3)
 	else
 		player4 = Player.new(
@@ -244,10 +268,11 @@ function newPlayer()
 			"Roomy",
 			{ x = player1.pos.x + 75, y = player1.pos.y },
 			{ up = "i", left = "j", down = "k", right = "l", act1 = "u", act2 = "o" },
-			{ r = 0.7, g = 1.0, b = 1.0, a = 1.0 },
+			getP4ColorPalette(),
 			players[1].room
 		)
 		player4:addAnimations()
+		player4:addParticles()
 		table.insert(players, player4)
 	end
 	newCamera()

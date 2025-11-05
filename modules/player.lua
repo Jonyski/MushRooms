@@ -89,16 +89,16 @@ function Player:move(dt)
 		return
 	end
 	if love.keyboard.isDown(self.controls.up) then
-		self.movementVec.y = self.movementVec.y - dt * self.vel
+		self.movementVec.y = -1
 	end
 	if love.keyboard.isDown(self.controls.down) then
-		self.movementVec.y = self.movementVec.y + dt * self.vel
+		self.movementVec.y = 1
 	end
 	if love.keyboard.isDown(self.controls.left) then
-		self.movementVec.x = self.movementVec.x - dt * self.vel
+		self.movementVec.x = -1
 	end
 	if love.keyboard.isDown(self.controls.right) then
-		self.movementVec.x = self.movementVec.x + dt * self.vel
+		self.movementVec.x = 1
 	end
 
 	if self.movementVec.x == 0 and self.movementVec.y == 0 then
@@ -180,6 +180,28 @@ function Player:checkAction1(key)
 	if key == self.controls.act1 then
 		self:attack()
 	end
+
+	if self.weapon and self.state == DEFENDING then
+		local len = #self.weapons
+		if len <= 1 then 
+			return
+		end
+
+		local indexWeapon = tableIndexOf(self.weapons, self.weapon)
+		local nextIndex = indexWeapon
+
+		-- caminha ciclicamente entre as armas
+		if key == self.controls.right then
+			nextIndex = (indexWeapon % len) + 1
+		elseif key == self.controls.left then
+			nextIndex = ((indexWeapon - 2 + len) % len) + 1
+		else 
+			-- previne que tente equipar a mesma arma, sem que nada tenha mudado
+			return
+		end
+
+		self:equipWeapon(self.weapons[nextIndex].type)
+	end	
 end
 
 function Player:collectWeapon(weapon)

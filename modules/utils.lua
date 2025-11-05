@@ -56,6 +56,15 @@ function tableFind(table, value)
 	return nil
 end
 
+function tableIndexOf(table, value)
+	for i, v in ipairs(table) do
+		if v == value then
+			return i
+		end
+	end
+	return nil
+end
+
 -- Retorna x limitado ao intervalo [a, b]
 function clamp(x, a, b)
 	if x < a then

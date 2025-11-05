@@ -31,6 +31,7 @@ function getP2ColorPalette()
 end
 
 function getP3ColorPalette()
+    -- TODO: Paleta de cores única para o player 3
     local palette = {}
     table.insert(palette, Color:new(1.0, 0.11, 0.2, 1.0))
     table.insert(palette, Color:new(1.0, 0.88, 0.44, 1.0))
@@ -39,6 +40,7 @@ function getP3ColorPalette()
 end
 
 function getP4ColorPalette()
+    -- TODO: Paleta de cores única para o player 4
     local palette = {}
     table.insert(palette, Color:new(1.0, 0.11, 0.2, 1.0))
     table.insert(palette, Color:new(1.0, 0.88, 0.44, 1.0))

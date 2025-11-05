@@ -10,7 +10,7 @@ SLING_SHOT = "Sling Shot"
 Weapon = {}
 Weapon.__index = Weapon
 
-function Weapon.new(type, damage, ammo, cadence, cooldown, range, attack, color, particles)
+function Weapon.new(type, damage, ammo, cadence, cooldown, attack)
 	local weapon = setmetatable({}, Weapon)
 
 	-- atributos que variam
@@ -19,17 +19,13 @@ function Weapon.new(type, damage, ammo, cadence, cooldown, range, attack, color,
 	weapon.ammo = ammo      -- número de munições
 	weapon.cadence = cadence -- número máximo de ataques por segundo
 	weapon.cooldown = cooldown -- tempo de recarga
-	weapon.range = range    -- alcance
 	weapon.attack = attack  -- método de ataque
-	weapon.color = color    -- cor da arma
-	weapon.attackParticles = particles
 	-- atributos fixos na instanciação
-	weapon.size = { height = 20, width = 64 }
-	weapon.target = nil   -- inimigo para o qual a arma está mirando
-	weapon.rotation = 0   -- rotação da arma em radianos
-	weapon.state = IDLE   -- estado atual da arma
+	weapon.target = nil     -- inimigo para o qual a arma está mirando
+	weapon.rotation = 0     -- rotação da arma em radianos
+	weapon.state = IDLE     -- estado atual da arma
 	weapon.spriteSheets = {} -- no tipo imagem do love
-	weapon.animations = {} -- as chaves são estados e os valores são Animações
+	weapon.animations = {}  -- as chaves são estados e os valores são Animações
 
 	return weapon
 end
@@ -40,6 +36,21 @@ function Weapon:updateOrientation(dirVec)
 	else
 		self.rotation = math.atan2(dirVec.x, -dirVec.y) - math.pi * 0.5
 	end
+end
+
+function Weapon:addAnimations()
+	-- animação idle
+	self:addAnimation(IDLE, 1, 1, true, 1)
+end
+
+function Weapon:addAnimation(action, numFrames, frameDur, looping, loopFrame)
+	local folderName = string.lower(self.type:gsub(" ", ""))
+	local path = "assets/animations/weapons/" .. folderName .. "/" .. action:gsub(" ", "_") .. ".png"
+	local quadSize = { width = 64, height = 64 }
+	local animation = newAnimation(path, numFrames, quadSize, frameDur, looping, loopFrame, quadSize)
+	self.animations[action] = animation
+	self.spriteSheets[action] = love.graphics.newImage(path)
+	self.spriteSheets[action]:setFilter("nearest", "nearest")
 end
 
 ----------------------------------------
@@ -95,25 +106,13 @@ function newWeapon(type)
 end
 
 function newKatana()
-	local color = { r = 0.9, g = 0.9, b = 0.9, a = 1.0 }
-	local katana = Weapon.new(KATANA, 30, math.huge, 1, 0, 120, Weapon.meleeAtack, color)
-	local idlePath = "assets/sprites/weapons/katana/katana.png"
-	local quadSize = { width = 64, height = 64 }
-	local idleAnimation = newAnimation(idlePath, 1, quadSize, 1, true, 1, quadSize)
-	katana.animations[IDLE] = idleAnimation
-	katana.spriteSheets[IDLE] = love.graphics.newImage(idlePath)
-	katana.spriteSheets[IDLE]:setFilter("nearest", "nearest")
+	local katana = Weapon.new(KATANA, 15, math.huge, 1, 0, Weapon.meleeAtack)
+	katana:addAnimations()
 	return katana
 end
 
 function newSlingShot()
-	local color = { r = 0.7, g = 0.7, b = 0.4, a = 1.0 }
-	local slingshot = Weapon.new(SLING_SHOT, 20, 5, 1.6, 1, 380, Weapon.slowProjectileAttack, color)
-	local idlePath = "assets/sprites/weapons/slingshot/slingshot.png"
-	local quadSize = { width = 64, height = 64 }
-	local idleAnimation = newAnimation(idlePath, 1, quadSize, 1, true, 1, quadSize)
-	slingshot.animations[IDLE] = idleAnimation
-	slingshot.spriteSheets[IDLE] = love.graphics.newImage(idlePath)
-	slingshot.spriteSheets[IDLE]:setFilter("nearest", "nearest")
+	local slingshot = Weapon.new(SLING_SHOT, 8, 5, 1.6, 1, Weapon.slowProjectileAttack)
+	slingshot:addAnimations()
 	return slingshot
 end

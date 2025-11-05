@@ -146,10 +146,13 @@ end
 function Player:updateState()
 	local prevState = self.state
 	if love.keyboard.isDown(self.controls.act2) then
-		if prevState ~= DEFENDING then
-			self.particles[DEFENDING]:start()
+		-- só defende se está completamente parado; se não, muda de arma
+		if nullVec(self.movementVec) then
+			if prevState ~= DEFENDING then
+				self.particles[DEFENDING]:start()
+			end
+			self.state = DEFENDING
 		end
-		self.state = DEFENDING
 	else
 		if self.movementVec.y < 0 then
 			self.state = WALKING_UP
@@ -180,8 +183,10 @@ function Player:checkAction1(key)
 	if key == self.controls.act1 then
 		self:attack()
 	end
+end
 
-	if self.weapon and self.state == DEFENDING then
+function Player:checkAction2(key)
+	if key == self.controls.act2 and self.movementVec.x ~= 0 then
 		local len = #self.weapons
 		if len <= 1 then 
 			return
@@ -191,17 +196,14 @@ function Player:checkAction1(key)
 		local nextIndex = indexWeapon
 
 		-- caminha ciclicamente entre as armas
-		if key == self.controls.right then
+		if self.movementVec.x < 0 then
 			nextIndex = (indexWeapon % len) + 1
-		elseif key == self.controls.left then
+		else
 			nextIndex = ((indexWeapon - 2 + len) % len) + 1
-		else 
-			-- previne que tente equipar a mesma arma, sem que nada tenha mudado
-			return
 		end
 
 		self:equipWeapon(self.weapons[nextIndex].type)
-	end	
+	end
 end
 
 function Player:collectWeapon(weapon)

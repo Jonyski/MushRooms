@@ -31,6 +31,7 @@ function love.keypressed(key, scancode, isrepeat)
 	if not isrepeat then
 		for _, p in pairs(players) do
 			p:checkAction1(key)
+			p:checkAction2(key)
 		end
 	end
 end

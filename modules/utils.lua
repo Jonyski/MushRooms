@@ -64,3 +64,14 @@ function tableIndexOf(table, value)
 	end
 	return nil
 end
+
+-- Retorna x limitado ao intervalo [a, b]
+function clamp(x, a, b)
+	if x < a then
+		return a
+	end
+	if x > b then
+		return b
+	end
+	return x
+end

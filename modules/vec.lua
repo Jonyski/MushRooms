@@ -7,3 +7,11 @@ function normalize(v)
     v.x = v.x / mod
     v.y = v.y / mod
 end
+
+function nullVec(v)
+    if v.x == 0 and v.y == 0 then
+        return true
+    else 
+        return false
+    end
+end

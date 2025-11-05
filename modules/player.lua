@@ -46,8 +46,6 @@ function Player.new(id, name, spawn_pos, controls, color, room)
 	player.animations = {} -- as chaves são estados e os valores são Animações
 	player.weapons = {} -- lista das armas que o jogador possui
 	player.weapon = nil -- arma equipada
-	player.act1Pressed = false
-	player.act2Pressed = false
 
 	return player
 end
@@ -102,8 +100,10 @@ function Player:move(dt)
 	-- Normalizando para impedir movimentos na diagonal de serem mais rápidos
 	normalize(self.movementVec)
 	-- Levando o dt e a velocidade do cogumelo em consideração
-	self.pos.x = self.pos.x + self.movementVec.x * dt * self.vel
-	self.pos.y = self.pos.y + self.movementVec.y * dt * self.vel
+	self.movementVec.x = self.movementVec.x * dt * self.vel
+	self.movementVec.y = self.movementVec.y * dt * self.vel
+	self.pos.x = self.pos.x + self.movementVec.x
+	self.pos.y = self.pos.y + self.movementVec.y
 
 	if self.weapon then
 		self.weapon:updateOrientation({ x = self.movementVec.x, y = self.movementVec.y })
@@ -158,51 +158,32 @@ function Player:updateState()
 	end
 end
 
-function Player:checkAction1(key, type)
-	if type == "pressed" then
-		if key == self.controls.act1 then
-			self.act1Pressed = true
-			self:attack()
-		end
-
-		if key == self.controls.act2 then
-			self.act2Pressed = true
-		end
-
-		if self.weapon and self.act2Pressed then
-			local len = #self.weapons
-			if len <= 1 then goto unalteredWeapon end
-
-			local indexWeapon = tableIndexOf(self.weapons, self.weapon)
-			local nextIndex = indexWeapon
-
-			-- caminha ciclicamente entre as armas
-			if key == self.controls.right then
-				nextIndex = (indexWeapon % len) + 1
-			elseif key == self.controls.left then
-				nextIndex = ((indexWeapon - 2 + len) % len) + 1
-			else 
-				-- previne que tente equipar a mesma arma, sem que nada tenha mudado
-				goto unalteredWeapon
-			end
-
-			self:equipWeapon(self.weapons[nextIndex].type)
-		end
-		
-		::unalteredWeapon::
-
-		-- futuras condicionais...
-
-		return
+function Player:checkAction1(key)
+	if key == self.controls.act1 then
+		self:attack()
 	end
 
-	if type == "released" then
-		if key == self.controls.act1 then
-			self.act1Pressed = false
-		elseif key == self.controls.act2 then
-			self.act2Pressed = false
+	if self.weapon and self.state == DEFENDING then
+		local len = #self.weapons
+		if len <= 1 then 
+			return
 		end
-	end
+
+		local indexWeapon = tableIndexOf(self.weapons, self.weapon)
+		local nextIndex = indexWeapon
+
+		-- caminha ciclicamente entre as armas
+		if key == self.controls.right then
+			nextIndex = (indexWeapon % len) + 1
+		elseif key == self.controls.left then
+			nextIndex = ((indexWeapon - 2 + len) % len) + 1
+		else 
+			-- previne que tente equipar a mesma arma, sem que nada tenha mudado
+			return
+		end
+
+		self:equipWeapon(self.weapons[nextIndex].type)
+	end	
 end
 
 function Player:collectWeapon(weapon)

@@ -30,7 +30,6 @@ function Weapon.new(type, damage, ammo, cadence, cooldown, range, attack, color,
 	weapon.state = IDLE -- estado atual da arma
 	weapon.spriteSheets = {} -- no tipo imagem do love
 	weapon.animations = {} -- as chaves são estados e os valores são Animações
-    weapon.zIndexRef = 1   -- define se deve estar à frente (1) ou atrás (-1) do player
 
 	return weapon
 end
@@ -41,13 +40,6 @@ function Weapon:updateOrientation(dirVec)
 	else
 		self.rotation = math.atan2(dirVec.x, -dirVec.y) - math.pi * 0.5
 	end
-
-    -- se a arma está no terceiro ou quarto quadrante, a coloca à frente do player; se não, coloca para trás
-    if self.rotation/math.pi < -1 or self.rotation/math.pi > 0 then
-        self.zIndexRef = 1
-    else
-        self.zIndexRef = -1
-    end
 end
 
 ----------------------------------------

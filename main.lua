@@ -30,15 +30,9 @@ function love.keypressed(key, scancode, isrepeat)
 	end
 	if not isrepeat then
 		for _, p in pairs(players) do
-			p:checkAction1(key, "pressed")
+			p:checkAction1(key)
 		end
 	end
-end
-
-function love.keyreleased(key)
-		for _, p in pairs(players) do
-			p:checkAction1(key, "released")
-		end
 end
 
 function love.resize(w, h)

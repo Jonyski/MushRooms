@@ -82,6 +82,21 @@ function Player:addParticles()
 	self.particles[DEFENDING] = newDefenseParticles(self.colors[1], self.colors[3])
 end
 
+function Player:update(dt)
+	self:move(dt)
+	self.animations[self.state]:update(dt)
+	for _, w in pairs(self.weapons) do
+		-- atualizando a animação da arma equipada
+		if w == self.weapon then
+			self.weapon.animations[self.weapon.state]:update(dt)
+		end
+		-- atualizando todos os ataques/eventos desferidos
+		w.atk:update(dt)
+	end
+	self:updateState()
+	self:updateParticles(dt)
+end
+
 function Player:move(dt)
 	self.movementVec = { x = 0, y = 0 }
 
@@ -208,12 +223,13 @@ end
 
 function Player:collectWeapon(weapon)
 	table.insert(self.weapons, weapon)
+	weapon.owner = self
 end
 
 function Player:equipWeapon(weapon)
 	-- itera pelas armas do jogador procurando pela que ele quer equipar
 	for _, w in pairs(self.weapons) do
-		if w.type == weapon then
+		if w.name == weapon then
 			self.weapon = w
 		end
 	end
@@ -221,7 +237,7 @@ end
 
 function Player:attack()
 	if self.weapon then
-		self.weapon:attack()
+		self.weapon.atk:attack(self.pos, polarToVec(self.weapon.rotation, 1))
 	end
 end
 

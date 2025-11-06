@@ -1,7 +1,6 @@
 ----------------------------------------
 -- Classe Color
 ----------------------------------------
-
 Color = {}
 Color.__index = Color
 
@@ -14,6 +13,9 @@ function Color:new(r, g, b, a)
     return c
 end
 
+----------------------------------------
+-- Funções Globais
+----------------------------------------
 function getP1ColorPalette()
     local palette = {}
     table.insert(palette, Color:new(1.0, 0.11, 0.2, 1.0))

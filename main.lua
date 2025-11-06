@@ -76,13 +76,7 @@ end
 ----------------------------------------
 function love.update(dt)
 	for _, p in pairs(players) do
-		p:move(dt)
-		p.animations[p.state]:update(dt)
-		if p.weapon then
-			p.weapon.animations[p.weapon.state]:update(dt)
-		end
-		p:updateState()
-		p:updateParticles(dt)
+		p:update(dt)
 	end
 	for _, c in pairs(cameras) do
 		c:updatePosition()

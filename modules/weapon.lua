@@ -45,15 +45,23 @@ end
 
 function Weapon:addAnimations(idleSettings, weaponAtkSettings)
 	-- animação idle
-	self:addAnimation(IDLE, idleSettings.numFrames, idleSettings.frameDur, idleSettings.looping, idleSettings.loopFrame)
-	-- TODO: animação da arma ao atacar
+	self:addAnimation(IDLE, idleSettings)
+	-- animação da arma ao atacar
+	self:addAnimation(ATTACKING, weaponAtkSettings)
 end
 
-function Weapon:addAnimation(action, numFrames, frameDur, looping, loopFrame)
+function Weapon:addAnimation(action, settings)
 	local folderName = string.lower(self.name:gsub(" ", ""))
 	local path = "assets/animations/weapons/" .. folderName .. "/" .. action:gsub(" ", "_") .. ".png"
-	local quadSize = { width = 64, height = 64 }
-	local animation = newAnimation(path, numFrames, quadSize, frameDur, looping, loopFrame, quadSize)
+	local animation = newAnimation(
+		path,
+		settings.numFrames,
+		settings.quadSize,
+		settings.frameDur,
+		settings.looping,
+		settings.loopFrame,
+		settings.quadSize
+	)
 	self.animations[action] = animation
 	self.spriteSheets[action] = love.graphics.newImage(path)
 	self.spriteSheets[action]:setFilter("nearest", "nearest")
@@ -67,6 +75,8 @@ function Weapon:update(dt)
 	if self.timer < 0 then
 		self.timer = self.cooldown
 		self.canShoot = true
+		self.state = IDLE
+		self.animations[ATTACKING]:reset()
 	end
 	-- atualizando todos os ataques/eventos desferidos
 	self.atk:update(dt)
@@ -131,9 +141,9 @@ function newKatana()
 	local attack = Attack:new("Katana Slice", atkSettings, atkAnimSettings, createUpdateFunc(), onHitFunc)
 
 	-- Inicialicação da arma em si
-	local katana = Weapon:new(KATANA, math.huge, 0.2, attack)
+	local katana = Weapon:new(KATANA, math.huge, 0.3, attack)
 	local idleAnimSettings = newAnimSetting(4, { width = 64, height = 64 }, 0.3, true, 1)
-	local weaponAtkAnimSettings = newAnimSetting(12, { width = 64, height = 64 }, 0.3, false, 1)
+	local weaponAtkAnimSettings = newAnimSetting(12, { width = 64, height = 64 }, 0.03, false, 1)
 	katana:addAnimations(idleAnimSettings, weaponAtkAnimSettings)
 	return katana
 end
@@ -148,14 +158,14 @@ function newSlingShot()
 		target.hp = target.hp - atkEvent.dmg
 	end
 	local baseAtkSettings = newBaseAtkSetting(true, 15, 1.5, Circle:new(200))
-	local atkSettings = newProjectileAtkSetting(baseAtkSettings, 1, 1, 0, 2)
+	local atkSettings = newProjectileAtkSetting(baseAtkSettings, 10, 1, 0, 2)
 	local atkAnimSettings = newAnimSetting(5, { width = 16, height = 16 }, 0.1, true, 1)
 	local attack = Attack:new("Pebble Shot", atkSettings, atkAnimSettings, updateFunc, onHitFunc)
 
 	-- Inicialicação da arma em si
 	local slingshot = Weapon:new(SLING_SHOT, math.huge, 0.4, attack)
 	local idleAnimSettings = newAnimSetting(2, { width = 64, height = 64 }, 0.5, true, 1)
-	local weaponAtkAnimSettings = newAnimSetting(1, { width = 64, height = 64 }, 0.05, false, 1)
+	local weaponAtkAnimSettings = newAnimSetting(10, { width = 64, height = 64 }, 0.05, false, 1)
 	slingshot:addAnimations(idleAnimSettings, weaponAtkAnimSettings)
 	return slingshot
 end

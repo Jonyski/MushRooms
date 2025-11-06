@@ -136,6 +136,7 @@ function AttackEvent:draw(camera)
 	local wViewPos = camera:viewPos(self.pos)
 	local animation = self.animation
 	local quad = animation.frames[animation.currFrame]
+	local flipY = (self.direction / math.pi < -0.5 and self.direction / math.pi >= -1.5) and -1 or 1
 
 	love.graphics.draw(
 		self.spriteSheet,
@@ -144,7 +145,7 @@ function AttackEvent:draw(camera)
 		wViewPos.y,
 		self.direction,
 		3,
-		3,
+		3 * flipY,
 		animation.frameDim.width / 2,
 		animation.frameDim.height / 2
 	)

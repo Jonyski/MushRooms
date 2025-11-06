@@ -225,6 +225,15 @@ function Player:attack()
 	end
 end
 
+function Player:checkColisions()
+	for _, d in pairs(self.room.destructibles) do
+		local dist = distance(self.pos, d.pos)
+		if d.state == INTACT and dist < (self.size.width / 2 + d.size.width / 2) then
+			d:breakApart()
+		end
+	end
+end
+
 function Player:draw(camera)
 	local viewPos = camera:viewPos(self.pos)
 	local animation = self.animations[self.state]

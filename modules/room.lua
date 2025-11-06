@@ -28,6 +28,7 @@ function Room.new(pos, dimensions, hitbox, type, color, sprites)
 	room.sprites = sprites -- os sprites da sala em camadas
 	-- atributos fixos na instanciação
 	room.explored = false -- se algum jogador já entrou na sala ou não
+	room.destructibles = {}
 
 	return room
 end

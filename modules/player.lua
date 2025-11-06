@@ -210,13 +210,13 @@ function Player:checkAction2(key)
 		local nextIndex = indexWeapon
 
 		-- caminha ciclicamente entre as armas
-		if self.movementVec.x < 0 then
+		if self.movementVec.x > 0 then
 			nextIndex = (indexWeapon % len) + 1
 		else
 			nextIndex = ((indexWeapon - 2 + len) % len) + 1
 		end
 
-		self:equipWeapon(self.weapons[nextIndex].type)
+		self:equipWeapon(self.weapons[nextIndex].name)
 	end
 end
 
@@ -225,10 +225,10 @@ function Player:collectWeapon(weapon)
 	weapon.owner = self
 end
 
-function Player:equipWeapon(weapon)
+function Player:equipWeapon(weaponName)
 	-- itera pelas armas do jogador procurando pela que ele quer equipar
 	for _, w in pairs(self.weapons) do
-		if w.name == weapon then
+		if w.name == weaponName then
 			self.weapon = w
 		end
 	end

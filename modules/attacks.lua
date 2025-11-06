@@ -56,8 +56,8 @@ function Attack:new(name, atkSettings, animSettings, updateFunc, onHit)
 	return attack
 end
 
-function Attack:attack(origin, direction)
-	local atkEvent = AttackEvent:new(self, origin, direction)
+function Attack:attack(attacker, origin, direction)
+	local atkEvent = AttackEvent:new(self, attacker, origin, direction)
 	atkEvent:addAnimation(self.animSettings)
 	table.insert(self.events, atkEvent)
 end
@@ -84,10 +84,11 @@ AttackEvent.__index = AttackEvent
 
 -- Attack Events armazenam o comportamento de um ataque
 -- são instanciados a cada ataque e destruídos ao fim do timer
-function AttackEvent:new(attackState, origin, direction)
+function AttackEvent:new(attackState, attacker, origin, direction)
 	local atkEvent = setmetatable({}, AttackEvent)
 	local dirVec = polarToVec(direction, 1)
 	atkEvent.name = attackState.name -- para descobrirmos o caminho até os assets
+	atkEvent.attacker = attacker -- jogador ou inimigo que desferiu o ataque
 	atkEvent.pos = origin -- posição atual do ataque
 	atkEvent.dmg = attackState.dmg -- dano atual do ataque (caso mude com o tempo)
 	atkEvent.timer = attackState.dur -- tempo até o ataque terminar

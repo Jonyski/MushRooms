@@ -236,7 +236,7 @@ end
 
 function Player:attack()
 	if self.weapon and self.weapon.canShoot then
-		self.weapon.atk:attack(self.pos, self.weapon.rotation)
+		self.weapon.atk:attack(self, self.pos, self.weapon.rotation)
 		self.weapon.canShoot = false
 	end
 end

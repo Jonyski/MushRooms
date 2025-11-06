@@ -10,7 +10,7 @@ function newBaseAtkSetting(ally, damage, duration, hitboxShape)
 		hitbox = hitboxShape,
 		-- por padrão, ataques não terão velocidade, aceleração, quiques e atravessam infinitos alvos (Melee)
 		speed = 0,
-		acceleration = 0,
+		acc = 0,
 		bounces = 0,
 		pierces = math.huge,
 	}
@@ -86,13 +86,15 @@ AttackEvent.__index = AttackEvent
 -- são instanciados a cada ataque e destruídos ao fim do timer
 function AttackEvent:new(attackState, origin, direction)
 	local atkEvent = setmetatable({}, AttackEvent)
+	local dirVec = polarToVec(direction, 1)
 	atkEvent.name = attackState.name -- para descobrirmos o caminho até os assets
 	atkEvent.pos = origin -- posição atual do ataque
 	atkEvent.dmg = attackState.dmg -- dano atual do ataque (caso mude com o tempo)
 	atkEvent.timer = attackState.dur -- tempo até o ataque terminar
 	atkEvent.speed = attackState.speed -- coeficiente de velocidade do ataque/projétil
-	atkEvent.vel = scaleVec(direction, attackState.speed) -- vetor de velocidade atual do ataque
-	atkEvent.acc = scaleVec(direction, attackState.acc) -- aceleração atual do ataque
+	atkEvent.direction = direction -- ângulo do ataque em radianos
+	atkEvent.vel = scaleVec(dirVec, attackState.speed) -- vetor de velocidade atual do ataque
+	atkEvent.acc = scaleVec(dirVec, attackState.acc) -- aceleração atual do ataque
 	atkEvent.hb = attackState.hb -- formato da hitbox
 	atkEvent.bouncesLeft = attackState.bounces -- número de ricochetes restantes
 	atkEvent.piercesLeft = attackState.pierces -- número de alvos atravessáveis restantes
@@ -139,7 +141,7 @@ function AttackEvent:draw(camera)
 		quad,
 		wViewPos.x,
 		wViewPos.y,
-		0,
+		self.direction,
 		3,
 		3,
 		animation.frameDim.width / 2,

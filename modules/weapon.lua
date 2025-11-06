@@ -121,7 +121,7 @@ function newKatana()
 		target.hp = target.hp - atkEvent.dmg
 	end
 	local atkSettings = newBaseAtkSetting(true, 15, 0.5, Circle:new(200))
-	local atkAnimSettings = newAnimSetting(1, { width = 64, height = 64 }, 0.1, false, 1)
+	local atkAnimSettings = newAnimSetting(12, { width = 64, height = 64 }, 0.03, false, 1)
 	local attack = Attack:new("Katana Slice", atkSettings, atkAnimSettings, updateFunc, onHitFunc)
 	local katana = Weapon:new(KATANA, math.huge, 0.2, attack)
 	katana:addAnimations()

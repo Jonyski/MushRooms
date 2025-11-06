@@ -6,7 +6,7 @@ Circle = {}
 Circle.__index = Circle
 Circle.shape = "circle" -- We use this type for the dispatch
 
-function Circle:new(radius)
+function Circle.new(radius)
     local circle = setmetatable({}, Circle)
     circle.radius = radius
     return circle
@@ -20,7 +20,7 @@ Rectangle = {}
 Rectangle.__index = Rectangle
 Rectangle.shape = "rectangle" -- We use this type for the dispatch
 
-function Rectangle:new(width, height)
+function Rectangle.new(width, height)
     local rect = setmetatable({}, Rectangle)
     rect.width = width
     rect.height = height
@@ -37,7 +37,7 @@ Line = {}
 Line.__index = Line
 Line.shape = "line"
 
-function Line:new(angle, length)
+function Line.new(angle, length)
     local line = setmetatable({}, Line)
     line.angle = angle
     line.length = length

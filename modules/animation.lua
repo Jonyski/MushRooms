@@ -55,10 +55,10 @@ end
 ----------------------------------------
 -- Funções Globais
 ----------------------------------------
-function newAnimation(path, length, quadSize, frameDur, looping, loopFrame, frameDim)
+function newAnimation(path, length, quadSize, frameDur, looping, loopFrame, frameDim, gap)
 	local sheetImg = love.graphics.newImage(path)
 	local frames = {}
-	local gap = 4
+	local gap = gap
 	local sWidth = sheetImg:getWidth()
 	local sHeight = sheetImg:getHeight()
 	local qWidth = quadSize.width

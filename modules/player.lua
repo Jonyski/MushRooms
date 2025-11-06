@@ -71,7 +71,7 @@ end
 function Player:addAnimation(action, numFrames, frameDur, looping, loopFrame)
 	local path = "assets/animations/players/" .. string.lower(self.name) .. "/" .. action:gsub(" ", "_") .. ".png"
 	local quadSize = { width = 32, height = 32 }
-	local animation = newAnimation(path, numFrames, quadSize, frameDur, looping, loopFrame, quadSize)
+	local animation = newAnimation(path, numFrames, quadSize, frameDur, looping, loopFrame, quadSize, 4)
 	self.animations[action] = animation
 	self.spriteSheets[action] = love.graphics.newImage(path)
 	self.spriteSheets[action]:setFilter("nearest", "nearest")

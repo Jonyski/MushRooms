@@ -99,7 +99,7 @@ function newKatana()
 	local katana = Weapon.new(KATANA, 30, math.huge, 1, 0, 120, Weapon.meleeAtack, color)
 	local idlePath = "assets/sprites/weapons/katana/katana.png"
 	local quadSize = { width = 64, height = 64 }
-	local idleAnimation = newAnimation(idlePath, 1, quadSize, 1, true, 1, quadSize)
+	local idleAnimation = newAnimation(idlePath, 1, quadSize, 1, true, 1, quadSize, 4)
 	katana.animations[IDLE] = idleAnimation
 	katana.spriteSheets[IDLE] = love.graphics.newImage(idlePath)
 	katana.spriteSheets[IDLE]:setFilter("nearest", "nearest")
@@ -111,7 +111,7 @@ function newSlingShot()
 	local slingshot = Weapon.new(SLING_SHOT, 20, 5, 1.6, 1, 380, Weapon.slowProjectileAttack, color)
 	local idlePath = "assets/sprites/weapons/slingshot/slingshot.png"
 	local quadSize = { width = 64, height = 64 }
-	local idleAnimation = newAnimation(idlePath, 1, quadSize, 1, true, 1, quadSize)
+	local idleAnimation = newAnimation(idlePath, 1, quadSize, 1, true, 1, quadSize, 4)
 	slingshot.animations[IDLE] = idleAnimation
 	slingshot.spriteSheets[IDLE] = love.graphics.newImage(idlePath)
 	slingshot.spriteSheets[IDLE]:setFilter("nearest", "nearest")

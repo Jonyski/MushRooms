@@ -63,19 +63,16 @@ function Attack:attack(origin, direction)
 end
 
 function Attack:update(dt)
-	-- atualiza o estado e animação de cada evento de ataque desferido
-	local finishedEvents = {}
-	for _, e in pairs(self.events) do
+	print(#self.events)
+	for i = #self.events, 1, -1 do
+		local e = self.events[i]
 		self.updateEvent(dt, e)
-		if e.timer > 0 then
-			e.animation:update(dt)
+
+		if e.timer <= 0 then
+			table.remove(self.events, i)
 		else
-			table.insert(finishedEvents, tableIndexOf(self.events, e))
+			e.animation:update(dt)
 		end
-	end
-	-- removendo eventos encerrados
-	for _, i in pairs(finishedEvents) do
-		self.events[i] = nil
 	end
 end
 
@@ -88,7 +85,7 @@ AttackEvent.__index = AttackEvent
 
 -- Attack Events armazenam o comportamento de um ataque
 -- são instanciados a cada ataque e destruídos ao fim do timer
-function AttackEvent:new(attackState, origin, direction, acceleration)
+function AttackEvent:new(attackState, origin, direction)
 	local atkEvent = setmetatable({}, AttackEvent)
 	atkEvent.name = attackState.name -- para descobrirmos o caminho até os assets
 	atkEvent.pos = origin -- posição atual do ataque
@@ -110,6 +107,7 @@ function AttackEvent:baseUpdate(dt)
 	self.vel = addVec(self.vel, self.acc)
 	self.pos = addVec(self.pos, self.vel)
 	self.timer = self.timer - dt
+	-- print(self.timer)
 end
 
 ----------------------------------------

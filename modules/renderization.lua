@@ -51,7 +51,7 @@ function renderEntities(cam)
 			})
 		end
 		for _, w in pairs(p.weapons) do
-			for _, e in ipairs(w.atk.events) do
+			for _, e in pairs(w.atk.events) do
 				e:draw(camera)
 			end
 		end

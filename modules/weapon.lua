@@ -16,16 +16,16 @@ SLING_SHOT = "Sling Shot"
 Weapon = {}
 Weapon.__index = Weapon
 
-function Weapon:new(name, ammo, cadence, cooldown, attack)
+function Weapon:new(name, ammo, cooldown, attack)
 	local weapon = setmetatable({}, Weapon)
 
 	-- atributos que variam
 	weapon.name = name -- nome do tipo de arma
 	weapon.ammo = ammo -- número de munições
-	weapon.cadence = cadence -- número máximo de ataques por segundo
-	weapon.cooldown = cooldown -- tempo de recarga
+	weapon.cooldown = cooldown -- tempo de espera entre ataques consecutivos
 	weapon.atk = attack -- instância de Attack associada à arma
 	-- atributos fixos na instanciação
+	weapon.canShoot = false
 	weapon.timer = 0 -- timer do cooldown
 	weapon.target = nil -- inimigo para o qual a arma está mirando
 	weapon.rotation = 0 -- rotação da arma em radianos
@@ -56,6 +56,19 @@ function Weapon:addAnimation(action, numFrames, frameDur, looping, loopFrame)
 	self.animations[action] = animation
 	self.spriteSheets[action] = love.graphics.newImage(path)
 	self.spriteSheets[action]:setFilter("nearest", "nearest")
+end
+
+function Weapon:update(dt)
+	-- atualizando o cooldown
+	if self.canShoot == false then
+		self.timer = self.timer - dt
+	end
+	if self.timer < 0 then
+		self.timer = self.cooldown
+		self.canShoot = true
+	end
+	-- atualizando todos os ataques/eventos desferidos
+	self.atk:update(dt)
 end
 
 ----------------------------------------
@@ -110,7 +123,7 @@ function newKatana()
 	local atkSettings = newBaseAtkSetting(true, 15, 0.5, Circle:new(200))
 	local atkAnimSettings = newAnimSetting(1, { width = 64, height = 64 }, 0.1, false, 1)
 	local attack = Attack:new("Katana Slice", atkSettings, atkAnimSettings, updateFunc, onHitFunc)
-	local katana = Weapon:new(KATANA, math.huge, 1, 0, attack)
+	local katana = Weapon:new(KATANA, math.huge, 0.2, attack)
 	katana:addAnimations()
 	return katana
 end
@@ -123,11 +136,11 @@ function newSlingShot()
 		print("Estilingue acertou um " .. target.type .. " por " .. atkEvent.dmg .. " de dano!")
 		target.hp = target.hp - atkEvent.dmg
 	end
-	local baseAtkSettings = newBaseAtkSetting(true, 15, 0.5, Circle:new(200))
+	local baseAtkSettings = newBaseAtkSetting(true, 15, 1.5, Circle:new(200))
 	local atkSettings = newProjectileAtkSetting(baseAtkSettings, 1, 1, 0, 2)
 	local atkAnimSettings = newAnimSetting(5, { width = 16, height = 16 }, 0.1, true, 1)
 	local attack = Attack:new("Pebble Shot", atkSettings, atkAnimSettings, updateFunc, onHitFunc)
-	local slingshot = Weapon:new(SLING_SHOT, math.huge, 1, 0, attack)
+	local slingshot = Weapon:new(SLING_SHOT, math.huge, 0.4, attack)
 	slingshot:addAnimations()
 	return slingshot
 end

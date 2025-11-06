@@ -65,6 +65,13 @@ function tableIndexOf(table, value)
 	return nil
 end
 
+function tableRemoveValue(table, value)
+	local i = tableIndexOf(table, value)
+	if i then
+		table[i] = nil
+	end
+end
+
 -- Retorna x limitado ao intervalo [a, b]
 function clamp(x, a, b)
 	if x < a then

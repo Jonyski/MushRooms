@@ -90,8 +90,7 @@ function Player:update(dt)
 		if w == self.weapon then
 			self.weapon.animations[self.weapon.state]:update(dt)
 		end
-		-- atualizando todos os ataques/eventos desferidos
-		w.atk:update(dt)
+		w:update(dt)
 	end
 	self:updateState()
 	self:updateParticles(dt)
@@ -236,8 +235,9 @@ function Player:equipWeapon(weapon)
 end
 
 function Player:attack()
-	if self.weapon then
+	if self.weapon and self.weapon.canShoot then
 		self.weapon.atk:attack(self.pos, polarToVec(self.weapon.rotation, 1))
+		self.weapon.canShoot = false
 	end
 end
 

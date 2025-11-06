@@ -3,7 +3,7 @@
 ----------------------------------------
 require("table")
 require("modules/room")
-require("modules/game")
+require("modules/renderization")
 require("modules/player")
 require("modules/camera")
 require("modules/animation")
@@ -15,21 +15,23 @@ require("modules/weapon")
 ----------------------------------------
 window = {}
 sec_timer = {}
+
 ----------------------------------------
 -- Callbacks
 ----------------------------------------
 function love.keypressed(key, scancode, isrepeat)
-	-- esc closes the game
+	-- esc fecha o jogo
 	if key == "escape" then
 		love.event.quit()
 	end
-	-- n adds a new player to the game
+	-- n adiciona um player ao jogo
 	if key == "n" then
 		newPlayer()
 	end
 	if not isrepeat then
 		for _, p in pairs(players) do
 			p:checkAction1(key)
+			p:checkAction2(key)
 		end
 	end
 end
@@ -60,8 +62,9 @@ function love.load()
 	newPlayer()
 
 	-- bloco de teste de armas -------------------------
+	players[1]:collectWeapon(newWeapon(SLING_SHOT))
 	players[1]:collectWeapon(newWeapon(KATANA))
-	players[1]:equipWeapon(KATANA)
+	players[1]:equipWeapon(SLING_SHOT)
 	----------------------------------------------------
 
 	-- métodos de estado do love
@@ -75,7 +78,11 @@ function love.update(dt)
 	for _, p in pairs(players) do
 		p:move(dt)
 		p.animations[p.state]:update(dt)
+		if p.weapon then
+			p.weapon.animations[p.weapon.state]:update(dt)
+		end
 		p:updateState()
+		p:updateParticles(dt)
 	end
 	for _, c in pairs(cameras) do
 		c:updatePosition()
@@ -111,9 +118,7 @@ function love.draw()
 		love.graphics.setCanvas(c.canvas)
 		love.graphics.clear(0.0, 0.0, 0.0, 1.0)
 		renderRooms(i)
-		renderWeapons(i)
-		renderPlayers(i)
-		renderEnemies(i)
+		renderEntities(i)
 		love.graphics.setCanvas()
 		love.graphics.draw(c.canvas, c.canvasPos.x, c.canvasPos.y)
 	end

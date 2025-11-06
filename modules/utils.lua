@@ -30,7 +30,7 @@ function BiList:insertLeft(el)
 	self.length = self.length + 1
 end
 
--- cuidado, esta função pode doixar buracos na lista
+-- cuidado, esta função pode deixar buracos na lista
 function BiList:insert(index, el)
 	if el == nil then
 		return
@@ -47,7 +47,6 @@ end
 ----------------------------------------
 -- Funções Utilitárias
 ----------------------------------------
-
 function tableFind(table, value)
 	for k, v in pairs(table) do
 		if v == value then
@@ -55,4 +54,24 @@ function tableFind(table, value)
 		end
 	end
 	return nil
+end
+
+function tableIndexOf(table, value)
+	for i, v in ipairs(table) do
+		if v == value then
+			return i
+		end
+	end
+	return nil
+end
+
+-- Retorna x limitado ao intervalo [a, b]
+function clamp(x, a, b)
+	if x < a then
+		return a
+	end
+	if x > b then
+		return b
+	end
+	return x
 end

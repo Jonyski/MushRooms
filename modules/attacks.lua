@@ -63,7 +63,6 @@ function Attack:attack(origin, direction)
 end
 
 function Attack:update(dt)
-	print(#self.events)
 	for i = #self.events, 1, -1 do
 		local e = self.events[i]
 		self.updateEvent(dt, e)

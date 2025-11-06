@@ -236,7 +236,8 @@ end
 
 function Player:attack()
 	if self.weapon and self.weapon.canShoot then
-		self.weapon.atk:attack(self.pos, polarToVec(self.weapon.rotation, 1))
+		local atkDir = polarToVec(self.weapon.rotation, 1)
+		self.weapon.atk:attack(self.pos, atkDir)
 		self.weapon.canShoot = false
 	end
 end

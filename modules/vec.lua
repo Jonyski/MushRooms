@@ -35,5 +35,5 @@ end
 
 -- constrói um vetor a partir de coordenadas polares
 function polarToVec(angle, r)
-	return vec(math.sin(r), math.cos(r))
+	return vec(math.cos(angle), math.sin(angle))
 end

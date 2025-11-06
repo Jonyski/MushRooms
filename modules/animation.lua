@@ -13,14 +13,14 @@ function Animation.new(frames, frameDur, looping, loopFrame, frameDim)
 	local animation = setmetatable({}, Animation)
 
 	-- atributos que variam
-	animation.frames = frames    -- número de frames na animação
+	animation.frames = frames -- número de frames na animação
 	animation.frameDur = frameDur -- duração de cada frame em segundos
-	animation.looping = looping  -- se a animação é ciclica ou não
+	animation.looping = looping -- se a animação é ciclica ou não
 	animation.loopFrame = loopFrame -- a partir de qual frame a animação é ciclica
 	animation.frameDim = frameDim -- dimensões de cada frame
 	-- atributos fixos na instanciação
-	animation.currFrame = 1      -- frame atual
-	animation.timer = 0          -- tempo decorrido desde a última mudança de frame
+	animation.currFrame = 1 -- frame atual
+	animation.timer = 0 -- tempo decorrido desde a última mudança de frame
 
 	return animation
 end
@@ -77,6 +77,21 @@ function newAnimSetting(numFrames, quadSize, frameDur, looping, loopFrame)
 		looping = looping,
 		loopFrame = loopFrame,
 	}
+end
+
+function addAnimation(entity, path, action, settings)
+	local animation = newAnimation(
+		path,
+		settings.numFrames,
+		settings.quadSize,
+		settings.frameDur,
+		settings.looping,
+		settings.loopFrame,
+		settings.quadSize
+	)
+	entity.animations[action] = animation
+	entity.spriteSheets[action] = love.graphics.newImage(path)
+	entity.spriteSheets[action]:setFilter("nearest", "nearest")
 end
 
 return Animation

@@ -3,6 +3,7 @@
 ----------------------------------------
 require("modules/attacks")
 require("modules/shapes")
+require("modules/animation")
 
 ----------------------------------------
 -- Variáveis e Enums
@@ -45,26 +46,11 @@ end
 
 function Weapon:addAnimations(idleSettings, weaponAtkSettings)
 	-- animação idle
-	self:addAnimation(IDLE, idleSettings)
+	local path = pngPathFormat({ "assets", "animations", "weapons", self.name, IDLE })
+	addAnimation(self, path, IDLE, idleSettings)
 	-- animação da arma ao atacar
-	self:addAnimation(ATTACKING, weaponAtkSettings)
-end
-
-function Weapon:addAnimation(action, settings)
-	local folderName = string.lower(self.name:gsub(" ", ""))
-	local path = "assets/animations/weapons/" .. folderName .. "/" .. action:gsub(" ", "_") .. ".png"
-	local animation = newAnimation(
-		path,
-		settings.numFrames,
-		settings.quadSize,
-		settings.frameDur,
-		settings.looping,
-		settings.loopFrame,
-		settings.quadSize
-	)
-	self.animations[action] = animation
-	self.spriteSheets[action] = love.graphics.newImage(path)
-	self.spriteSheets[action]:setFilter("nearest", "nearest")
+	path = pngPathFormat({ "assets", "animations", "weapons", self.name, ATTACKING })
+	addAnimation(self, path, ATTACKING, weaponAtkSettings)
 end
 
 function Weapon:update(dt)
@@ -113,7 +99,7 @@ function Weapon:draw(camera)
 end
 
 ----------------------------------------
--- Funções Globais
+-- Construtores
 ----------------------------------------
 function newWeapon(type)
 	if type == KATANA then

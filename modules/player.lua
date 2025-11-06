@@ -69,7 +69,7 @@ function Player:addAnimations()
 end
 
 function Player:addAnimation(action, numFrames, frameDur, looping, loopFrame)
-	local path = "assets/animations/players/" .. string.lower(self.name) .. "/" .. action:gsub(" ", "_") .. ".png"
+	local path = pngPathFormat({ "assets", "animations", "players", self.name, action })
 	local quadSize = { width = 32, height = 32 }
 	local animation = newAnimation(path, numFrames, quadSize, frameDur, looping, loopFrame, quadSize)
 	self.animations[action] = animation

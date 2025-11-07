@@ -94,6 +94,12 @@ function Player:update(dt)
 	end
 	self:updateState()
 	self:updateParticles(dt)
+	self:checkColisions()
+
+	-- atualização de destrutíveis ----------------------------
+	for _, d in pairs(self.room.destructibles) do
+		d:update(dt)
+	end
 end
 
 function Player:move(dt)
@@ -239,6 +245,15 @@ function Player:attack()
 		self.weapon.atk:attack(self, self.pos, self.weapon.rotation)
 		self.weapon.canShoot = false
 		self.weapon.state = ATTACKING
+	end
+end
+
+function Player:checkColisions()
+	for _, d in pairs(self.room.destructibles) do
+		local dist = dist(self.pos, d.pos)
+		if d.state == INTACT and dist < (self.size.width / 2 + d.size.width / 2) then
+			d:breakApart()
+		end
 	end
 end
 

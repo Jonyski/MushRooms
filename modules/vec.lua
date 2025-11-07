@@ -7,9 +7,17 @@ function vec(x, y)
 	return { x = x, y = y }
 end
 
+-- retorna o ponto médio entre dois vetores
+function midpoint(v1, v2)
+    return { 
+        x = (v1.x + v2.x) / 2, 
+        y = (v1.y + v2.y) / 2 
+    }
+end
+
 -- transforma um vetor v em um vetor unitário v'
 function normalize(v)
-	local mod = math.sqrt(math.pow(v.x, 2) + math.pow(v.y, 2))
+	local mod = math.sqrt(v.x^2 + v.y^2)
 	v.x = v.x / mod
 	v.y = v.y / mod
 end

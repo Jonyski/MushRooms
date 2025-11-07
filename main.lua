@@ -9,6 +9,7 @@ require("modules/camera")
 require("modules/animation")
 require("modules/enemy")
 require("modules/weapon")
+require("modules/destructibles")
 
 ----------------------------------------
 -- Variáveis Globais
@@ -66,6 +67,13 @@ function love.load()
 	players[1]:collectWeapon(newWeapon(KATANA))
 	players[1]:equipWeapon(SLING_SHOT)
 	----------------------------------------------------
+	-- criação de objetos para debugging
+	newDestructible("barrel", { x = 100, y = 0 }, rooms[0][0])
+	newDestructible("sign", { x = 200, y = 0 }, rooms[0][0])
+	newDestructible("jar", { x = 300, y = 0 }, rooms[0][0])
+	newDestructible("barrel", { x = 400, y = 0 }, rooms[0][0])
+	newDestructible("barrel", { x = 600, y = 0 }, rooms[0][0])
+	------------------------------------------------------
 
 	-- métodos de estado do love
 	love.window.setMode(window.width, window.height, { resizable = true })
@@ -78,6 +86,7 @@ function love.update(dt)
 	for _, p in pairs(players) do
 		p:update(dt)
 	end
+
 	for _, c in pairs(cameras) do
 		c:updatePosition()
 	end
@@ -97,10 +106,10 @@ function love.update(dt)
 			newEnemy(SPIDER_DUCK, randSpawnPos)
 		end
 	end
+
 	for _, e in pairs(enemies) do
 		e:update(dt)
 	end
-	----------------------------------------------------------
 end
 
 ----------------------------------------

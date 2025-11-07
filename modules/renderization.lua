@@ -40,6 +40,7 @@ function renderEntities(cam)
 				p:draw(camera)
 			end,
 		})
+
 		if p.weapon then
 			local w = p.weapon
 			local offsetY = (w.rotation / math.pi < -1 or w.rotation / math.pi > 0) and 2 or -2
@@ -50,6 +51,16 @@ function renderEntities(cam)
 				end,
 			})
 		end
+
+		for _, d in pairs(p.room.destructibles) do
+			table.insert(drawList, {
+				y = d.pos.y,
+				draw = function()
+					d:draw(camera)
+				end,
+			})
+		end
+
 		for _, w in pairs(p.weapons) do
 			for _, e in pairs(w.atk.events) do
 				e:draw(camera)

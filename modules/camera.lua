@@ -114,6 +114,28 @@ function Camera:viewPos(entityPos)
 end
 
 ----------------------------------------
+-- Função de Renderização
+----------------------------------------
+function Camera:draw()
+	love.graphics.setCanvas(self.canvas)
+	love.graphics.clear(0.0, 0.0, 0.0, 1.0)
+	love.graphics.push()
+	
+	-- centraliza o zoom
+	love.graphics.translate(self.viewport.width / 2, self.viewport.height / 2)
+	love.graphics.scale(self.zoom)
+	love.graphics.translate(-self.viewport.width / 2, -self.viewport.height / 2)
+
+	-- renderiza mundo
+	renderRooms(self)
+	renderEntities(self)
+
+	love.graphics.pop()
+	love.graphics.setCanvas()
+	love.graphics.draw(self.canvas, self.canvasPos.x, self.canvasPos.y)
+end
+
+----------------------------------------
 -- Funções Globais
 ----------------------------------------
 function newCamera()

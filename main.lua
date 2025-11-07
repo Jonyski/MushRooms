@@ -130,12 +130,7 @@ end
 -- Renderização
 ----------------------------------------
 function love.draw()
-	for i, c in pairs(cameras) do
-		love.graphics.setCanvas(c.canvas)
-		love.graphics.clear(0.0, 0.0, 0.0, 1.0)
-		renderRooms(i)
-		renderEntities(i)
-		love.graphics.setCanvas()
-		love.graphics.draw(c.canvas, c.canvasPos.x, c.canvasPos.y)
+	for _, c in pairs(cameras) do
+		c:draw()
 	end
 end

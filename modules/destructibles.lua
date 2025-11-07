@@ -53,7 +53,7 @@ end
 function Destructible:addAnimation(state, numFrames, frameDur, looping)
   local path = "assets/animations/destructibles/" .. string.lower(self.type) .. "/" .. state:gsub(" ", "_") .. ".png"
   local quadSize = { width = self.size.width, height = self.size.height }
-  local animation = newAnimation(path, numFrames, quadSize, frameDur, looping, 1, quadSize, 0)
+  local animation = newAnimation(path, numFrames, quadSize, frameDur, looping, 1, quadSize)
   self.animations[state] = animation
   self.spriteSheets[state] = love.graphics.newImage(path)
   self.spriteSheets[state]:setFilter("nearest", "nearest")

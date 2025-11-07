@@ -71,7 +71,7 @@ end
 function Player:addAnimation(action, numFrames, frameDur, looping, loopFrame)
 	local path = pngPathFormat({ "assets", "animations", "players", self.name, action })
 	local quadSize = { width = 32, height = 32 }
-	local animation = newAnimation(path, numFrames, quadSize, frameDur, looping, loopFrame, quadSize, 4)
+	local animation = newAnimation(path, numFrames, quadSize, frameDur, looping, loopFrame, quadSize)
 	self.animations[action] = animation
 	self.spriteSheets[action] = love.graphics.newImage(path)
 	self.spriteSheets[action]:setFilter("nearest", "nearest")
@@ -94,6 +94,12 @@ function Player:update(dt)
 	end
 	self:updateState()
 	self:updateParticles(dt)
+	self:checkColisions()
+
+	-- atualização de destrutíveis ----------------------------
+	for _, d in pairs(self.room.destructibles) do
+		d:update(dt)
+	end
 end
 
 function Player:move(dt)
@@ -244,7 +250,7 @@ end
 
 function Player:checkColisions()
 	for _, d in pairs(self.room.destructibles) do
-		local dist = distance(self.pos, d.pos)
+		local dist = dist(self.pos, d.pos)
 		if d.state == INTACT and dist < (self.size.width / 2 + d.size.width / 2) then
 			d:breakApart()
 		end

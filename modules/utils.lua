@@ -75,3 +75,21 @@ function clamp(x, a, b)
 	end
 	return x
 end
+
+-- transforma uma string em um formato padronizado para caminhos
+function pathlizeName(s)
+	return string.lower(s:gsub(" ", "_"))
+end
+
+-- transforma uma lista de pastas e um nome de arquivo em um caminho para o arquivo
+function pngPathFormat(parts)
+	local path = ""
+	for i, v in ipairs(parts) do
+		if i ~= #parts then
+			path = path .. pathlizeName(v) .. "/"
+		else
+			path = path .. pathlizeName(v) .. ".png"
+		end
+	end
+	return path
+end

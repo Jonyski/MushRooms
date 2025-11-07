@@ -84,19 +84,7 @@ end
 ----------------------------------------
 function love.update(dt)
 	for _, p in pairs(players) do
-		p:move(dt)
-		p.animations[p.state]:update(dt)
-		if p.weapon then
-			p.weapon.animations[p.weapon.state]:update(dt)
-		end
-		p:updateState()
-		p:updateParticles(dt)
-		p:checkColisions()
-
-		-- atualização de destrutíveis ----------------------------
-		for _, d in pairs(p.room.destructibles) do
-			d:update(dt)
-		end
+		p:update(dt)
 	end
 
 	for _, c in pairs(cameras) do
@@ -120,8 +108,7 @@ function love.update(dt)
 	end
 
 	for _, e in pairs(enemies) do
-		e:move(dt)
-		e:attack(dt)
+		e:update(dt)
 	end
 end
 

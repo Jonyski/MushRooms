@@ -15,11 +15,12 @@ enemies = {}
 Enemy = {}
 Enemy.__index = Enemy
 
-function Enemy.new(type, spawnPos, velocity, color, move, attack)
+function Enemy.new(type, hp, spawnPos, velocity, color, move, attack)
 	local enemy = setmetatable({}, Enemy)
 
 	-- atributos que variam
 	enemy.type = type -- nome do tipo de inimigo
+	enemy.hp = hp -- pontos de vida do inimigo
 	enemy.pos = spawnPos -- posição do inimigo
 	enemy.vel = velocity -- velocidade de movimento do inimigo
 	enemy.color = color -- cor do inimigo
@@ -34,6 +35,19 @@ function Enemy.new(type, spawnPos, velocity, color, move, attack)
 	enemy.animations = {} -- as chaves são estados e os valores são Animações
 
 	return enemy
+end
+
+function Enemy:addAnimations(idleSettings)
+	-- animação idle
+	local path = pngPathFormat({ "assets", "animations", "enemies", self.type, IDLE })
+	addAnimation(self, path, IDLE, idleSettings)
+	-- TODO: adicionar o resto das animações
+end
+
+function Enemy:update(dt)
+	self:move(dt)
+	self:attack(dt)
+	self.animations[self.state]:update(dt)
 end
 
 ----------------------------------------
@@ -72,28 +86,17 @@ end
 ----------------------------------------
 function Enemy:draw(camera)
 	local viewPos = camera:viewPos(self.pos)
-	love.graphics.setColor(self.color.r, self.color.g, self.color.b, self.color.a)
+	local animation = self.animations[self.state]
+	local quad = animation.frames[animation.currFrame]
 	local offset = {
-		x = self.size.width / 2,
-		y = self.size.height / 2,
+		x = animation.frameDim.width / 2,
+		y = animation.frameDim.height / 2,
 	}
-	love.graphics.rectangle(
-		"fill",
-		viewPos.x,
-		viewPos.y,
-		self.size.width,
-		self.size.height,
-		0,
-		1,
-		1,
-		offset.x,
-		offset.y
-	)
-	love.graphics.setColor(1, 1, 1, 1)
+	love.graphics.draw(self.spriteSheets[self.state], quad, viewPos.x, viewPos.y, 0, 3, 3, offset.x, offset.y)
 end
 
 ----------------------------------------
--- Funções Globais
+-- Construtores
 ----------------------------------------
 function newEnemy(type, spawnPos)
 	if type == NUCLEAR_CAT then
@@ -107,7 +110,9 @@ function newNuclearCat(spawnPos)
 	local color = { r = 0.9, g = 0.4, b = 0.4, a = 1.0 }
 	local movementFunc = Enemy.moveFollowPlayer
 	local attackFunc = Enemy.simpleAttack
-	local enemy = Enemy.new(NUCLEAR_CAT, spawnPos, 180, color, movementFunc, attackFunc)
+	local enemy = Enemy.new(NUCLEAR_CAT, 30, spawnPos, 180, color, movementFunc, attackFunc)
+	local idleAnimSettings = newAnimSetting(6, { width = 32, height = 32 }, 0.15, true, 1)
+	enemy:addAnimations(idleAnimSettings)
 	table.insert(enemies, enemy)
 end
 
@@ -115,6 +120,8 @@ function newSpiderDuck(spawnPos)
 	local color = { r = 0.9, g = 0.9, b = 0.1, a = 1.0 }
 	local movementFunc = Enemy.moveFollowPlayer
 	local attackFunc = Enemy.simpleAttack
-	local enemy = Enemy.new(SPIDER_DUCK, spawnPos, 180, color, movementFunc, attackFunc)
+	local enemy = Enemy.new(SPIDER_DUCK, 20, spawnPos, 180, color, movementFunc, attackFunc)
+	local idleAnimSettings = newAnimSetting(4, { width = 32, height = 32 }, 0.4, true, 1)
+	enemy:addAnimations(idleAnimSettings)
 	table.insert(enemies, enemy)
 end

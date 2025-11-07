@@ -76,6 +76,11 @@ function clamp(x, a, b)
 	return x
 end
 
+-- Função de interpolação linear
+function lerp(a, b, t)
+	return a + (b - a) * t
+end
+
 -- transforma uma string em um formato padronizado para caminhos
 function pathlizeName(s)
 	return string.lower(s:gsub(" ", "_"))

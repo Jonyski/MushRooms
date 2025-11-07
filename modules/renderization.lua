@@ -3,7 +3,7 @@ require("modules/camera")
 ----------------------------------------
 -- Funções Globais
 ----------------------------------------
-function renderRooms(cam)
+function renderRooms(camera)
 	for i = rooms.minIndex, rooms.maxIndex do
 		for j = rooms[i].minIndex, rooms[i].maxIndex do
 			local r = rooms[i][j]
@@ -12,10 +12,7 @@ function renderRooms(cam)
 			end
 
 			love.graphics.setColor(r.color.r, r.color.g, r.color.b, r.color.a)
-			local roomViewPos = {
-				x = r.hitbox.p1.x - cameras[cam].cx + cameras[cam].viewport.width / 2,
-				y = r.hitbox.p1.y - cameras[cam].cy + cameras[cam].viewport.height / 2,
-			}
+			local roomViewPos = camera:viewPos(r.hitbox.p1)
 			love.graphics.draw(r.sprites.floor, roomViewPos.x, roomViewPos.y, 0, 6, 6)
 
 			-- reseta a cor de renderização
@@ -28,8 +25,7 @@ end
 ----------------------------------------
 -- Funções de Renderização Global
 ----------------------------------------
-function renderEntities(cam)
-	local camera = cameras[cam]
+function renderEntities(camera)
 	local drawList = {}
 
 	-- Adiciona jogadores e suas possíveis armas

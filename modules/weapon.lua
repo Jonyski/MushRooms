@@ -1,4 +1,11 @@
 ----------------------------------------
+-- Importações de Módulos
+----------------------------------------
+require("modules/attacks")
+require("modules/shapes")
+require("modules/animation")
+
+----------------------------------------
 -- Variáveis e Enums
 ----------------------------------------
 KATANA = "Katana"
@@ -10,27 +17,22 @@ SLING_SHOT = "Sling Shot"
 Weapon = {}
 Weapon.__index = Weapon
 
-function Weapon.new(type, damage, ammo, cadence, cooldown, range, attack, color, particles)
+function Weapon.new(name, ammo, cooldown, attack)
 	local weapon = setmetatable({}, Weapon)
 
 	-- atributos que variam
-	weapon.type = type      -- nome do tipo de arma
-	weapon.damage = damage  -- dano
+	weapon.name = name      -- nome do tipo de arma
 	weapon.ammo = ammo      -- número de munições
-	weapon.cadence = cadence -- número máximo de ataques por segundo
-	weapon.cooldown = cooldown -- tempo de recarga
-	weapon.range = range    -- alcance
-	weapon.attack = attack  -- método de ataque
-	weapon.color = color    -- cor da arma
-	weapon.attackParticles = particles
+	weapon.cooldown = cooldown -- tempo de espera entre ataques consecutivos
+	weapon.atk = attack     -- instância de Attack associada à arma
 	-- atributos fixos na instanciação
-	weapon.size = { height = 20, width = 64 }
+	weapon.canShoot = false
+	weapon.timer = 0      -- timer do cooldown
 	weapon.target = nil   -- inimigo para o qual a arma está mirando
 	weapon.rotation = 0   -- rotação da arma em radianos
 	weapon.state = IDLE   -- estado atual da arma
 	weapon.spriteSheets = {} -- no tipo imagem do love
 	weapon.animations = {} -- as chaves são estados e os valores são Animações
-
 	return weapon
 end
 
@@ -42,32 +44,45 @@ function Weapon:updateOrientation(dirVec)
 	end
 end
 
-----------------------------------------
--- Funções de Ataque
-----------------------------------------
-function Weapon:meleeAtack()
-	print("MELEE ATTACK")
+function Weapon:addAnimations(idleSettings, weaponAtkSettings)
+	-- animação idle
+	local path = pngPathFormat({ "assets", "animations", "weapons", self.name, IDLE })
+	addAnimation(self, path, IDLE, idleSettings)
+	-- animação da arma ao atacar
+	path = pngPathFormat({ "assets", "animations", "weapons", self.name, ATTACKING })
+	addAnimation(self, path, ATTACKING, weaponAtkSettings)
 end
 
-function Weapon:slowProjectileAttack()
-	print("SLOW PROJECTILE ATTACK")
+function Weapon:update(dt)
+	-- atualizando o cooldown
+	if self.canShoot == false then
+		self.timer = self.timer - dt
+	end
+	if self.timer < 0 then
+		self.timer = self.cooldown
+		self.canShoot = true
+		self.state = IDLE
+		self.animations[ATTACKING]:reset()
+	end
+	-- atualizando todos os ataques/eventos desferidos
+	self.atk:update(dt)
 end
 
 ----------------------------------------
 -- Funções de Renderização
 ----------------------------------------
-function Weapon:draw(camera, owner)
+function Weapon:draw(camera)
 	-- Não renderiza armas de jogadores se defendendo
-	if owner.state == DEFENDING then
+	if self.owner.state == DEFENDING then
 		return
 	end
 
-	local wViewPos = camera:viewPos(owner.pos)
+	local wViewPos = camera:viewPos(self.owner.pos)
 
 	local animation = self.animations[self.state]
 	local quad = animation.frames[animation.currFrame]
-	local flipY = (self.rotation / math.pi < -0.5 and self.rotation / math.pi >= -1.5) and -1 or
-	1                                                                                           -- inverte arma no segundo e terceiro quadrantes
+	-- inverte arma no segundo e terceiro quadrantes
+	local flipY = (self.rotation / math.pi < -0.5 and self.rotation / math.pi >= -1.5) and -1 or 1
 
 	love.graphics.setColor(1, 1, 1, 1)
 	love.graphics.draw(
@@ -84,7 +99,7 @@ function Weapon:draw(camera, owner)
 end
 
 ----------------------------------------
--- Funções Globais
+-- Construtores
 ----------------------------------------
 function newWeapon(type)
 	if type == KATANA then
@@ -95,25 +110,48 @@ function newWeapon(type)
 end
 
 function newKatana()
-	local color = { r = 0.9, g = 0.9, b = 0.9, a = 1.0 }
-	local katana = Weapon.new(KATANA, 30, math.huge, 1, 0, 120, Weapon.meleeAtack, color)
-	local idlePath = "assets/sprites/weapons/katana/katana.png"
-	local quadSize = { width = 64, height = 64 }
-	local idleAnimation = newAnimation(idlePath, 1, quadSize, 1, true, 1, quadSize)
-	katana.animations[IDLE] = idleAnimation
-	katana.spriteSheets[IDLE] = love.graphics.newImage(idlePath)
-	katana.spriteSheets[IDLE]:setFilter("nearest", "nearest")
+	-- configurações do ataque
+	local createUpdateFunc = function()
+		return function(dt, atkEvent)
+			atkEvent:baseUpdate(dt)
+			-- seguindo o jogador
+			atkEvent.pos = atkEvent.attacker.pos
+		end
+	end
+	local onHitFunc = function(atkEvent, target)
+		print("Katana acertou um " .. target.type .. " por " .. atkEvent.dmg .. " de dano!")
+		target.hp = target.hp - atkEvent.dmg
+	end
+	local atkSettings = newBaseAtkSetting(true, 15, 0.5, Circle.new(200))
+	local atkAnimSettings = newAnimSetting(12, { width = 64, height = 64 }, 0.03, false, 1)
+	local attack = Attack.new("Katana Slice", atkSettings, atkAnimSettings, createUpdateFunc(), onHitFunc)
+
+	-- Inicialicação da arma em si
+	local katana = Weapon.new(KATANA, math.huge, 0.3, attack)
+	local idleAnimSettings = newAnimSetting(4, { width = 64, height = 64 }, 0.3, true, 1)
+	local weaponAtkAnimSettings = newAnimSetting(12, { width = 64, height = 64 }, 0.03, false, 1)
+	katana:addAnimations(idleAnimSettings, weaponAtkAnimSettings)
 	return katana
 end
 
 function newSlingShot()
-	local color = { r = 0.7, g = 0.7, b = 0.4, a = 1.0 }
-	local slingshot = Weapon.new(SLING_SHOT, 20, 5, 1.6, 1, 380, Weapon.slowProjectileAttack, color)
-	local idlePath = "assets/sprites/weapons/slingshot/slingshot.png"
-	local quadSize = { width = 64, height = 64 }
-	local idleAnimation = newAnimation(idlePath, 1, quadSize, 1, true, 1, quadSize)
-	slingshot.animations[IDLE] = idleAnimation
-	slingshot.spriteSheets[IDLE] = love.graphics.newImage(idlePath)
-	slingshot.spriteSheets[IDLE]:setFilter("nearest", "nearest")
+	-- configurações do ataque
+	local updateFunc = function(dt, atkEvent)
+		atkEvent:baseUpdate(dt)
+	end
+	local onHitFunc = function(atkEvent, target)
+		print("Estilingue acertou um " .. target.type .. " por " .. atkEvent.dmg .. " de dano!")
+		target.hp = target.hp - atkEvent.dmg
+	end
+	local baseAtkSettings = newBaseAtkSetting(true, 15, 1.5, Circle.new(200))
+	local atkSettings = newProjectileAtkSetting(baseAtkSettings, 10, 1, 0, 2)
+	local atkAnimSettings = newAnimSetting(5, { width = 16, height = 16 }, 0.1, true, 1)
+	local attack = Attack.new("Pebble Shot", atkSettings, atkAnimSettings, updateFunc, onHitFunc)
+
+	-- Inicialicação da arma em si
+	local slingshot = Weapon.new(SLING_SHOT, math.huge, 0.4, attack)
+	local idleAnimSettings = newAnimSetting(2, { width = 64, height = 64 }, 0.5, true, 1)
+	local weaponAtkAnimSettings = newAnimSetting(10, { width = 64, height = 64 }, 0.05, false, 1)
+	slingshot:addAnimations(idleAnimSettings, weaponAtkAnimSettings)
 	return slingshot
 end

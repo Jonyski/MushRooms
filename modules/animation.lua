@@ -69,4 +69,29 @@ function newAnimation(path, length, quadSize, frameDur, looping, loopFrame, fram
 	return Animation.new(frames, frameDur, looping, loopFrame, frameDim)
 end
 
+function newAnimSetting(numFrames, quadSize, frameDur, looping, loopFrame)
+	return {
+		numFrames = numFrames,
+		quadSize = quadSize,
+		frameDur = frameDur,
+		looping = looping,
+		loopFrame = loopFrame,
+	}
+end
+
+function addAnimation(entity, path, action, settings)
+	local animation = newAnimation(
+		path,
+		settings.numFrames,
+		settings.quadSize,
+		settings.frameDur,
+		settings.looping,
+		settings.loopFrame,
+		settings.quadSize
+	)
+	entity.animations[action] = animation
+	entity.spriteSheets[action] = love.graphics.newImage(path)
+	entity.spriteSheets[action]:setFilter("nearest", "nearest")
+end
+
 return Animation

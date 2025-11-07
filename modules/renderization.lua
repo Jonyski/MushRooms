@@ -38,13 +38,18 @@ function renderEntities(camera)
 		})
 		if p.weapon then
 			local w = p.weapon
-			local offsetY = (w.rotation/math.pi < -1 or w.rotation/math.pi > 0) and 2 or -2
+			local offsetY = (w.rotation / math.pi < -1 or w.rotation / math.pi > 0) and 2 or -2
 			table.insert(drawList, {
 				y = p.pos.y + offsetY, -- mesma altura do jogador, mas deslocado para frente ou para trás
 				draw = function()
-					w:draw(camera, p)
+					w:draw(camera)
 				end,
 			})
+		end
+		for _, w in pairs(p.weapons) do
+			for _, e in pairs(w.atk.events) do
+				e:draw(camera)
+			end
 		end
 	end
 

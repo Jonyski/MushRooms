@@ -33,23 +33,23 @@ function Player.new(id, name, spawn_pos, controls, colors, room)
 	local player = setmetatable({}, Player)
 
 	-- atributos que variam
-	player.id = id                         -- número do jogador
-	player.name = name                     -- nome do jogador
-	player.pos = spawn_pos                 -- posição do jogador (inicializa para a posição do spawn)
-	player.controls =
-	controls                               -- os comandos para controlar o boneco, no formato {up = "", left = "", down = "", right = "", action = ""}
-	player.colors = colors                 -- paleta de cores do jogador
-	player.room = room                     -- sala na qual o jogador está atualmente
+	player.id = id -- número do jogador
+	player.name = name -- nome do jogador
+	player.hp = 10 -- pontos de vida
+	player.pos = spawn_pos -- posição do jogador (inicializa para a posição do spawn)
+	player.controls = controls -- os comandos para controlar o boneco, no formato {up = "", left = "", down = "", right = "", action = ""}
+	player.colors = colors -- paleta de cores do jogador
+	player.room = room -- sala na qual o jogador está atualmente
 	-- atributos fixos na instanciação
-	player.vel = 280                       -- velocidade em pixels por segundo
+	player.vel = 280 -- velocidade em pixels por segundo
 	player.size = { height = 32, width = 32 } -- em pixels
-	player.movementVec = { x = 0, y = 0 }  -- vetor de direção e magnitude do movimento do jogador
-	player.state = IDLE                    -- define o estado atual do jogador, estreitamente relacionado às animações
-	player.spriteSheets = {}               -- no tipo imagem do love
-	player.animations = {}                 -- as chaves são estados e os valores são Animações
-	player.particles = {}                  -- efeitos de partícula emitidos pelo player
-	player.weapons = {}                    -- lista das armas que o jogador possui
-	player.weapon = nil                    -- arma equipada
+	player.movementVec = { x = 0, y = 0 } -- vetor de direção e magnitude do movimento do jogador
+	player.state = IDLE -- define o estado atual do jogador, estreitamente relacionado às animações
+	player.spriteSheets = {} -- no tipo imagem do love
+	player.animations = {} -- as chaves são estados e os valores são Animações
+	player.particles = {} -- efeitos de partícula emitidos pelo player
+	player.weapons = {} -- lista das armas que o jogador possui
+	player.weapon = nil -- arma equipada
 	return player
 end
 
@@ -69,7 +69,7 @@ function Player:addAnimations()
 end
 
 function Player:addAnimation(action, numFrames, frameDur, looping, loopFrame)
-	local path = "assets/animations/players/" .. string.lower(self.name) .. "/" .. action:gsub(" ", "_") .. ".png"
+	local path = pngPathFormat({ "assets", "animations", "players", self.name, action })
 	local quadSize = { width = 32, height = 32 }
 	local animation = newAnimation(path, numFrames, quadSize, frameDur, looping, loopFrame, quadSize)
 	self.animations[action] = animation
@@ -80,6 +80,20 @@ end
 function Player:addParticles()
 	-- Efeito de partícula do player se defendendo
 	self.particles[DEFENDING] = newDefenseParticles(self.colors[1], self.colors[3])
+end
+
+function Player:update(dt)
+	self:move(dt)
+	self.animations[self.state]:update(dt)
+	for _, w in pairs(self.weapons) do
+		-- atualizando a animação da arma equipada
+		if w == self.weapon then
+			self.weapon.animations[self.weapon.state]:update(dt)
+		end
+		w:update(dt)
+	end
+	self:updateState()
+	self:updateParticles(dt)
 end
 
 function Player:move(dt)
@@ -188,7 +202,7 @@ end
 function Player:checkAction2(key)
 	if key == self.controls.act2 and self.movementVec.x ~= 0 then
 		local len = #self.weapons
-		if len <= 1 then 
+		if len <= 1 then
 			return
 		end
 
@@ -196,32 +210,35 @@ function Player:checkAction2(key)
 		local nextIndex = indexWeapon
 
 		-- caminha ciclicamente entre as armas
-		if self.movementVec.x < 0 then
+		if self.movementVec.x > 0 then
 			nextIndex = (indexWeapon % len) + 1
 		else
 			nextIndex = ((indexWeapon - 2 + len) % len) + 1
 		end
 
-		self:equipWeapon(self.weapons[nextIndex].type)
+		self:equipWeapon(self.weapons[nextIndex].name)
 	end
 end
 
 function Player:collectWeapon(weapon)
 	table.insert(self.weapons, weapon)
+	weapon.owner = self
 end
 
-function Player:equipWeapon(weapon)
+function Player:equipWeapon(weaponName)
 	-- itera pelas armas do jogador procurando pela que ele quer equipar
 	for _, w in pairs(self.weapons) do
-		if w.type == weapon then
+		if w.name == weaponName then
 			self.weapon = w
 		end
 	end
 end
 
 function Player:attack()
-	if self.weapon then
-		self.weapon:attack()
+	if self.weapon and self.weapon.canShoot then
+		self.weapon.atk:attack(self, self.pos, self.weapon.rotation)
+		self.weapon.canShoot = false
+		self.weapon.state = ATTACKING
 	end
 end
 

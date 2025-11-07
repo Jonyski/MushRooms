@@ -75,3 +75,8 @@ function clamp(x, a, b)
 	end
 	return x
 end
+
+-- Função de interpolação linear
+function lerp(a, b, t)
+	return a + (b - a) * t
+end

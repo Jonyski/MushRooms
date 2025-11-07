@@ -28,11 +28,26 @@ function love.keypressed(key, scancode, isrepeat)
 	if key == "n" then
 		newPlayer()
 	end
+	-- q faz a câmera 1 tremer (teste)
+	if key == "c" then
+		cameras[1]:shake(20, 1)
+	end
+	-- z dá zoom na câmera 1 (teste)
+	if key == "z" then
+		cameras[1].targetZoom = 2
+	end
+
 	if not isrepeat then
 		for _, p in pairs(players) do
 			p:checkAction1(key)
 			p:checkAction2(key)
 		end
+	end
+end
+
+function love.keyreleased(key)
+	if key == "z" then
+		cameras[1].targetZoom = 1
 	end
 end
 
@@ -84,8 +99,9 @@ function love.update(dt)
 		p:updateState()
 		p:updateParticles(dt)
 	end
+
 	for _, c in pairs(cameras) do
-		c:updatePosition()
+		c:updatePosition(dt)
 	end
 
 	-- trecho de debug de inimigos ----------------------------

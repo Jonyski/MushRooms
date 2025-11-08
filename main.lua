@@ -84,7 +84,7 @@ function love.load()
 	----------------------------------------------------
 	-- criação de objetos para debugging
 	newDestructible("barrel", { x = 100, y = 0 }, rooms[0][0])
-	newDestructible("sign", { x = 200, y = 0 }, rooms[0][0])
+	newDestructible("jar", { x = 200, y = 0 }, rooms[0][0])
 	newDestructible("jar", { x = 300, y = 0 }, rooms[0][0])
 	newDestructible("barrel", { x = 400, y = 0 }, rooms[0][0])
 	newDestructible("barrel", { x = 600, y = 0 }, rooms[0][0])

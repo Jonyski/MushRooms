@@ -57,7 +57,7 @@ end
 
 function checkCircleRectCollision(circle, rect)
     local rectCenter = vec(rect.pos.x + rect.shape.half_w, rect.pos.y + rect.shape.half_h)
-    local dist = vec(abs(circle.pos.x - rectCenter.x), abs(circle.pos.y - rectCenter.y))
+    local dist = vec(math.abs(circle.pos.x - rectCenter.x), math.abs(circle.pos.y - rectCenter.y))
     if dist.x > (rect.shape.half_w + circle.shape.radius) or dist.y > (rect.shape.half_w + circle.shape.radius) then
         return false
     end
@@ -65,7 +65,7 @@ function checkCircleRectCollision(circle, rect)
         return true
     end
     local cornerDist = math.pow(dist.x - rect.shape.half_w, 2) + math.pow(dist.y - rect.shape.half_h, 2)
-    return cornerDist <= pow(circle.shape.radius, 2)
+    return cornerDist <= math.pow(circle.shape.radius, 2)
 end
 
 function checkCircleLineCollision(circle, line)
@@ -82,8 +82,8 @@ function checkCircleLineCollision(circle, line)
     end
     local distX = closestX - circle.pos.x
     local distY = closestY - circle.pos.y
-    local dist = pow(distX, 2) + pow(distY, 2)
-    if dist <= pow(circle.shape.radius, 2) then
+    local dist = distX ^ 2 + distY ^ 2
+    if dist <= circle.shape.radius ^ 2 then
         return true
     end
     return false

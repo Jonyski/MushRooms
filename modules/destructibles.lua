@@ -44,19 +44,18 @@ end
 -- Animações
 ----------------------------------------
 function Destructible:addAnimations()
-  
-  self:addAnimation(INTACT, 1, 1, true)
-  self:addAnimation(BREAKING, 7, 0.1, false)
-  self:addAnimation(BROKEN, 1, 1, true)
+    self:addAnimation(INTACT, 1, 1, true)
+    self:addAnimation(BREAKING, 7, 0.05, false)
+    self:addAnimation(BROKEN, 1, 1, true)
 end
 
 function Destructible:addAnimation(state, numFrames, frameDur, looping)
-  local path = "assets/animations/destructibles/" .. string.lower(self.type) .. "/" .. state:gsub(" ", "_") .. ".png"
-  local quadSize = { width = self.size.width, height = self.size.height }
-  local animation = newAnimation(path, numFrames, quadSize, frameDur, looping, 1, quadSize)
-  self.animations[state] = animation
-  self.spriteSheets[state] = love.graphics.newImage(path)
-  self.spriteSheets[state]:setFilter("nearest", "nearest")
+    local path = pngPathFormat({ "assets", "animations", "destructibles", self.type, state })
+    local quadSize = { width = self.size.width, height = self.size.height }
+    local animation = newAnimation(path, numFrames, quadSize, frameDur, looping, 1, quadSize)
+    self.animations[state] = animation
+    self.spriteSheets[state] = love.graphics.newImage(path)
+    self.spriteSheets[state]:setFilter("nearest", "nearest")
 end
 
 ----------------------------------------

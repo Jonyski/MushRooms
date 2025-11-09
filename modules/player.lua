@@ -230,8 +230,15 @@ function Player:checkAction2(key)
 end
 
 function Player:collectWeapon(weapon)
+	-- previne de pegar a mesma arma novamente
+	if self:hasWeapon(weapon.name) then
+		return false
+	end
+
 	table.insert(self.weapons, weapon)
 	weapon.owner = self
+
+	return true
 end
 
 function Player:equipWeapon(weaponName)
@@ -241,6 +248,16 @@ function Player:equipWeapon(weaponName)
 			self.weapon = w
 		end
 	end
+end
+
+function Player:hasWeapon(weaponName)
+	for _, w in pairs(self.weapons) do
+		if w.name == weaponName then
+			return true
+		end
+	end
+
+	return false
 end
 
 function Player:attack()

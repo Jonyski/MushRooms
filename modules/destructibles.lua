@@ -18,7 +18,7 @@ BROKEN = "broken"
 ----------------------------------------
 LOOT_TABLE = {
 	["barrel"] = {
-		{ item = "slingshot", chance = 1.0, amount = 1, pickupType = "manual" },
+		{ item = "coin", chance = 0.5, amount = {1, 4}, pickupType = "auto" },
 	},
 
 	["jar"] = {
@@ -115,8 +115,8 @@ end
 ----------------------------------------
 -- Função global auxiliar
 ----------------------------------------
-function newDestructible(typeName, pos, room)
-    return Destructible.new(typeName, pos, room)
+function newDestructible(typeName, pos, room, loot)
+    return Destructible.new(typeName, pos, room, loot)
 end
 
 function rollLoot(object, pos)

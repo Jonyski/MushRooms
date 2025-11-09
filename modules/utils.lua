@@ -44,6 +44,49 @@ function BiList:insert(index, el)
 	self.length = self.length + 1
 end
 
+-------------------------------------------------
+--- Tabela Set: não armazena valores duplicados
+-------------------------------------------------
+Set = {}
+Set.__index = Set
+
+function Set.new()
+	local set = setmetatable({__data = {}}, Set)
+	return set
+end
+
+function Set:add(key, value)
+	self.__data[key] = value
+end
+
+function Set:remove(key)
+	self.__data[key] = nil
+end
+
+function Set:has(key)
+	return self.__data[key] ~= nil
+end
+
+function Set:get(key)
+	return self.__data[key]
+end
+
+function Set:size()
+	local count = 0
+	for _, _ in pairs(self.__data) do
+		count = count + 1
+	end
+	return count
+end
+
+function Set:iter()
+    local k, v
+    return function()
+			k, v = next(self.__data, k)
+			return k, v
+    end
+end
+
 ----------------------------------------
 -- Funções Utilitárias
 ----------------------------------------

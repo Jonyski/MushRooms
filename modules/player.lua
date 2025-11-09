@@ -271,8 +271,9 @@ end
 function Player:checkColisions()
 	for _, d in pairs(self.room.destructibles) do
 		local dist = dist(self.pos, d.pos)
-		if d.state == INTACT and dist < (self.size.width / 2 + d.size.width / 2) then
-			d:breakApart()
+
+		if d.state == INTACT and dist < 50 then
+			d:damage(d.health) -- destrói o objeto instantaneamente
 		end
 	end
 end
@@ -301,8 +302,7 @@ function newPlayer()
 	end
 
 	if #players == 0 then
-		-- o +365 e +350 são números mágicos para centralizar o player 1 na sala inicial
-		local firstSpawnPoint = { x = window.width / 2 + 365, y = window.height / 2 + 350 }
+		local firstSpawnPoint = { x = rooms[0][0].center.x, y = rooms[0][0].center.y }
 		player1 = Player.new(
 			1,
 			"Mush",

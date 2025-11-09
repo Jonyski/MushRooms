@@ -53,7 +53,7 @@ end
 
 -- retorna o tamanho/módulo de um vetor
 function lenVec(v)
-	return math.sqrt(math.pow(v.x, 2) + math.pow(v.y, 2))
+	return math.sqrt(v.x^2 + v.y^2)
 end
 
 -- retorna a distância de dois entre dois vetores

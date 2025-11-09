@@ -10,6 +10,7 @@ require("modules/animation")
 require("modules/enemy")
 require("modules/weapon")
 require("modules/destructibles")
+require("modules/items")
 
 ----------------------------------------
 -- Variáveis Globais
@@ -104,6 +105,19 @@ function love.update(dt)
 
 	for _, c in pairs(cameras) do
 		c:updatePosition(dt)
+	end
+
+	for _, r in activeRooms:iter() do
+		-- atualiza destrutíveis
+		for _, d in pairs(r.destructibles) do
+			d:update(dt)
+		end
+
+		-- atualiza items
+		for _, item in pairs(r.items) do
+			item:checkPickup(players) -- trocar isso quando houver colisão
+			item:update(dt)
+		end
 	end
 
 	-- trecho de debug de inimigos ----------------------------

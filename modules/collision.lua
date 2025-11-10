@@ -64,8 +64,8 @@ function checkCircleRectCollision(circle, rect)
     if dist.x <= rect.shape.half_w or dist.y <= rect.shape.half_h then
         return true
     end
-    local cornerDist = math.pow(dist.x - rect.shape.half_w, 2) + math.pow(dist.y - rect.shape.half_h, 2)
-    return cornerDist <= math.pow(circle.shape.radius, 2)
+    local cornerDist = (dist.x - rect.shape.half_w)^2 + (dist.y - rect.shape.half_h)^2
+    return cornerDist <= (circle.shape.radius)^2
 end
 
 function checkCircleLineCollision(circle, line)

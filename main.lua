@@ -10,6 +10,7 @@ require("modules/animation")
 require("modules/enemy")
 require("modules/weapon")
 require("modules/destructibles")
+require("modules/items")
 
 ----------------------------------------
 -- Variáveis Globais
@@ -77,17 +78,18 @@ function love.load()
 	createInitialRooms()
 	newPlayer()
 
-	-- bloco de teste de armas -------------------------
-	players[1]:collectWeapon(newWeapon(SLING_SHOT))
-	players[1]:collectWeapon(newWeapon(KATANA))
-	players[1]:equipWeapon(SLING_SHOT)
 	----------------------------------------------------
 	-- criação de objetos para debugging
-	newDestructible("barrel", { x = 100, y = 0 }, rooms[0][0])
 	newDestructible("jar", { x = 200, y = 0 }, rooms[0][0])
 	newDestructible("jar", { x = 300, y = 0 }, rooms[0][0])
-	newDestructible("barrel", { x = 400, y = 0 }, rooms[0][0])
-	newDestructible("barrel", { x = 600, y = 0 }, rooms[0][0])
+	newDestructible("jar", { x = 400, y = 0 }, rooms[0][0])
+	newDestructible("jar", { x = 200, y = -100 }, rooms[0][0])
+	newDestructible("jar", { x = 300, y = -100 }, rooms[0][0])
+	newDestructible("jar", { x = 400, y = -100 }, rooms[0][0])
+
+	newDestructible("barrel", { x = -200, y = 0 }, rooms[0][0], {{ item = "slingshot", chance = 1.0, amount = 1, pickupType = "manual" }})
+	newDestructible("barrel", { x = -300, y = 0 }, rooms[0][0], {{ item = "katana", chance = 1.0, amount = 1, pickupType = "manual" }})
+	newDestructible("barrel", { x = -400, y = 0 }, rooms[0][0])
 	------------------------------------------------------
 
 	-- métodos de estado do love
@@ -106,9 +108,24 @@ function love.update(dt)
 		c:updatePosition(dt)
 	end
 
+	for _, r in activeRooms:iter() do
+		-- atualiza destrutíveis
+		for _, d in pairs(r.destructibles) do
+			d:update(dt)
+		end
+
+		-- atualiza items
+		for _, item in pairs(r.items) do
+			item:checkPickup(players) -- trocar isso quando houver colisão
+			item:update(dt)
+		end
+	end
+
 	-- trecho de debug de inimigos ----------------------------
+	local spawnEnemies = false
+
 	sec_timer.curr = sec_timer.curr + dt
-	if sec_timer.curr - sec_timer.prev >= 1 then
+	if spawnEnemies and sec_timer.curr - sec_timer.prev >= 1 then
 		sec_timer.prev = sec_timer.prev + 1
 		local r = math.random()
 		local randSpawnPos = {

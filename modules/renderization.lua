@@ -28,6 +28,28 @@ end
 function renderEntities(camera)
 	local drawList = {}
 
+	for _, r in activeRooms:iter() do
+		-- Adiciona destrutíveis
+		for _, d in pairs(r.destructibles) do
+			table.insert(drawList, {
+				y = d.pos.y,
+				draw = function()
+					d:draw(camera)
+				end,
+			})
+		end
+
+		-- Adiciona items
+		for _, i in pairs(r.items) do
+			table.insert(drawList, {
+				y = i.floorY,
+				draw = function()
+					i:draw(camera)
+				end,
+			})
+		end
+	end
+
 	-- Adiciona jogadores e suas possíveis armas
 	for _, p in pairs(players) do
 		table.insert(drawList, {
@@ -44,15 +66,6 @@ function renderEntities(camera)
 				y = p.pos.y + offsetY, -- mesma altura do jogador, mas deslocado para frente ou para trás
 				draw = function()
 					w:draw(camera)
-				end,
-			})
-		end
-
-		for _, d in pairs(p.room.destructibles) do
-			table.insert(drawList, {
-				y = d.pos.y,
-				draw = function()
-					d:draw(camera)
 				end,
 			})
 		end
@@ -80,7 +93,7 @@ function renderEntities(camera)
 	end)
 
 	-- Desenha na ordem correta
-	for _, item in ipairs(drawList) do
-		item.draw()
+	for _, obj in ipairs(drawList) do
+		obj.draw()
 	end
 end

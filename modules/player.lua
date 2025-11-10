@@ -95,11 +95,6 @@ function Player:update(dt)
 	self:updateState()
 	self:updateParticles(dt)
 	self:checkColisions()
-
-	-- atualização de destrutíveis ----------------------------
-	for _, d in pairs(self.room.destructibles) do
-		d:update(dt)
-	end
 end
 
 function Player:move(dt)
@@ -142,6 +137,7 @@ end
 function Player:updateRoom()
 	local roomX = self.room.pos.x
 	local roomY = self.room.pos.y
+	local prevRoom = self.room
 
 	-- o jogador foi para a sala à esquerda
 	if self.pos.x < self.room.hitbox.p1.x then
@@ -160,7 +156,14 @@ function Player:updateRoom()
 		self.room = rooms[roomY + 1][roomX]
 	end
 
-	self.room:setExplored()
+	-- se mudou de sala, se retira dela e entra na próxima
+	if prevRoom ~= self.room then
+		prevRoom.playersInRoom:remove(self.id)
+		prevRoom:verifyIsEmpty()
+
+		self.room:setExplored()
+		self.room:visit(self)
+	end
 end
 
 function Player:updateState()
@@ -227,8 +230,15 @@ function Player:checkAction2(key)
 end
 
 function Player:collectWeapon(weapon)
+	-- previne de pegar a mesma arma novamente
+	if self:hasWeapon(weapon.name) then
+		return false
+	end
+
 	table.insert(self.weapons, weapon)
 	weapon.owner = self
+
+	return true
 end
 
 function Player:equipWeapon(weaponName)
@@ -238,6 +248,16 @@ function Player:equipWeapon(weaponName)
 			self.weapon = w
 		end
 	end
+end
+
+function Player:hasWeapon(weaponName)
+	for _, w in pairs(self.weapons) do
+		if w.name == weaponName then
+			return true
+		end
+	end
+
+	return false
 end
 
 function Player:attack()
@@ -251,8 +271,9 @@ end
 function Player:checkColisions()
 	for _, d in pairs(self.room.destructibles) do
 		local dist = dist(self.pos, d.pos)
-		if d.state == INTACT and dist < (self.size.width / 2 + d.size.width / 2) then
-			d:breakApart()
+
+		if d.state == INTACT and dist < 50 then
+			d:damage(d.health) -- destrói o objeto instantaneamente
 		end
 	end
 end
@@ -281,8 +302,7 @@ function newPlayer()
 	end
 
 	if #players == 0 then
-		-- o +365 e +350 são números mágicos para centralizar o player 1 na sala inicial
-		local firstSpawnPoint = { x = window.width / 2 + 365, y = window.height / 2 + 350 }
+		local firstSpawnPoint = { x = rooms[0][0].center.x, y = rooms[0][0].center.y }
 		player1 = Player.new(
 			1,
 			"Mush",
@@ -293,6 +313,7 @@ function newPlayer()
 		)
 		player1:addAnimations()
 		player1:addParticles()
+		player1.room:visit(player1)
 		table.insert(players, player1)
 	elseif #players == 1 then
 		player2 = Player.new(
@@ -305,6 +326,7 @@ function newPlayer()
 		)
 		player2:addAnimations()
 		player2:addParticles()
+		player2.room:visit(player2)
 		table.insert(players, player2)
 	elseif #players == 2 then
 		player3 = Player.new(
@@ -317,6 +339,7 @@ function newPlayer()
 		)
 		player3:addAnimations()
 		player3:addParticles()
+		player3.room:visit(player3)
 		table.insert(players, player3)
 	else
 		player4 = Player.new(
@@ -329,6 +352,7 @@ function newPlayer()
 		)
 		player4:addAnimations()
 		player4:addParticles()
+		player4.room:visit(player4)
 		table.insert(players, player4)
 	end
 	newCamera()

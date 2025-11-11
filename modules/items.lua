@@ -106,7 +106,7 @@ end
 function Item:draw(camera)
 	if self.collected then return end
 
-  local scale = 2.5
+  local scale = 3
 	local viewPos = camera:viewPos(self.pos)
 	local offset = {
 		x = self.image:getWidth() / 2,

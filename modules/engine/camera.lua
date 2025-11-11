@@ -1,8 +1,8 @@
 ----------------------------------------
 -- Importações de Módulos
 ----------------------------------------
-require("modules/player")
-require("modules/utils")
+require("modules.entities.player")
+require("modules.utils.utils")
 
 ----------------------------------------
 -- Variáveis
@@ -18,22 +18,22 @@ Camera.__index = Camera
 function Camera.new(pos, viewport, canvas, canvasPos)
 	local camera = setmetatable({}, Camera)
 
-	camera.pos = pos -- posição da camera
+	camera.pos = pos          -- posição da camera
 	camera.viewport = viewport -- tamanho da câmera (o espaço que ela enxerga)
-	camera.canvas = canvas -- canvas associado à câmera
+	camera.canvas = canvas    -- canvas associado à câmera
 	camera.canvasPos = canvasPos -- posição do canvas na tela
 	camera.cx = (pos.x + viewport.width) / 2
 	camera.cy = (pos.y + viewport.height) / 2
 	camera.targetPos = { x = pos.x, y = pos.y } -- onde a câmera deve ir
 	-- atributos fixos na instanciação
-	camera.transitionSpeed = 6 -- controla a suavidade da transição
-	camera.shakeOffset = { x = 0, y = 0 } -- deslocamento atual do shake
-	camera.shakeIntensity = 0 -- intensidade do shake
-	camera.shakeDuration = 0 -- duração total do shake
-	camera.shakeTimer = 0 -- tempo restante do shake
-	camera.zoom = 1 -- zoom atual
-	camera.targetZoom = 1 -- zoom desejado
-	camera.zoomSpeed = 3 -- velocidade da transição
+	camera.transitionSpeed = 6               -- controla a suavidade da transição
+	camera.shakeOffset = { x = 0, y = 0 }    -- deslocamento atual do shake
+	camera.shakeIntensity = 0                -- intensidade do shake
+	camera.shakeDuration = 0                 -- duração total do shake
+	camera.shakeTimer = 0                    -- tempo restante do shake
+	camera.zoom = 1                          -- zoom atual
+	camera.targetZoom = 1                    -- zoom desejado
+	camera.zoomSpeed = 3                     -- velocidade da transição
 
 	return camera
 end
@@ -60,16 +60,10 @@ function Camera:updatePosition(dt)
 		local room = player.room
 
 		-- limita a posição da câmera ao hitbox da sala
-		self.targetPos.x = clamp(
-			player.pos.x - viewportZoomed.width / 2,
-			room.hitbox.p1.x,
-			room.hitbox.p2.x - viewportZoomed.width
-		)
-		self.targetPos.y = clamp(
-			player.pos.y - viewportZoomed.height / 2,
-			room.hitbox.p1.y,
-			room.hitbox.p2.y - viewportZoomed.height
-		)
+		self.targetPos.x =
+			clamp(player.pos.x - viewportZoomed.width / 2, room.hitbox.p1.x, room.hitbox.p2.x - viewportZoomed.width)
+		self.targetPos.y =
+			clamp(player.pos.y - viewportZoomed.height / 2, room.hitbox.p1.y, room.hitbox.p2.y - viewportZoomed.height)
 	end
 
 	-- atualiza shake se estiver ativo
@@ -120,7 +114,7 @@ function Camera:draw()
 	love.graphics.setCanvas(self.canvas)
 	love.graphics.clear(0.0, 0.0, 0.0, 1.0)
 	love.graphics.push()
-	
+
 	-- centraliza o zoom
 	love.graphics.translate(self.viewport.width / 2, self.viewport.height / 2)
 	love.graphics.scale(self.zoom)
@@ -160,9 +154,9 @@ function newCamera()
 			table.insert(cameras, camera)
 		else -- no caso de 4 câmeras
 			local canvasPositions = {
-				{ x = 0, y = 0 },
+				{ x = 0,                y = 0 },
 				{ x = window.width / 2, y = 0 },
-				{ x = 0, y = window.height / 2 },
+				{ x = 0,                y = window.height / 2 },
 				{ x = window.width / 2, y = window.height / 2 },
 			}
 			local camera = Camera.new(

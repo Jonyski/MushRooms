@@ -1,4 +1,4 @@
-require("modules/player")
+require("modules.entities.player")
 require("table")
 
 ----------------------------------------
@@ -14,32 +14,33 @@ enemies = {}
 ----------------------------------------
 Enemy = {}
 Enemy.__index = Enemy
+Enemy.type = "enemy"
 
-function Enemy.new(type, hp, spawnPos, velocity, color, move, attack)
+function Enemy.new(name, hp, spawnPos, velocity, color, move, attack)
 	local enemy = setmetatable({}, Enemy)
 
 	-- atributos que variam
-	enemy.type = type -- nome do tipo de inimigo
-	enemy.hp = hp -- pontos de vida do inimigo
+	enemy.name = name  -- nome do tipo de inimigo
+	enemy.hp = hp      -- pontos de vida do inimigo
 	enemy.pos = spawnPos -- posição do inimigo
 	enemy.vel = velocity -- velocidade de movimento do inimigo
 	enemy.color = color -- cor do inimigo
-	enemy.move = move -- função de movimento do inimigo
+	enemy.move = move  -- função de movimento do inimigo
 	enemy.attack = attack -- função de ataque do inimigo
 	-- atributos fixos na instanciação
 	enemy.size = { height = 32, width = 32 }
 	enemy.cooldown = 0
 	enemy.movementDirections = {} -- tabela com as direções de movimento atualmente ativas
-	enemy.state = IDLE -- define o estado atual do inimigo, estreitamente relacionado às animações
-	enemy.spriteSheets = {} -- no tipo imagem do love
-	enemy.animations = {} -- as chaves são estados e os valores são Animações
+	enemy.state = IDLE         -- define o estado atual do inimigo, estreitamente relacionado às animações
+	enemy.spriteSheets = {}    -- no tipo imagem do love
+	enemy.animations = {}      -- as chaves são estados e os valores são Animações
 
 	return enemy
 end
 
 function Enemy:addAnimations(idleSettings)
 	-- animação idle
-	local path = pngPathFormat({ "assets", "animations", "enemies", self.type, IDLE })
+	local path = pngPathFormat({ "assets", "animations", "enemies", self.name, IDLE })
 	addAnimation(self, path, IDLE, idleSettings)
 	-- TODO: adicionar o resto das animações
 end
@@ -73,7 +74,7 @@ end
 function Enemy:simpleAttack(dt)
 	if self.cooldown <= 0 then
 		if math.abs(self.pos.x - players[1].pos.x) < 75 and math.abs(self.pos.y - players[1].pos.y) < 75 then
-			print(self.type .. " ataca")
+			print(self.name .. " ataca")
 			self.cooldown = 3
 			return
 		end
@@ -98,10 +99,10 @@ end
 ----------------------------------------
 -- Construtores
 ----------------------------------------
-function newEnemy(type, spawnPos)
-	if type == NUCLEAR_CAT then
+function newEnemy(name, spawnPos)
+	if name == NUCLEAR_CAT then
 		newNuclearCat(spawnPos)
-	elseif type == SPIDER_DUCK then
+	elseif name == SPIDER_DUCK then
 		newSpiderDuck(spawnPos)
 	end
 end

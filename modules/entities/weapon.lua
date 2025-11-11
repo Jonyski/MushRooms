@@ -1,9 +1,9 @@
 ----------------------------------------
 -- Importações de Módulos
 ----------------------------------------
-require("modules/attacks")
-require("modules/shapes")
-require("modules/animation")
+require("modules.systems.attacks")
+require("modules.utils.shapes")
+require("modules.engine.animation")
 
 ----------------------------------------
 -- Variáveis e Enums
@@ -16,6 +16,7 @@ SLING_SHOT = "Sling Shot"
 ----------------------------------------
 Weapon = {}
 Weapon.__index = Weapon
+Weapon.type = "weapon"
 
 function Weapon.new(name, ammo, cooldown, attack)
 	local weapon = setmetatable({}, Weapon)

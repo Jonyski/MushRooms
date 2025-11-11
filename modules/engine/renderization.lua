@@ -1,4 +1,4 @@
-require("modules/camera")
+require("modules.engine.camera")
 
 ----------------------------------------
 -- Funções Globais

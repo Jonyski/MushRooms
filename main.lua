@@ -2,15 +2,15 @@
 -- Importações de Módulos
 ----------------------------------------
 require("table")
-require("modules/room")
-require("modules/renderization")
-require("modules/player")
-require("modules/camera")
-require("modules/animation")
-require("modules/enemy")
-require("modules/weapon")
-require("modules/destructibles")
-require("modules/items")
+require("modules.entities.room")
+require("modules.engine.renderization")
+require("modules.entities.player")
+require("modules.engine.camera")
+require("modules.engine.animation")
+require("modules.entities.enemy")
+require("modules.entities.weapon")
+require("modules.entities.destructibles")
+require("modules.entities.items")
 
 ----------------------------------------
 -- Variáveis Globais
@@ -87,8 +87,18 @@ function love.load()
 	newDestructible("jar", { x = 300, y = -100 }, rooms[0][0])
 	newDestructible("jar", { x = 400, y = -100 }, rooms[0][0])
 
-	newDestructible("barrel", { x = -200, y = 0 }, rooms[0][0], {{ item = "slingshot", chance = 1.0, amount = 1, pickupType = "manual" }})
-	newDestructible("barrel", { x = -300, y = 0 }, rooms[0][0], {{ item = "katana", chance = 1.0, amount = 1, pickupType = "manual" }})
+	newDestructible(
+		"barrel",
+		{ x = -200, y = 0 },
+		rooms[0][0],
+		{ { item = "slingshot", chance = 1.0, amount = 1, pickupType = "manual" } }
+	)
+	newDestructible(
+		"barrel",
+		{ x = -300, y = 0 },
+		rooms[0][0],
+		{ { item = "katana", chance = 1.0, amount = 1, pickupType = "manual" } }
+	)
 	newDestructible("barrel", { x = -400, y = 0 }, rooms[0][0])
 	------------------------------------------------------
 

@@ -135,7 +135,7 @@ function Item:checkPickup(players)
 		if distance < self.radius then
 			anyPlayerNear = true
 
-			if self.pickupType == "auto" then
+			if self.pickupType == "auto" and distance < self.radius/2 then
 				self:collect(player)
 				return
 

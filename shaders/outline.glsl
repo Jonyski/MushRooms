@@ -9,7 +9,7 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) 
   // percorre vizinhança para detectar borda
   for (float x = -thickness; x <= thickness; x++) {
       for (float y = -thickness; y <= thickness; y++) {
-        if (sqrt(pow(abs(x), 2) + pow(abs(y), 2)) > thickness) continue; // arredonda
+        // if (sqrt(pow(abs(x), 2) + pow(abs(y), 2)) > thickness) continue; // arredonda
 
         // pegamos quem é o maior alpha: se é do próprio pixel ou do vizinho
         vec2 offset = vec2(x, y) / love_ScreenSize.xy;

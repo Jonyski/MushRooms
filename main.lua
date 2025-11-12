@@ -70,6 +70,7 @@ end
 -- Inicialização
 ----------------------------------------
 function love.load()
+	math.randomseed(os.time())
 	window.width = 800
 	window.height = 800
 	window.cx = 400 -- centro no eixo x

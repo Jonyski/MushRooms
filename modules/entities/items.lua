@@ -66,14 +66,14 @@ function Item:move(dt)
 end
 
 function Item:updateShine()
+	local anyPlayerNearby = false
 	for _, p in pairs(players) do
 		local d = dist(self.pos, p.pos)
 		if d <= self.radius then
-			self.shine = true
-		else
-			self.shine = false
+			anyPlayerNearby = true
 		end
 	end
+	self.shine = anyPlayerNearby
 end
 
 ----------------------------------------
@@ -84,7 +84,7 @@ function Item:draw(camera)
 		return
 	end
 
-	local scale = 2.5
+	local scale = 3
 	local viewPos = camera:viewPos(self.pos)
 	local offset = {
 		x = self.image:getWidth() / 2,

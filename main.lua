@@ -80,26 +80,15 @@ function love.load()
 
 	----------------------------------------------------
 	-- criação de objetos para debugging
-	newDestructible("jar", { x = 200, y = 0 }, rooms[0][0])
-	newDestructible("jar", { x = 300, y = 0 }, rooms[0][0])
-	newDestructible("jar", { x = 400, y = 0 }, rooms[0][0])
-	newDestructible("jar", { x = 200, y = -100 }, rooms[0][0])
-	newDestructible("jar", { x = 300, y = -100 }, rooms[0][0])
-	newDestructible("jar", { x = 400, y = -100 }, rooms[0][0])
-
-	newDestructible(
-		"barrel",
-		{ x = -200, y = 0 },
-		rooms[0][0],
-		{ { item = "slingshot", chance = 1.0, amount = 1, pickupType = "manual" } }
-	)
-	newDestructible(
-		"barrel",
-		{ x = -300, y = 0 },
-		rooms[0][0],
-		{ { item = "katana", chance = 1.0, amount = 1, pickupType = "manual" } }
-	)
-	newDestructible("barrel", { x = -400, y = 0 }, rooms[0][0])
+	Destructible.new("jar", { x = 200, y = 0 }, rooms[0][0])
+	Destructible.new("jar", { x = 300, y = 0 }, rooms[0][0])
+	Destructible.new("jar", { x = 400, y = 0 }, rooms[0][0])
+	Destructible.new("jar", { x = 200, y = -100 }, rooms[0][0])
+	Destructible.new("jar", { x = 300, y = -100 }, rooms[0][0])
+	Destructible.new("jar", { x = 400, y = -100 }, rooms[0][0])
+	Destructible.new("barrel", { x = -400, y = 0 }, rooms[0][0])
+	Destructible.new("barrel", { x = -200, y = 0 }, rooms[0][0], Loot.new(newSlingShot(), 1.0, range(1, 1), false))
+	Destructible.new("barrel", { x = -300, y = 0 }, rooms[0][0], Loot.new(newKatana(), 1.0, range(1, 1), false))
 	------------------------------------------------------
 
 	-- métodos de estado do love
@@ -126,7 +115,6 @@ function love.update(dt)
 
 		-- atualiza items
 		for _, item in pairs(r.items) do
-			item:checkPickup(players) -- trocar isso quando houver colisão
 			item:update(dt)
 		end
 	end

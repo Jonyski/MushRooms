@@ -96,7 +96,7 @@ function Player:update(dt)
 	end
 	self:updateState()
 	self:updateParticles(dt)
-	self:checkColisions()
+	self:checkCollisions()
 end
 
 function Player:move(dt)
@@ -236,10 +236,8 @@ function Player:collectWeapon(weapon)
 	if self:hasWeapon(weapon.name) then
 		return false
 	end
-
 	table.insert(self.weapons, weapon)
 	weapon.owner = self
-
 	return true
 end
 
@@ -270,13 +268,52 @@ function Player:attack()
 	end
 end
 
-function Player:checkColisions()
+function Player:collectCoin()
+	print("moedinhaaa")
+	return true
+end
+
+function Player:collectItem(item)
+	local result = false
+	if item.object.type == "weapon" then
+		result = self:collectWeapon(item.object)
+		if result then
+			self:equipWeapon(item.object.name)
+		end
+	elseif item.object.type == "coin" then
+		result = self:collectCoin()
+	end
+	if result then
+		item:setCollected()
+	end
+end
+
+function Player:checkCollisions()
+	-- TODO: Mover toda lógica de colisão para um detector de colisões centralizado
+
+	-- colisão com destrutíveis
 	for _, d in pairs(self.room.destructibles) do
 		local dist = dist(self.pos, d.pos)
-
 		if d.state == INTACT and dist < 50 then
 			d:damage(d.health) -- destrói o objeto instantaneamente
 		end
+	end
+	-- colisão com itens
+	for _, item in pairs(self.room.items) do
+		if item.collected or not nullVec(item.vel) then
+			goto nextitem
+		end
+		local distance = dist(self.pos, item.pos)
+		if distance < item.radius then
+			if item.autoPick then
+				self:collectItem(item)
+				return
+			elseif not item.autoPick and love.keyboard.isDown(self.controls.act2) then
+				self:collectItem(item)
+				return
+			end
+		end
+		::nextitem::
 	end
 end
 

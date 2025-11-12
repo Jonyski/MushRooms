@@ -3,6 +3,7 @@
 ----------------------------------------
 require("modules.engine.animation")
 require("modules.utils.utils")
+require("modules.systems.loots")
 require("table")
 
 ----------------------------------------
@@ -12,19 +13,6 @@ require("table")
 INTACT = "intact"
 BREAKING = "breaking"
 BROKEN = "broken"
-
-----------------------------------------
--- Tabela de loot: quais drops cada tipo de objeto pode gerar
-----------------------------------------
-LOOT_TABLE = {
-    ["barrel"] = {
-        { item = "coin", chance = 0.5, amount = { 1, 4 }, pickupType = "auto" },
-    },
-
-    ["jar"] = {
-        { item = "coin", chance = 0.5, amount = { 1, 4 }, pickupType = "auto" },
-    },
-}
 
 ----------------------------------------
 -- Classe Destructible
@@ -43,7 +31,7 @@ function Destructible.new(name, pos, room, loot)
     obj.health = 100                                                -- vida para ser destruído
     obj.spriteSheets = {}
     obj.animations = {}
-    obj.loot = loot or LOOT_TABLE[name] or {} -- pode ser sobrescrito na criação
+    obj.loot = loot or LOOT_TABLE[name] or Loot.new() -- pode ser sobrescrito na criação
 
     obj:addAnimations()
     table.insert(room.destructibles, obj)
@@ -85,8 +73,7 @@ end
 
 function Destructible:breakApart()
     self.state = BREAKING
-    rollLoot(self, self.pos) -- gera (ou não) loot ao quebrar
-
+    self:spawnLoot()
     local anim = self.animations[BREAKING]
     anim.onFinish = function()
         self.state = BROKEN
@@ -114,37 +101,18 @@ function Destructible:draw(camera)
     love.graphics.draw(self.spriteSheets[self.state], quad, viewPos.x, viewPos.y, 0, 3, 3, offset.x, offset.y)
 end
 
-----------------------------------------
--- Função global auxiliar
-----------------------------------------
-function newDestructible(name, pos, room, loot)
-    return Destructible.new(name, pos, room, loot)
-end
-
-function rollLoot(object, pos)
-    local lootTable = object.loot
-    if not lootTable then
+function Destructible:spawnLoot()
+    local loot = self.loot
+    if not loot or loot.len == 0 then
         return
-    end -- retorna se não há nenhum loot definido
-
-    for _, loot in pairs(lootTable) do
-        if math.random() < loot.chance then
-            local amount = loot.amount -- pode ser um número ou um table
-            if type(amount) == "table" then
-                -- se for um table, sorteia um valor entre amount[1] e amount[2]
-                amount = math.random(amount[1], amount[2])
-            end
-
-            for i = 1, amount do
-                -- items são criados a partir do centro da sala
-                -- logo, é necessário converter 'pos' (absoluta) para relativa
-                local itemPos = subVec(pos, object.room.center)
-
-                local item = newItem(loot.item, {
-                    x = itemPos.x,
-                    y = itemPos.y,
-                }, object.room, loot.pickupType, math.random(-20, 20))
-
+    end
+    for i = 1, loot.len do
+        local el = loot[i] -- elemento do loot
+        if math.random() < el.chance then
+            local amount = math.random(el.amountRange.min, el.amountRange.max)
+            for j = 1, amount do
+                local itemPos = subVec(self.pos, self.room.center)
+                local item = newItem(el.object, itemPos, self.room, el.autoPick, math.random(-20, 20))
                 item:applyImpulse(math.random(-100, 100), -math.random(150, 200))
             end
         end

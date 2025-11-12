@@ -21,6 +21,7 @@ function Animation.new(frames, frameDur, looping, loopFrame, frameDim)
 	-- atributos fixos na instanciação
 	animation.currFrame = 1 -- frame atual
 	animation.timer = 0 -- tempo decorrido desde a última mudança de frame
+	animation.onFinish = nil -- callback chamado quando a animação não-loop termina
 
 	return animation
 end
@@ -30,9 +31,19 @@ function Animation:update(dt)
 	if self.timer > self.frameDur then
 		self.timer = 0
 		self.currFrame = self.currFrame + 1
+
+		-- atingiu o fim da animação
 		if self.currFrame > #self.frames then
-			-- volta pro primeiro frame de loop se a animação for ciclica
-			self.currFrame = self.looping and self.loopFrame or #self.frames
+			if self.looping then
+				-- volta pro primeiro frame de loop se a animação for ciclica
+				self.currFrame = self.loopFrame
+			else
+				-- trava no último frame e chama callback se existir
+				self.currFrame = #self.frames
+				if self.onFinish then
+					self.onFinish(self)
+				end
+			end
 		end
 	end
 end
@@ -67,6 +78,31 @@ function newAnimation(path, length, quadSize, frameDur, looping, loopFrame, fram
 
 	::createanimation::
 	return Animation.new(frames, frameDur, looping, loopFrame, frameDim)
+end
+
+function newAnimSetting(numFrames, quadSize, frameDur, looping, loopFrame)
+	return {
+		numFrames = numFrames,
+		quadSize = quadSize,
+		frameDur = frameDur,
+		looping = looping,
+		loopFrame = loopFrame,
+	}
+end
+
+function addAnimation(entity, path, action, settings)
+	local animation = newAnimation(
+		path,
+		settings.numFrames,
+		settings.quadSize,
+		settings.frameDur,
+		settings.looping,
+		settings.loopFrame,
+		settings.quadSize
+	)
+	entity.animations[action] = animation
+	entity.spriteSheets[action] = love.graphics.newImage(path)
+	entity.spriteSheets[action]:setFilter("nearest", "nearest")
 end
 
 return Animation

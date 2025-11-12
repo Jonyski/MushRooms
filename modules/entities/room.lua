@@ -2,12 +2,13 @@
 -- Importações de Módulos
 ----------------------------------------
 require("table")
-require("modules/utils")
+require("modules.utils.utils")
 
 ----------------------------------------
 -- Variáveis
 ----------------------------------------
 rooms = BiList.new()
+activeRooms = Set.new()
 
 ----------------------------------------
 -- Classe Player
@@ -15,33 +16,50 @@ rooms = BiList.new()
 Room = {}
 Room.__index = Room
 Room.stdDim = { width = 1536, height = 1536 }
+Room.type = "room"
 
-function Room.new(pos, dimensions, hitbox, type, color, sprites)
+function Room.new(pos, dimensions, hitbox, roomType, color, sprites)
 	local room = setmetatable({}, Room)
 
 	-- atributos que variam
-	room.pos = pos -- posição da sala na array de salas
-	room.dimensions = dimensions -- largura e altura da sala
-	room.hitbox = hitbox -- pontos superior esquerdo (p1) e inferior direito (p2) da sala
-	room.type = type -- tipo de sala
-	room.color = color -- cor da sala
-	room.sprites = sprites -- os sprites da sala em camadas
+	room.pos = pos                            -- posição da sala na array de salas
+	room.dimensions = dimensions              -- largura e altura da sala
+	room.hitbox = hitbox                      -- pontos superior esquerdo (p1) e inferior direito (p2) da sala
+	room.center = midpoint(hitbox.p1, hitbox.p2) -- ponto central da sala
+	room.roomType = roomType                  -- tipo de sala
+	room.color = color                        -- cor da sala
+	room.sprites = sprites                    -- os sprites da sala em camadas
 	-- atributos fixos na instanciação
-	room.explored = false -- se algum jogador já entrou na sala ou não
+	room.explored = false                     -- se algum jogador já entrou na sala ou não
+	room.destructibles = {}
+	room.items = {}
+	room.playersInRoom = Set.new()
 
 	return room
 end
 
+function Room:visit(player)
+	if self.playersInRoom:has(player.id) then
+		return
+	end
+
+	self.playersInRoom:add(player.id, player)
+	activeRooms:add(makeKey(self.pos.x, self.pos.y), self)
+end
+
 function Room:setExplored()
-	self.explored = true
-	-- criando salas adjacentes se eles ainda não existem
-	local adjacentPos = self:getAdjacentPos()
-	for _, pos in pairs(adjacentPos) do
-		if not rooms[pos.y] then
-			rooms:insert(pos.y, BiList.new())
-		end
-		if not rooms[pos.y][pos.x] then
-			newRoom(pos, Room.stdDim, love.math.random(0, 2))
+	if not self.explored then
+		self.explored = true
+
+		-- criando salas adjacentes se eles ainda não existem
+		local adjacentPos = self:getAdjacentPos()
+		for _, pos in pairs(adjacentPos) do
+			if not rooms[pos.y] then
+				rooms:insert(pos.y, BiList.new())
+			end
+			if not rooms[pos.y][pos.x] then
+				newRoom(pos, Room.stdDim, love.math.random(0, 2))
+			end
 		end
 	end
 end
@@ -57,20 +75,27 @@ function Room:getAdjacentPos()
 	return adjacentPos
 end
 
+-- se a sala está vazia (sem jogadores), remove ela da lista de salas ativas
+function Room:verifyIsEmpty()
+	if self.playersInRoom:size() == 0 then
+		activeRooms:remove(makeKey(self.pos.x, self.pos.y))
+	end
+end
+
 ----------------------------------------
 -- Funções Globais
 ----------------------------------------
-function newRoom(pos, dimensions, type)
+function newRoom(pos, dimensions, roomType)
 	if not rooms[pos.y] then
 		rooms:insert(pos.y, BiList.new())
 	end
 
 	local color = {}
-	if type == 0 then
+	if roomType == 0 then
 		color = { r = 0.7, g = 0.7, b = 1.0, a = 1.0 }
-	elseif type == 1 then
+	elseif roomType == 1 then
 		color = { r = 1.0, g = 0.7, b = 0.7, a = 1.0 }
-	elseif type == 2 then
+	elseif roomType == 2 then
 		color = { r = 0.7, g = 0.7, b = 0.7, a = 1.0 }
 	end
 
@@ -107,6 +132,11 @@ function calculateRoomLimits(r)
 		y = p1.y + r.dimensions.height,
 	}
 	return { p1 = p1, p2 = p2 }
+end
+
+-- cria uma key única baseada nas coordenadas da sala
+function makeKey(x, y)
+	return tostring(x) .. "," .. tostring(y)
 end
 
 return Room

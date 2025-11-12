@@ -2,13 +2,15 @@
 -- Importações de Módulos
 ----------------------------------------
 require("table")
-require("modules/room")
-require("modules/renderization")
-require("modules/player")
-require("modules/camera")
-require("modules/animation")
-require("modules/enemy")
-require("modules/weapon")
+require("modules.entities.room")
+require("modules.engine.renderization")
+require("modules.entities.player")
+require("modules.engine.camera")
+require("modules.engine.animation")
+require("modules.entities.enemy")
+require("modules.entities.weapon")
+require("modules.entities.destructibles")
+require("modules.entities.items")
 
 ----------------------------------------
 -- Variáveis Globais
@@ -28,11 +30,26 @@ function love.keypressed(key, scancode, isrepeat)
 	if key == "n" then
 		newPlayer()
 	end
+	-- q faz a câmera 1 tremer (teste)
+	if key == "c" then
+		cameras[1]:shake(20, 1)
+	end
+	-- z dá zoom na câmera 1 (teste)
+	if key == "z" then
+		cameras[1].targetZoom = 2
+	end
+
 	if not isrepeat then
 		for _, p in pairs(players) do
 			p:checkAction1(key)
 			p:checkAction2(key)
 		end
+	end
+end
+
+function love.keyreleased(key)
+	if key == "z" then
+		cameras[1].targetZoom = 1
 	end
 end
 
@@ -61,11 +78,18 @@ function love.load()
 	createInitialRooms()
 	newPlayer()
 
-	-- bloco de teste de armas -------------------------
-	players[1]:collectWeapon(newWeapon(SLING_SHOT))
-	players[1]:collectWeapon(newWeapon(KATANA))
-	players[1]:equipWeapon(SLING_SHOT)
 	----------------------------------------------------
+	-- criação de objetos para debugging
+	Destructible.new("jar", { x = 200, y = 0 }, rooms[0][0])
+	Destructible.new("jar", { x = 300, y = 0 }, rooms[0][0])
+	Destructible.new("jar", { x = 400, y = 0 }, rooms[0][0])
+	Destructible.new("jar", { x = 200, y = -100 }, rooms[0][0])
+	Destructible.new("jar", { x = 300, y = -100 }, rooms[0][0])
+	Destructible.new("jar", { x = 400, y = -100 }, rooms[0][0])
+	Destructible.new("barrel", { x = -400, y = 0 }, rooms[0][0])
+	Destructible.new("barrel", { x = -200, y = 0 }, rooms[0][0], Loot.new(newSlingShot(), 1.0, range(1, 1), false))
+	Destructible.new("barrel", { x = -300, y = 0 }, rooms[0][0], Loot.new(newKatana(), 1.0, range(1, 1), false))
+	------------------------------------------------------
 
 	-- métodos de estado do love
 	love.window.setMode(window.width, window.height, { resizable = true })
@@ -76,21 +100,30 @@ end
 ----------------------------------------
 function love.update(dt)
 	for _, p in pairs(players) do
-		p:move(dt)
-		p.animations[p.state]:update(dt)
-		if p.weapon then
-			p.weapon.animations[p.weapon.state]:update(dt)
-		end
-		p:updateState()
-		p:updateParticles(dt)
+		p:update(dt)
 	end
+
 	for _, c in pairs(cameras) do
-		c:updatePosition()
+		c:updatePosition(dt)
+	end
+
+	for _, r in activeRooms:iter() do
+		-- atualiza destrutíveis
+		for _, d in pairs(r.destructibles) do
+			d:update(dt)
+		end
+
+		-- atualiza items
+		for _, item in pairs(r.items) do
+			item:update(dt)
+		end
 	end
 
 	-- trecho de debug de inimigos ----------------------------
+	local spawnEnemies = false
+
 	sec_timer.curr = sec_timer.curr + dt
-	if sec_timer.curr - sec_timer.prev >= 1 then
+	if spawnEnemies and sec_timer.curr - sec_timer.prev >= 1 then
 		sec_timer.prev = sec_timer.prev + 1
 		local r = math.random()
 		local randSpawnPos = {
@@ -103,23 +136,17 @@ function love.update(dt)
 			newEnemy(SPIDER_DUCK, randSpawnPos)
 		end
 	end
+
 	for _, e in pairs(enemies) do
-		e:move(dt)
-		e:attack(dt)
+		e:update(dt)
 	end
-	----------------------------------------------------------
 end
 
 ----------------------------------------
 -- Renderização
 ----------------------------------------
 function love.draw()
-	for i, c in pairs(cameras) do
-		love.graphics.setCanvas(c.canvas)
-		love.graphics.clear(0.0, 0.0, 0.0, 1.0)
-		renderRooms(i)
-		renderEntities(i)
-		love.graphics.setCanvas()
-		love.graphics.draw(c.canvas, c.canvasPos.x, c.canvasPos.y)
+	for _, c in pairs(cameras) do
+		c:draw()
 	end
 end

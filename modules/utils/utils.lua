@@ -44,6 +44,49 @@ function BiList:insert(index, el)
 	self.length = self.length + 1
 end
 
+-------------------------------------------------
+--- Tabela Set: não armazena valores duplicados
+-------------------------------------------------
+Set = {}
+Set.__index = Set
+
+function Set.new()
+	local set = setmetatable({ __data = {} }, Set)
+	return set
+end
+
+function Set:add(key, value)
+	self.__data[key] = value
+end
+
+function Set:remove(key)
+	self.__data[key] = nil
+end
+
+function Set:has(key)
+	return self.__data[key] ~= nil
+end
+
+function Set:get(key)
+	return self.__data[key]
+end
+
+function Set:size()
+	local count = 0
+	for _, _ in pairs(self.__data) do
+		count = count + 1
+	end
+	return count
+end
+
+function Set:iter()
+	local k, v
+	return function()
+		k, v = next(self.__data, k)
+		return k, v
+	end
+end
+
 ----------------------------------------
 -- Funções Utilitárias
 ----------------------------------------
@@ -74,4 +117,31 @@ function clamp(x, a, b)
 		return b
 	end
 	return x
+end
+
+-- Função de interpolação linear
+function lerp(a, b, t)
+	return a + (b - a) * t
+end
+
+-- transforma uma string em um formato padronizado para caminhos
+function pathlizeName(s)
+	return string.lower(s:gsub(" ", "_"))
+end
+
+-- transforma uma lista de pastas e um nome de arquivo em um caminho para o arquivo
+function pngPathFormat(parts)
+	local path = ""
+	for i, v in ipairs(parts) do
+		if i ~= #parts then
+			path = path .. pathlizeName(v) .. "/"
+		else
+			path = path .. pathlizeName(v) .. ".png"
+		end
+	end
+	return path
+end
+
+function range(min, max)
+	return { min = min, max = max }
 end

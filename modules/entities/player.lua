@@ -1,11 +1,11 @@
 ----------------------------------------
 -- Importações de Módulos
 ----------------------------------------
-require("modules/utils")
-require("modules/animation")
-require("modules/vec")
-require("modules/particles")
-require("modules/colors")
+require("modules.utils.utils")
+require("modules.engine.animation")
+require("modules.utils.vec")
+require("modules.systems.particles")
+require("modules.utils.colors")
 require("table")
 
 ----------------------------------------
@@ -27,6 +27,7 @@ ATTACKING = "attacking"
 ----------------------------------------
 Player = {}
 Player.__index = Player
+Player.type = "player"
 
 -- Construtor
 function Player.new(id, name, spawn_pos, controls, colors, room)
@@ -35,6 +36,7 @@ function Player.new(id, name, spawn_pos, controls, colors, room)
 	-- atributos que variam
 	player.id = id                         -- número do jogador
 	player.name = name                     -- nome do jogador
+	player.hp = 10                         -- pontos de vida
 	player.pos = spawn_pos                 -- posição do jogador (inicializa para a posição do spawn)
 	player.controls =
 	controls                               -- os comandos para controlar o boneco, no formato {up = "", left = "", down = "", right = "", action = ""}
@@ -69,7 +71,7 @@ function Player:addAnimations()
 end
 
 function Player:addAnimation(action, numFrames, frameDur, looping, loopFrame)
-	local path = "assets/animations/players/" .. string.lower(self.name) .. "/" .. action:gsub(" ", "_") .. ".png"
+	local path = pngPathFormat({ "assets", "animations", "players", self.name, action })
 	local quadSize = { width = 32, height = 32 }
 	local animation = newAnimation(path, numFrames, quadSize, frameDur, looping, loopFrame, quadSize)
 	self.animations[action] = animation
@@ -80,6 +82,21 @@ end
 function Player:addParticles()
 	-- Efeito de partícula do player se defendendo
 	self.particles[DEFENDING] = newDefenseParticles(self.colors[1], self.colors[3])
+end
+
+function Player:update(dt)
+	self:move(dt)
+	self.animations[self.state]:update(dt)
+	for _, w in pairs(self.weapons) do
+		-- atualizando a animação da arma equipada
+		if w == self.weapon then
+			self.weapon.animations[self.weapon.state]:update(dt)
+		end
+		w:update(dt)
+	end
+	self:updateState()
+	self:updateParticles(dt)
+	self:checkCollisions()
 end
 
 function Player:move(dt)
@@ -122,6 +139,7 @@ end
 function Player:updateRoom()
 	local roomX = self.room.pos.x
 	local roomY = self.room.pos.y
+	local prevRoom = self.room
 
 	-- o jogador foi para a sala à esquerda
 	if self.pos.x < self.room.hitbox.p1.x then
@@ -140,7 +158,14 @@ function Player:updateRoom()
 		self.room = rooms[roomY + 1][roomX]
 	end
 
-	self.room:setExplored()
+	-- se mudou de sala, se retira dela e entra na próxima
+	if prevRoom ~= self.room then
+		prevRoom.playersInRoom:remove(self.id)
+		prevRoom:verifyIsEmpty()
+
+		self.room:setExplored()
+		self.room:visit(self)
+	end
 end
 
 function Player:updateState()
@@ -188,7 +213,7 @@ end
 function Player:checkAction2(key)
 	if key == self.controls.act2 and self.movementVec.x ~= 0 then
 		local len = #self.weapons
-		if len <= 1 then 
+		if len <= 1 then
 			return
 		end
 
@@ -196,32 +221,99 @@ function Player:checkAction2(key)
 		local nextIndex = indexWeapon
 
 		-- caminha ciclicamente entre as armas
-		if self.movementVec.x < 0 then
+		if self.movementVec.x > 0 then
 			nextIndex = (indexWeapon % len) + 1
 		else
 			nextIndex = ((indexWeapon - 2 + len) % len) + 1
 		end
 
-		self:equipWeapon(self.weapons[nextIndex].type)
+		self:equipWeapon(self.weapons[nextIndex].name)
 	end
 end
 
 function Player:collectWeapon(weapon)
+	-- previne de pegar a mesma arma novamente
+	if self:hasWeapon(weapon.name) then
+		return false
+	end
 	table.insert(self.weapons, weapon)
+	weapon.owner = self
+	return true
 end
 
-function Player:equipWeapon(weapon)
+function Player:equipWeapon(weaponName)
 	-- itera pelas armas do jogador procurando pela que ele quer equipar
 	for _, w in pairs(self.weapons) do
-		if w.type == weapon then
+		if w.name == weaponName then
 			self.weapon = w
 		end
 	end
 end
 
+function Player:hasWeapon(weaponName)
+	for _, w in pairs(self.weapons) do
+		if w.name == weaponName then
+			return true
+		end
+	end
+
+	return false
+end
+
 function Player:attack()
-	if self.weapon then
-		self.weapon:attack()
+	if self.weapon and self.weapon.canShoot then
+		self.weapon.atk:attack(self, self.pos, self.weapon.rotation)
+		self.weapon.canShoot = false
+		self.weapon.state = ATTACKING
+	end
+end
+
+function Player:collectCoin()
+	print("moedinhaaa")
+	return true
+end
+
+function Player:collectItem(item)
+	local result = false
+	if item.object.type == "weapon" then
+		result = self:collectWeapon(item.object)
+		if result then
+			self:equipWeapon(item.object.name)
+		end
+	elseif item.object.type == "coin" then
+		result = self:collectCoin()
+	end
+	if result then
+		item:setCollected()
+	end
+end
+
+function Player:checkCollisions()
+	-- TODO: Mover toda lógica de colisão para um detector de colisões centralizado
+
+	-- colisão com destrutíveis
+	for _, d in pairs(self.room.destructibles) do
+		local dist = dist(self.pos, d.pos)
+		if d.state == INTACT and dist < 50 then
+			d:damage(d.health) -- destrói o objeto instantaneamente
+		end
+	end
+	-- colisão com itens
+	for _, item in pairs(self.room.items) do
+		if item.collected or not nullVec(item.vel) then
+			goto nextitem
+		end
+		local distance = dist(self.pos, item.pos)
+		if distance < item.radius then
+			if item.autoPick then
+				self:collectItem(item)
+				return
+			elseif not item.autoPick and love.keyboard.isDown(self.controls.act2) then
+				self:collectItem(item)
+				return
+			end
+		end
+		::nextitem::
 	end
 end
 
@@ -249,8 +341,7 @@ function newPlayer()
 	end
 
 	if #players == 0 then
-		-- o +365 e +350 são números mágicos para centralizar o player 1 na sala inicial
-		local firstSpawnPoint = { x = window.width / 2 + 365, y = window.height / 2 + 350 }
+		local firstSpawnPoint = { x = rooms[0][0].center.x, y = rooms[0][0].center.y }
 		player1 = Player.new(
 			1,
 			"Mush",
@@ -261,6 +352,7 @@ function newPlayer()
 		)
 		player1:addAnimations()
 		player1:addParticles()
+		player1.room:visit(player1)
 		table.insert(players, player1)
 	elseif #players == 1 then
 		player2 = Player.new(
@@ -273,6 +365,7 @@ function newPlayer()
 		)
 		player2:addAnimations()
 		player2:addParticles()
+		player2.room:visit(player2)
 		table.insert(players, player2)
 	elseif #players == 2 then
 		player3 = Player.new(
@@ -285,6 +378,7 @@ function newPlayer()
 		)
 		player3:addAnimations()
 		player3:addParticles()
+		player3.room:visit(player3)
 		table.insert(players, player3)
 	else
 		player4 = Player.new(
@@ -297,6 +391,7 @@ function newPlayer()
 		)
 		player4:addAnimations()
 		player4:addParticles()
+		player4.room:visit(player4)
 		table.insert(players, player4)
 	end
 	newCamera()

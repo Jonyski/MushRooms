@@ -1,11 +1,11 @@
 ----------------------------------------
 -- Importações de Módulos
 ----------------------------------------
-require("modules/utils")
-require("modules/animation")
-require("modules/vec")
-require("modules/particles")
-require("modules/colors")
+require("modules.utils.utils")
+require("modules.engine.animation")
+require("modules.utils.vec")
+require("modules.systems.particles")
+require("modules.utils.colors")
 require("table")
 
 ----------------------------------------
@@ -27,29 +27,31 @@ ATTACKING = "attacking"
 ----------------------------------------
 Player = {}
 Player.__index = Player
+Player.type = "player"
 
 -- Construtor
 function Player.new(id, name, spawn_pos, controls, colors, room)
 	local player = setmetatable({}, Player)
 
 	-- atributos que variam
-	player.id = id -- número do jogador
-	player.name = name -- nome do jogador
-	player.hp = 10 -- pontos de vida
-	player.pos = spawn_pos -- posição do jogador (inicializa para a posição do spawn)
-	player.controls = controls -- os comandos para controlar o boneco, no formato {up = "", left = "", down = "", right = "", action = ""}
-	player.colors = colors -- paleta de cores do jogador
-	player.room = room -- sala na qual o jogador está atualmente
+	player.id = id                         -- número do jogador
+	player.name = name                     -- nome do jogador
+	player.hp = 10                         -- pontos de vida
+	player.pos = spawn_pos                 -- posição do jogador (inicializa para a posição do spawn)
+	player.controls =
+	controls                               -- os comandos para controlar o boneco, no formato {up = "", left = "", down = "", right = "", action = ""}
+	player.colors = colors                 -- paleta de cores do jogador
+	player.room = room                     -- sala na qual o jogador está atualmente
 	-- atributos fixos na instanciação
-	player.vel = 280 -- velocidade em pixels por segundo
+	player.vel = 280                       -- velocidade em pixels por segundo
 	player.size = { height = 32, width = 32 } -- em pixels
-	player.movementVec = { x = 0, y = 0 } -- vetor de direção e magnitude do movimento do jogador
-	player.state = IDLE -- define o estado atual do jogador, estreitamente relacionado às animações
-	player.spriteSheets = {} -- no tipo imagem do love
-	player.animations = {} -- as chaves são estados e os valores são Animações
-	player.particles = {} -- efeitos de partícula emitidos pelo player
-	player.weapons = {} -- lista das armas que o jogador possui
-	player.weapon = nil -- arma equipada
+	player.movementVec = { x = 0, y = 0 }  -- vetor de direção e magnitude do movimento do jogador
+	player.state = IDLE                    -- define o estado atual do jogador, estreitamente relacionado às animações
+	player.spriteSheets = {}               -- no tipo imagem do love
+	player.animations = {}                 -- as chaves são estados e os valores são Animações
+	player.particles = {}                  -- efeitos de partícula emitidos pelo player
+	player.weapons = {}                    -- lista das armas que o jogador possui
+	player.weapon = nil                    -- arma equipada
 	return player
 end
 
@@ -94,7 +96,7 @@ function Player:update(dt)
 	end
 	self:updateState()
 	self:updateParticles(dt)
-	self:checkColisions()
+	self:checkCollisions()
 end
 
 function Player:move(dt)
@@ -234,10 +236,8 @@ function Player:collectWeapon(weapon)
 	if self:hasWeapon(weapon.name) then
 		return false
 	end
-
 	table.insert(self.weapons, weapon)
 	weapon.owner = self
-
 	return true
 end
 
@@ -268,13 +268,52 @@ function Player:attack()
 	end
 end
 
-function Player:checkColisions()
+function Player:collectCoin()
+	print("moedinhaaa")
+	return true
+end
+
+function Player:collectItem(item)
+	local result = false
+	if item.object.type == "weapon" then
+		result = self:collectWeapon(item.object)
+		if result then
+			self:equipWeapon(item.object.name)
+		end
+	elseif item.object.type == "coin" then
+		result = self:collectCoin()
+	end
+	if result then
+		item:setCollected()
+	end
+end
+
+function Player:checkCollisions()
+	-- TODO: Mover toda lógica de colisão para um detector de colisões centralizado
+
+	-- colisão com destrutíveis
 	for _, d in pairs(self.room.destructibles) do
 		local dist = dist(self.pos, d.pos)
-
 		if d.state == INTACT and dist < 50 then
 			d:damage(d.health) -- destrói o objeto instantaneamente
 		end
+	end
+	-- colisão com itens
+	for _, item in pairs(self.room.items) do
+		if item.collected or not nullVec(item.vel) then
+			goto nextitem
+		end
+		local distance = dist(self.pos, item.pos)
+		if distance < item.radius then
+			if item.autoPick then
+				self:collectItem(item)
+				return
+			elseif not item.autoPick and love.keyboard.isDown(self.controls.act2) then
+				self:collectItem(item)
+				return
+			end
+		end
+		::nextitem::
 	end
 end
 

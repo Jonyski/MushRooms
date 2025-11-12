@@ -2,7 +2,7 @@
 -- Importações de Módulos
 ----------------------------------------
 require("table")
-require("modules/utils")
+require("modules.utils.utils")
 
 ----------------------------------------
 -- Variáveis
@@ -16,20 +16,21 @@ activeRooms = Set.new()
 Room = {}
 Room.__index = Room
 Room.stdDim = { width = 1536, height = 1536 }
+Room.type = "room"
 
-function Room.new(pos, dimensions, hitbox, type, color, sprites)
+function Room.new(pos, dimensions, hitbox, roomType, color, sprites)
 	local room = setmetatable({}, Room)
 
 	-- atributos que variam
-	room.pos = pos -- posição da sala na array de salas
-	room.dimensions = dimensions -- largura e altura da sala
-	room.hitbox = hitbox -- pontos superior esquerdo (p1) e inferior direito (p2) da sala
+	room.pos = pos                            -- posição da sala na array de salas
+	room.dimensions = dimensions              -- largura e altura da sala
+	room.hitbox = hitbox                      -- pontos superior esquerdo (p1) e inferior direito (p2) da sala
 	room.center = midpoint(hitbox.p1, hitbox.p2) -- ponto central da sala
-	room.type = type -- tipo de sala
-	room.color = color -- cor da sala
-	room.sprites = sprites -- os sprites da sala em camadas
+	room.roomType = roomType                  -- tipo de sala
+	room.color = color                        -- cor da sala
+	room.sprites = sprites                    -- os sprites da sala em camadas
 	-- atributos fixos na instanciação
-	room.explored = false -- se algum jogador já entrou na sala ou não
+	room.explored = false                     -- se algum jogador já entrou na sala ou não
 	room.destructibles = {}
 	room.items = {}
 	room.playersInRoom = Set.new()
@@ -38,7 +39,9 @@ function Room.new(pos, dimensions, hitbox, type, color, sprites)
 end
 
 function Room:visit(player)
-	if self.playersInRoom:has(player.id) then return end
+	if self.playersInRoom:has(player.id) then
+		return
+	end
 
 	self.playersInRoom:add(player.id, player)
 	activeRooms:add(makeKey(self.pos.x, self.pos.y), self)
@@ -82,17 +85,17 @@ end
 ----------------------------------------
 -- Funções Globais
 ----------------------------------------
-function newRoom(pos, dimensions, type)
+function newRoom(pos, dimensions, roomType)
 	if not rooms[pos.y] then
 		rooms:insert(pos.y, BiList.new())
 	end
 
 	local color = {}
-	if type == 0 then
+	if roomType == 0 then
 		color = { r = 0.7, g = 0.7, b = 1.0, a = 1.0 }
-	elseif type == 1 then
+	elseif roomType == 1 then
 		color = { r = 1.0, g = 0.7, b = 0.7, a = 1.0 }
-	elseif type == 2 then
+	elseif roomType == 2 then
 		color = { r = 0.7, g = 0.7, b = 0.7, a = 1.0 }
 	end
 
@@ -133,7 +136,7 @@ end
 
 -- cria uma key única baseada nas coordenadas da sala
 function makeKey(x, y)
-    return tostring(x) .. "," .. tostring(y)
+	return tostring(x) .. "," .. tostring(y)
 end
 
 return Room

@@ -1,5 +1,5 @@
-require("modules/camera")
 require("modules/anchors")
+require("modules.engine.camera")
 
 ----------------------------------------
 -- Funções Globais

@@ -51,7 +51,7 @@ Set = {}
 Set.__index = Set
 
 function Set.new()
-	local set = setmetatable({__data = {}}, Set)
+	local set = setmetatable({ __data = {} }, Set)
 	return set
 end
 
@@ -80,11 +80,11 @@ function Set:size()
 end
 
 function Set:iter()
-    local k, v
-    return function()
-			k, v = next(self.__data, k)
-			return k, v
-    end
+	local k, v
+	return function()
+		k, v = next(self.__data, k)
+		return k, v
+	end
 end
 
 ----------------------------------------
@@ -140,4 +140,8 @@ function pngPathFormat(parts)
 		end
 	end
 	return path
+end
+
+function range(min, max)
+	return { min = min, max = max }
 end

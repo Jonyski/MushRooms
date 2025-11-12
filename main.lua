@@ -2,15 +2,15 @@
 -- Importações de Módulos
 ----------------------------------------
 require("table")
-require("modules/room")
-require("modules/renderization")
-require("modules/player")
-require("modules/camera")
-require("modules/animation")
-require("modules/enemy")
-require("modules/weapon")
-require("modules/destructibles")
-require("modules/items")
+require("modules.entities.room")
+require("modules.engine.renderization")
+require("modules.entities.player")
+require("modules.engine.camera")
+require("modules.engine.animation")
+require("modules.entities.enemy")
+require("modules.entities.weapon")
+require("modules.entities.destructibles")
+require("modules.entities.items")
 
 ----------------------------------------
 -- Variáveis Globais
@@ -81,16 +81,15 @@ function love.load()
 
 	----------------------------------------------------
 	-- criação de objetos para debugging
-	newDestructible("jar", { x = 200, y = 0 }, rooms[0][0])
-	newDestructible("jar", { x = 300, y = 0 }, rooms[0][0])
-	newDestructible("jar", { x = 400, y = 0 }, rooms[0][0])
-	newDestructible("jar", { x = 200, y = -100 }, rooms[0][0])
-	newDestructible("jar", { x = 300, y = -100 }, rooms[0][0])
-	newDestructible("jar", { x = 400, y = -100 }, rooms[0][0])
-
-	newDestructible("barrel", { x = -200, y = 0 }, rooms[0][0], {{ item = "slingshot", chance = 1.0, amount = 1, pickupType = "manual" }})
-	newDestructible("barrel", { x = -300, y = 0 }, rooms[0][0], {{ item = "katana", chance = 1.0, amount = 1, pickupType = "manual" }})
-	newDestructible("barrel", { x = -400, y = 0 }, rooms[0][0])
+	Destructible.new("jar", { x = 200, y = 0 }, rooms[0][0])
+	Destructible.new("jar", { x = 300, y = 0 }, rooms[0][0])
+	Destructible.new("jar", { x = 400, y = 0 }, rooms[0][0])
+	Destructible.new("jar", { x = 200, y = -100 }, rooms[0][0])
+	Destructible.new("jar", { x = 300, y = -100 }, rooms[0][0])
+	Destructible.new("jar", { x = 400, y = -100 }, rooms[0][0])
+	Destructible.new("barrel", { x = -400, y = 0 }, rooms[0][0])
+	Destructible.new("barrel", { x = -200, y = 0 }, rooms[0][0], Loot.new(newSlingShot(), 1.0, range(1, 1), false))
+	Destructible.new("barrel", { x = -300, y = 0 }, rooms[0][0], Loot.new(newKatana(), 1.0, range(1, 1), false))
 	------------------------------------------------------
 
 	-- métodos de estado do love
@@ -117,7 +116,6 @@ function love.update(dt)
 
 		-- atualiza items
 		for _, item in pairs(r.items) do
-			item:checkPickup(players) -- trocar isso quando houver colisão
 			item:update(dt)
 		end
 	end

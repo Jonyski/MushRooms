@@ -1,24 +1,29 @@
 extern number thickness = 1.0;
+extern vec2 texSize;
 extern vec4 outlineColor = vec4(1.0, 1.0, 1.0, 1.0);
 
 // passa por cada pixel da imagem e decide a cor final
 vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
-  vec4 pixel = Texel(texture, texture_coords) * color;
-  float alpha = pixel.a;
+  vec4 pixel = Texel(texture, texture_coords);
+  float maxAlpha = pixel.a;
+
+  // normaliza baseado no tamanho da textura
+  vec2 px = vec2(1.0 / texSize.x, 1.0 / texSize.y);
 
   // percorre vizinhança para detectar borda
   for (float x = -thickness; x <= thickness; x++) {
       for (float y = -thickness; y <= thickness; y++) {
-        // if (sqrt(pow(abs(x), 2) + pow(abs(y), 2)) > thickness) continue; // arredonda
+        vec2 offset = vec2(x, y) * px;
+        vec4 neigborPixel = Texel(texture, texture_coords + offset);
 
-        // pegamos quem é o maior alpha: se é do próprio pixel ou do vizinho
-        vec2 offset = vec2(x, y) / love_ScreenSize.xy;
-        alpha = max(alpha, Texel(texture, texture_coords + offset).a);
+        maxAlpha = max(maxAlpha, neigborPixel.a);
       }
   }
 
-  // se o pixel atual é semitransparente e algum vizinho também, é um pixel de borda
-  if (pixel.a < 0.1 && alpha > 0.1) return outlineColor;
+  // se o pixel atual é semitransparente, mas seu vizinho (maxAlpha) não é, pinta a borda
+  if (pixel.a < 0.1 && maxAlpha > 0.1) 
+    return outlineColor;
+
   // se não, retorna o pixel do jeito que ele entrou
-  return pixel;
+  return pixel * color;
 }

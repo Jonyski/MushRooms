@@ -1,9 +1,13 @@
 outlineShader = love.graphics.newShader("shaders/outline.glsl")
-outlineShader:send("thickness", 15.0)
-outlineShader:send("outlineColor", {1, 1, 1, 1})
 
-function drawSpriteWithOutline(image, x, y, scale, offset)
+function drawSpriteWithOutline(image, x, y, scale, offset, thickness, outlineColor)
     love.graphics.setShader(outlineShader)
+
+    -- envia os parâmetros do shader
+    outlineShader:send("thickness", thickness or 1)
+    outlineShader:send("outlineColor", outlineColor or {1, 1, 1, 1})
+    outlineShader:send("texSize", {image:getWidth(), image:getHeight()})
+
     love.graphics.draw(image, x, y, 0, scale, scale, offset.x, offset.y)
     love.graphics.setShader()
 end

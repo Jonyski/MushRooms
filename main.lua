@@ -49,7 +49,7 @@ end
 
 function love.keyreleased(key)
 	if key == "z" then
-		cameras[1].targetZoom = 1
+		cameras[1].targetZoom = cameras[1].startingZoom
 	end
 end
 
@@ -61,8 +61,8 @@ function love.resize(w, h)
 	for i, _ in pairs(cameras) do
 		cameras[i] = nil
 	end
-	for _ = 1, #players do
-		newCamera()
+	for _, p in pairs(players) do
+		newCamera(p)
 	end
 end
 
@@ -122,7 +122,6 @@ function love.update(dt)
 
 	-- trecho de debug de inimigos ----------------------------
 	local spawnEnemies = false
-
 	sec_timer.curr = sec_timer.curr + dt
 	if spawnEnemies and sec_timer.curr - sec_timer.prev >= 1 then
 		sec_timer.prev = sec_timer.prev + 1

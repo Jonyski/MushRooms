@@ -108,6 +108,10 @@ function tableIndexOf(table, value)
 	return nil
 end
 
+function remap(value, inMin, inMax, outMin, outMax)
+	return outMin + (value - inMin) * (outMax - outMin) / (inMax - inMin)
+end
+
 -- Retorna x limitado ao intervalo [a, b]
 function clamp(x, a, b)
 	if x < a then

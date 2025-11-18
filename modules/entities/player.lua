@@ -82,6 +82,12 @@ end
 function Player:addParticles()
 	-- Efeito de partícula do player se defendendo
 	self.particles[DEFENDING] = newDefenseParticles(self.colors[1], self.colors[3])
+	-- Efeito de partícula do player caminhando
+	local walkingParticles = newWalkingParticles()
+	self.particles[WALKING_DOWN] = walkingParticles
+	self.particles[WALKING_UP] = walkingParticles
+	self.particles[WALKING_LEFT] = walkingParticles
+	self.particles[WALKING_RIGHT] = walkingParticles
 end
 
 function Player:update(dt)
@@ -125,7 +131,7 @@ function Player:move(dt)
 	-- Normalizando para impedir movimentos na diagonal de serem mais rápidos
 	normalize(self.movementVec)
 	-- Levando o dt e a velocidade do cogumelo em consideração
-	scaleVec(self.movementVec, dt * self.vel)
+	self.movementVec = scaleVec(self.movementVec, dt * self.vel)
 	------------ HACK PARA DEBUG ------------
 	if love.keyboard.isDown("lctrl") then
 		self.movementVec = scaleVec(self.movementVec, 5)
@@ -133,6 +139,7 @@ function Player:move(dt)
 	-----------------------------------------
 	self.pos = addVec(self.pos, self.movementVec)
 
+	self:updateParticlesPos()
 	if self.weapon then
 		self.weapon:updateOrientation({ x = self.movementVec.x, y = self.movementVec.y })
 	end
@@ -173,9 +180,10 @@ end
 
 function Player:updateState()
 	local prevState = self.state
+	local isMoving = not nullVec(self.movementVec)
 	if love.keyboard.isDown(self.controls.act2) then
 		-- só defende se está completamente parado; se não, muda de arma
-		if nullVec(self.movementVec) then
+		if not isMoving then
 			if prevState ~= DEFENDING then
 				self.particles[DEFENDING]:start()
 			end
@@ -194,6 +202,15 @@ function Player:updateState()
 			self.state = IDLE
 		end
 	end
+
+	-- atualizando a situação do sistema de partículas de caminhada
+	if isMoving then
+		self.particles[self.state]:setDirection(math.atan2(self.movementVec.y, self.movementVec.x) + math.pi)
+		self.particles[self.state]:start()
+	else
+		self.particles[WALKING_UP]:stop()
+	end
+
 	-- resetando a animação anterior, caso o estado tenha mudado
 	if self.state ~= prevState then
 		if prevState == DEFENDING then
@@ -205,6 +222,13 @@ end
 
 function Player:updateParticles(dt)
 	self.particles[DEFENDING]:update(dt)
+	-- atualiza as partículas de caminhada como um todo
+	self.particles[WALKING_UP]:update(dt)
+end
+
+function Player:updateParticlesPos()
+	self.particles[DEFENDING]:setPosition(self.pos.x, self.pos.y)
+	self.particles[WALKING_UP]:setPosition(self.pos.x, self.pos.y + 24)
 end
 
 function Player:checkAction1(key)
@@ -317,6 +341,13 @@ function Player:checkCollisions()
 end
 
 function Player:draw(camera)
+	-- desenhando o efeito de partículas de caminhada atrás do player
+	local particles_offset = {
+		x = -camera.cx + camera.viewport.width / 2,
+		y = -camera.cy + camera.viewport.height / 2,
+	}
+	love.graphics.draw(self.particles[WALKING_UP], particles_offset.x, particles_offset.y)
+	-- desenhando o player em si
 	local viewPos = camera:viewPos(self.pos)
 	local animation = self.animations[self.state]
 	local quad = animation.frames[animation.currFrame]
@@ -325,9 +356,8 @@ function Player:draw(camera)
 		y = animation.frameDim.height / 2,
 	}
 	love.graphics.draw(self.spriteSheets[self.state], quad, viewPos.x, viewPos.y, 0, 3, 3, offset.x, offset.y)
-	for _, v in pairs(self.particles) do
-		love.graphics.draw(v, viewPos.x, viewPos.y)
-	end
+	-- desenhando o efeito de partículas da defesa em cima do player
+	love.graphics.draw(self.particles[DEFENDING], particles_offset.x, particles_offset.y)
 end
 
 ----------------------------------------

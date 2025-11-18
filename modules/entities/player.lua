@@ -43,7 +43,7 @@ function Player.new(id, name, spawn_pos, controls, colors, room)
 	player.colors = colors -- paleta de cores do jogador
 	player.room = room -- sala na qual o jogador está atualmente
 	-- atributos fixos na instanciação
-	player.vel = 280 -- velocidade em pixels por segundo
+	player.vel = 360 -- velocidade em pixels por segundo
 	player.size = { height = 32, width = 32 } -- em pixels
 	player.movementVec = { x = 0, y = 0 } -- vetor de direção e magnitude do movimento do jogador
 	player.state = IDLE -- define o estado atual do jogador, estreitamente relacionado às animações
@@ -61,13 +61,13 @@ function Player:addAnimations()
 	-- animação defesa
 	self:addAnimation(DEFENDING, 15, 0.05, true, 12)
 	-- animação andar para cima
-	self:addAnimation(WALKING_UP, 4, 0.25, true, 1)
+	self:addAnimation(WALKING_UP, 4, 0.18, true, 1)
 	-- animação andar para baixo
-	self:addAnimation(WALKING_DOWN, 4, 0.25, true, 1)
+	self:addAnimation(WALKING_DOWN, 4, 0.18, true, 1)
 	-- animação andar para esquerda
-	self:addAnimation(WALKING_LEFT, 4, 0.25, true, 1)
+	self:addAnimation(WALKING_LEFT, 4, 0.18, true, 1)
 	-- animação andar para direita
-	self:addAnimation(WALKING_RIGHT, 4, 0.25, true, 1)
+	self:addAnimation(WALKING_RIGHT, 4, 0.18, true, 1)
 end
 
 function Player:addAnimation(action, numFrames, frameDur, looping, loopFrame)
@@ -127,6 +127,11 @@ function Player:move(dt)
 	-- Levando o dt e a velocidade do cogumelo em consideração
 	self.movementVec.x = self.movementVec.x * dt * self.vel
 	self.movementVec.y = self.movementVec.y * dt * self.vel
+	------------ HACK PARA DEBUG ------------
+	if love.keyboard.isDown("lctrl") then
+		self.movementVec = scaleVec(self.movementVec, 5)
+	end
+	-----------------------------------------
 	self.pos.x = self.pos.x + self.movementVec.x
 	self.pos.y = self.pos.y + self.movementVec.y
 

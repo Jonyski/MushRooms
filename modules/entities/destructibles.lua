@@ -124,9 +124,9 @@ end
 ----------------------------------------
 
 function newBarrel(pos, room)
-	local loot = Loot.new(newSlingShot(), 0.1, range(1, 1), false)
-	loot:insert(newKatana(), 0.1, range(1, 1), false)
-	loot:insert(COIN, 0.5, range(1, 5), true)
+	local loot = Loot.new(newSlingShot(), 0.2, range(1, 1), false)
+	loot:insert(newKatana(), 0.2, range(1, 1), false)
+	loot:insert(COIN, 0.6, range(1, 5), true)
 	return Destructible.new(BARREL.name, pos, room, loot)
 end
 

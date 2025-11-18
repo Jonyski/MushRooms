@@ -125,15 +125,13 @@ function Player:move(dt)
 	-- Normalizando para impedir movimentos na diagonal de serem mais rápidos
 	normalize(self.movementVec)
 	-- Levando o dt e a velocidade do cogumelo em consideração
-	self.movementVec.x = self.movementVec.x * dt * self.vel
-	self.movementVec.y = self.movementVec.y * dt * self.vel
+	scaleVec(self.movementVec, dt * self.vel)
 	------------ HACK PARA DEBUG ------------
 	if love.keyboard.isDown("lctrl") then
 		self.movementVec = scaleVec(self.movementVec, 5)
 	end
 	-----------------------------------------
-	self.pos.x = self.pos.x + self.movementVec.x
-	self.pos.y = self.pos.y + self.movementVec.y
+	self.pos = addVec(self.pos, self.movementVec)
 
 	if self.weapon then
 		self.weapon:updateOrientation({ x = self.movementVec.x, y = self.movementVec.y })

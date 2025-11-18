@@ -27,8 +27,8 @@ ANCHORS = {
 	-- Jogadores
 	mush = { floor = 10 },
 	musho = { floor = 10 },
-  roomy = { floor = 11 },
-  shroom = { floor = 13 },
+	roomy = { floor = 11 },
+	shroom = { floor = 13 },
 }
 
 ----------------------------------------
@@ -38,7 +38,7 @@ function getAnchor(obj, anchorType, scale)
 	scale = scale or 3
 
 	local key = obj.name or obj.object.name
-  key = pathlizeName(string.lower(key))
+	key = pathlizeName(string.lower(key))
 	local anchor = ANCHORS[key][anchorType]
 
 	if anchor then
@@ -48,3 +48,4 @@ function getAnchor(obj, anchorType, scale)
 	-- fallback padrão
 	return 0
 end
+

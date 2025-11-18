@@ -79,19 +79,6 @@ function love.load()
 	createInitialRooms()
 	newPlayer()
 
-	----------------------------------------------------
-	-- criação de objetos para debugging
-	Destructible.new("jar", { x = 200, y = 0 }, rooms[0][0])
-	Destructible.new("jar", { x = 300, y = 0 }, rooms[0][0])
-	Destructible.new("jar", { x = 400, y = 0 }, rooms[0][0])
-	Destructible.new("jar", { x = 200, y = -100 }, rooms[0][0])
-	Destructible.new("jar", { x = 300, y = -100 }, rooms[0][0])
-	Destructible.new("jar", { x = 400, y = -100 }, rooms[0][0])
-	Destructible.new("barrel", { x = -400, y = 0 }, rooms[0][0])
-	Destructible.new("barrel", { x = -200, y = 0 }, rooms[0][0], Loot.new(newSlingShot(), 1.0, range(1, 1), false))
-	Destructible.new("barrel", { x = -300, y = 0 }, rooms[0][0], Loot.new(newKatana(), 1.0, range(1, 1), false))
-	------------------------------------------------------
-
 	-- métodos de estado do love
 	love.window.setMode(window.width, window.height, { resizable = true })
 end

@@ -35,6 +35,7 @@ end
 
 Attack = {}
 Attack.__index = Attack
+Attack.type = ATTACK
 
 -- Attack States guardam apenas dados iniciais sobre ataques, e não comportamentos
 function Attack.new(name, atkSettings, animSettings, updateFunc, onHit)
@@ -81,6 +82,7 @@ end
 
 AttackEvent = {}
 AttackEvent.__index = AttackEvent
+AttackEvent.type = ATTACK_EVENT
 
 -- Attack Events armazenam o comportamento de um ataque
 -- são instanciados a cada ataque e destruídos ao fim do timer

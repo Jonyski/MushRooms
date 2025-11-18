@@ -6,6 +6,7 @@ require("modules.engine.animation")
 require("modules.utils.vec")
 require("modules.systems.particles")
 require("modules.utils.colors")
+require("modules.utils.types")
 require("table")
 
 ----------------------------------------
@@ -27,31 +28,30 @@ ATTACKING = "attacking"
 ----------------------------------------
 Player = {}
 Player.__index = Player
-Player.type = "player"
+Player.type = PLAYER
 
 -- Construtor
 function Player.new(id, name, spawn_pos, controls, colors, room)
 	local player = setmetatable({}, Player)
 
 	-- atributos que variam
-	player.id = id                         -- número do jogador
-	player.name = name                     -- nome do jogador
-	player.hp = 10                         -- pontos de vida
-	player.pos = spawn_pos                 -- posição do jogador (inicializa para a posição do spawn)
-	player.controls =
-	controls                               -- os comandos para controlar o boneco, no formato {up = "", left = "", down = "", right = "", action = ""}
-	player.colors = colors                 -- paleta de cores do jogador
-	player.room = room                     -- sala na qual o jogador está atualmente
+	player.id = id -- número do jogador
+	player.name = name -- nome do jogador
+	player.hp = 10 -- pontos de vida
+	player.pos = spawn_pos -- posição do jogador (inicializa para a posição do spawn)
+	player.controls = controls -- os comandos para controlar o boneco, no formato {up = "", left = "", down = "", right = "", action = ""}
+	player.colors = colors -- paleta de cores do jogador
+	player.room = room -- sala na qual o jogador está atualmente
 	-- atributos fixos na instanciação
-	player.vel = 280                       -- velocidade em pixels por segundo
+	player.vel = 280 -- velocidade em pixels por segundo
 	player.size = { height = 32, width = 32 } -- em pixels
-	player.movementVec = { x = 0, y = 0 }  -- vetor de direção e magnitude do movimento do jogador
-	player.state = IDLE                    -- define o estado atual do jogador, estreitamente relacionado às animações
-	player.spriteSheets = {}               -- no tipo imagem do love
-	player.animations = {}                 -- as chaves são estados e os valores são Animações
-	player.particles = {}                  -- efeitos de partícula emitidos pelo player
-	player.weapons = {}                    -- lista das armas que o jogador possui
-	player.weapon = nil                    -- arma equipada
+	player.movementVec = { x = 0, y = 0 } -- vetor de direção e magnitude do movimento do jogador
+	player.state = IDLE -- define o estado atual do jogador, estreitamente relacionado às animações
+	player.spriteSheets = {} -- no tipo imagem do love
+	player.animations = {} -- as chaves são estados e os valores são Animações
+	player.particles = {} -- efeitos de partícula emitidos pelo player
+	player.weapons = {} -- lista das armas que o jogador possui
+	player.weapon = nil -- arma equipada
 	return player
 end
 

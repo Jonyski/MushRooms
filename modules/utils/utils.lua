@@ -126,7 +126,7 @@ end
 
 -- transforma uma string em um formato padronizado para caminhos
 function pathlizeName(s)
-	return string.lower(s:gsub(" ", "_"))
+	return string.lower(string.gsub(s, " ", "_"))
 end
 
 -- transforma uma lista de pastas e um nome de arquivo em um caminho para o arquivo

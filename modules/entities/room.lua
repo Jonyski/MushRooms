@@ -50,6 +50,21 @@ function Room.new(pos, dimensions, hitbox, blueprint, sprites)
 	return room
 end
 
+function Room:update(dt)
+	-- atualiza destrutíveis
+	for _, d in pairs(self.destructibles) do
+		d:update(dt)
+	end
+	-- atualiza items
+	for _, item in pairs(self.items) do
+		item:update(dt)
+	end
+	-- atualiza inimigos
+	for _, e in pairs(self.enemies) do
+		e:update(dt)
+	end
+end
+
 function Room:visit(player)
 	if self.playersInRoom:has(player.id) then
 		return
@@ -111,10 +126,11 @@ end
 -- instancia uma entidade e a insere na lista correspondente da sala
 function Room:spawn(entity, pos)
 	local constructor = CONSTRUCTORS[entity.type][entity.name]
+	local real_pos = addVec(pos, self.center)
 	if entity.type == ENEMY then
-		table.insert(self.enemies, constructor(pos))
+		table.insert(self.enemies, constructor(real_pos))
 	elseif entity.type == DESTRUCTIBLE then
-		table.insert(self.destructibles, constructor(pos, self))
+		table.insert(self.destructibles, constructor(real_pos, self))
 	end
 end
 

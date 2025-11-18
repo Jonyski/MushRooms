@@ -26,7 +26,7 @@ function Destructible.new(name, pos, room, loot)
 	local obj = setmetatable({}, Destructible)
 
 	obj.name = name -- nome do objeto
-	obj.pos = { x = room.center.x + pos.x, y = room.center.y + pos.y } -- posição relativa ao centro da sala
+	obj.pos = pos -- posição do destrutível no mundo
 	obj.room = room -- sala a qual pertence
 	obj.state = INTACT
 	obj.health = 100 -- vida para ser destruído
@@ -110,8 +110,8 @@ function Destructible:spawnLoot()
 		if math.random() < el.chance then
 			local amount = math.random(el.amountRange.min, el.amountRange.max)
 			for j = 1, amount do
-				local itemPos = subVec(self.pos, self.room.center)
-				local item = newItem(el.object, itemPos, self.room, el.autoPick, math.random(-20, 20))
+				local item_pos = { x = self.pos.x, y = self.pos.y }
+				local item = newItem(el.object, item_pos, self.room, el.autoPick, math.random(-20, 20))
 				item:applyImpulse(math.random(-100, 100), -math.random(150, 200))
 			end
 		end

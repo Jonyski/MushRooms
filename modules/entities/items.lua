@@ -19,7 +19,7 @@ function Item.new(object, pos, room, autoPick, floorY)
 	local item = setmetatable({}, Item)
 
 	item.object = object -- objeto associado ao item (arma, recurso, etc)
-	item.pos = vec(room.center.x + pos.x, room.center.y + pos.y)
+	item.pos = pos -- posição do item no mundo
 	item.room = room -- sala onde o item está
 	item.vel = { x = 0, y = 0 } -- velocidade para física simples
 	item.radius = 50 -- usado para colisão e dist()

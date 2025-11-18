@@ -275,12 +275,12 @@ end
 
 function Player:collectItem(item)
 	local result = false
-	if item.object.type == "weapon" then
+	if item.object.type == WEAPON then
 		result = self:collectWeapon(item.object)
 		if result then
 			self:equipWeapon(item.object.name)
 		end
-	elseif item.object.type == "coin" then
+	elseif item.object.type == ITEM then
 		result = self:collectCoin()
 	end
 	if result then

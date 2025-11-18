@@ -1,9 +1,11 @@
 ----------------------------------------
--- Classes Utilitárias
+-- Estrutura BiList
 ----------------------------------------
 BiList = {}
 BiList.__index = BiList
 
+-- uma BiList é uma lista que pode crescer para os dois lados
+-- ou seja, para índices negativos ou positivos
 function BiList.new()
 	local biList = setmetatable({}, BiList)
 	biList.minIndex = 0
@@ -45,11 +47,12 @@ function BiList:insert(index, el)
 end
 
 -------------------------------------------------
---- Tabela Set: não armazena valores duplicados
+--- Estrutura Set
 -------------------------------------------------
 Set = {}
 Set.__index = Set
 
+-- um Set não permite elementos repetidos
 function Set.new()
 	local set = setmetatable({ __data = {} }, Set)
 	return set
@@ -88,7 +91,7 @@ function Set:iter()
 end
 
 ----------------------------------------
--- Funções Utilitárias
+-- Funções para tabelas
 ----------------------------------------
 function tableFind(table, value)
 	for k, v in pairs(table) do
@@ -108,6 +111,9 @@ function tableIndexOf(table, value)
 	return nil
 end
 
+----------------------------------------
+-- Funções matemáticas
+----------------------------------------
 -- Retorna x limitado ao intervalo [a, b]
 function clamp(x, a, b)
 	if x < a then
@@ -124,6 +130,13 @@ function lerp(a, b, t)
 	return a + (b - a) * t
 end
 
+function range(min, max)
+	return { min = min, max = max }
+end
+
+----------------------------------------
+-- Funções de sistema de arquivos
+----------------------------------------
 -- transforma uma string em um formato padronizado para caminhos
 function pathlizeName(s)
 	return string.lower(string.gsub(s, " ", "_"))
@@ -140,8 +153,4 @@ function pngPathFormat(parts)
 		end
 	end
 	return path
-end
-
-function range(min, max)
-	return { min = min, max = max }
 end

@@ -116,8 +116,8 @@ end
 ----------------------------------------
 -- Funções Globais
 ----------------------------------------
-function newItem(object, pos, room, pickupType, floorY)
-	return Item.new(object, pos, room, pickupType, floorY)
+function newItem(object, pos, room, autoPick, floorY)
+	return Item.new(object, pos, room, autoPick, floorY)
 end
 
 return Item

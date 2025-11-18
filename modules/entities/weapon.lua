@@ -72,9 +72,7 @@ function Weapon:draw(camera)
 	if self.owner.state == DEFENDING then
 		return
 	end
-
 	local wViewPos = camera:viewPos(self.owner.pos)
-
 	local animation = self.animations[self.state]
 	local quad = animation.frames[animation.currFrame]
 	-- inverte arma no segundo e terceiro quadrantes

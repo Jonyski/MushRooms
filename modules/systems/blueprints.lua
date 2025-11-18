@@ -108,11 +108,11 @@ end
 -- TODO: criar mais blueprints e tornar estas funções aleatórias
 
 function randPuzzleRoomBP()
-	return Blueprint.new(PUZZLE_ROOM, "Test Puzzle Room", Color.new(12, 253, 255, 255))
+	return Blueprint.new(PUZZLE_ROOM, "Test Puzzle Room", rgba8(12, 253, 255, 255))
 end
 
 function randNPCRoomBP()
-	local bp = Blueprint.new(NPC_ROOM, "Test NPC Room", Color.new(120, 58, 242, 255))
+	local bp = Blueprint.new(NPC_ROOM, "Test NPC Room", rgba8(120, 58, 242, 255))
 	local sp1 = SpawnPoint.new(vec(100, 0))
 	local sp2 = SpawnPoint.new(vec(200, 0))
 	local sp3 = SpawnPoint.new(vec(300, 0))
@@ -126,7 +126,7 @@ function randNPCRoomBP()
 end
 
 function randResourceRoomBP()
-	local bp = Blueprint.new(RESOURCE_ROOM, "Test Resource Room", Color.new(255, 248, 122, 255))
+	local bp = Blueprint.new(RESOURCE_ROOM, "Test Resource Room", rgba8(255, 248, 122, 255))
 	local sp1 = SpawnPoint.new(vec(100, 0))
 	local sp2 = SpawnPoint.new(vec(200, 0))
 	local sp3 = SpawnPoint.new(vec(300, 0))
@@ -142,7 +142,7 @@ function randResourceRoomBP()
 end
 
 function randBattleRoomBP()
-	local bp = Blueprint.new(BATTLE_ROOM, "Test Battle Room", Color.new(255, 255, 255, 255))
+	local bp = Blueprint.new(BATTLE_ROOM, "Test Battle Room", rgba8(255, 255, 255, 255))
 	local sp1 = SpawnPoint.new(vec(100, -100))
 	local sp2 = SpawnPoint.new(vec(-100, 100))
 	local sp3 = SpawnPoint.new(vec(100, 100))
@@ -158,7 +158,7 @@ function randBattleRoomBP()
 end
 
 function randBossRoomBP()
-	local bp = Blueprint.new(BOSS_ROOM, "Test Boss Room", Color.new(255, 41, 41, 255))
+	local bp = Blueprint.new(BOSS_ROOM, "Test Boss Room", rgba8(255, 41, 41, 255))
 	local sp1 = SpawnPoint.new(vec(0, 0))
 	local enemyData1 = SpawnData.new(SPIDER_DUCK, 0.5)
 	local enemyData2 = SpawnData.new(NUCLEAR_CAT, 1.0)
@@ -168,7 +168,7 @@ function randBossRoomBP()
 end
 
 function randEventRoomBP()
-	local bp = Blueprint.new(EVENT_ROOM, "Test Event Room", Color.new(104, 237, 102, 255))
+	local bp = Blueprint.new(EVENT_ROOM, "Test Event Room", rgba8(104, 237, 102, 255))
 	local sp1 = SpawnPoint.new(vec(0, 0))
 	local barrelData = SpawnData.new(BARREL, 0.25)
 	local jarData = SpawnData.new(JAR, 0.5)

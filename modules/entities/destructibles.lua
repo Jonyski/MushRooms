@@ -105,6 +105,7 @@ function Destructible:spawnLoot()
 	if not loot or loot.len == 0 then
 		return
 	end
+	-- spawna aleatoriamente os drops possíveis na posição destrutível
 	for i = 1, loot.len do
 		local el = loot[i] -- elemento do loot
 		if math.random() < el.chance then

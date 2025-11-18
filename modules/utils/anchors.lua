@@ -4,31 +4,38 @@
 require("modules.utils.utils")
 
 ----------------------------------------
+-- Funções locais
+----------------------------------------
+local function floorAnchor(y)
+	return { floor = y }
+end
+
+----------------------------------------
 -- Variáveis e Enums
 ----------------------------------------
 FLOOR = "floor"
 
+-- Observação: os valores aqui são relativos ao centro do sprite
+-- No futuro, outros anchors podem ser adicionados (head, hand, etc)
 ANCHORS = {
-	-- Observação: os valores aqui são relativos ao centro do sprite
-	-- No futuro, outros anchors podem ser adicionados (head, hand, etc)
-
 	-- Items
-	katana = { floor = 11 },
-	sling_shot = { floor = 8 },
-	coin = { floor = 8 },
+	katana = floorAnchor(11),
+	sling_shot = floorAnchor(8),
+	coin = floorAnchor(8),
 
 	-- Destrutíveis
-	barrel = { floor = 10 },
-	jar = { floor = 4 },
+	barrel = floorAnchor(10),
+	jar = floorAnchor(4),
 
 	-- Inimigos
-	spider_duck = { floor = 14 },
-	nuclear_cat = { floor = 16 },
+	spider_duck = floorAnchor(14),
+	nuclear_cat = floorAnchor(16),
+
 	-- Jogadores
-	mush = { floor = 10 },
-	musho = { floor = 10 },
-	roomy = { floor = 11 },
-	shroom = { floor = 13 },
+	mush = floorAnchor(10),
+	musho = floorAnchor(10),
+	roomy = floorAnchor(11),
+	shroom = floorAnchor(13),
 }
 
 ----------------------------------------
@@ -48,4 +55,3 @@ function getAnchor(obj, anchorType, scale)
 	-- fallback padrão
 	return 0
 end
-

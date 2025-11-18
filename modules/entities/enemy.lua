@@ -14,7 +14,7 @@ Enemy = {}
 Enemy.__index = Enemy
 Enemy.type = ENEMY
 
-function Enemy.new(name, hp, spawnPos, velocity, color, move, attack)
+function Enemy.new(name, hp, spawnPos, velocity, move, attack)
 	local enemy = setmetatable({}, Enemy)
 
 	-- atributos que variam
@@ -22,7 +22,6 @@ function Enemy.new(name, hp, spawnPos, velocity, color, move, attack)
 	enemy.hp = hp -- pontos de vida do inimigo
 	enemy.pos = spawnPos -- posição do inimigo
 	enemy.vel = velocity -- velocidade de movimento do inimigo
-	enemy.color = color -- cor do inimigo
 	enemy.move = move -- função de movimento do inimigo
 	enemy.attack = attack -- função de ataque do inimigo
 	-- atributos fixos na instanciação
@@ -106,10 +105,9 @@ function newEnemy(enemy, spawnPos)
 end
 
 function newNuclearCat(spawnPos)
-	local color = { r = 0.9, g = 0.4, b = 0.4, a = 1.0 }
 	local movementFunc = Enemy.moveFollowPlayer
 	local attackFunc = Enemy.simpleAttack
-	local enemy = Enemy.new(NUCLEAR_CAT.name, 30, spawnPos, 180, color, movementFunc, attackFunc)
+	local enemy = Enemy.new(NUCLEAR_CAT.name, 30, spawnPos, 180, movementFunc, attackFunc)
 	local idleAnimSettings = newAnimSetting(6, { width = 32, height = 32 }, 0.15, true, 1)
 	enemy:addAnimations(idleAnimSettings)
 	table.insert(enemies, enemy)
@@ -117,10 +115,9 @@ function newNuclearCat(spawnPos)
 end
 
 function newSpiderDuck(spawnPos)
-	local color = { r = 0.9, g = 0.9, b = 0.1, a = 1.0 }
 	local movementFunc = Enemy.moveFollowPlayer
 	local attackFunc = Enemy.simpleAttack
-	local enemy = Enemy.new(SPIDER_DUCK.name, 20, spawnPos, 180, color, movementFunc, attackFunc)
+	local enemy = Enemy.new(SPIDER_DUCK.name, 20, spawnPos, 180, movementFunc, attackFunc)
 	local idleAnimSettings = newAnimSetting(4, { width = 32, height = 32 }, 0.4, true, 1)
 	enemy:addAnimations(idleAnimSettings)
 	table.insert(enemies, enemy)

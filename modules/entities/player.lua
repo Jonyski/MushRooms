@@ -216,10 +216,8 @@ function Player:checkAction2(key)
 		if len <= 1 then
 			return
 		end
-
 		local indexWeapon = tableIndexOf(self.weapons, self.weapon)
 		local nextIndex = indexWeapon
-
 		-- caminha ciclicamente entre as armas
 		if self.movementVec.x > 0 then
 			nextIndex = (indexWeapon % len) + 1
@@ -242,7 +240,6 @@ function Player:collectWeapon(weapon)
 end
 
 function Player:equipWeapon(weaponName)
-	-- itera pelas armas do jogador procurando pela que ele quer equipar
 	for _, w in pairs(self.weapons) do
 		if w.name == weaponName then
 			self.weapon = w
@@ -256,7 +253,6 @@ function Player:hasWeapon(weaponName)
 			return true
 		end
 	end
-
 	return false
 end
 

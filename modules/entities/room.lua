@@ -37,7 +37,6 @@ function Room.new(pos, dimensions, hitbox, blueprint, sprites)
 	room.dimensions = dimensions -- largura e altura da sala
 	room.hitbox = hitbox -- pontos superior esquerdo (p1) e inferior direito (p2) da sala
 	room.center = midpoint(hitbox.p1, hitbox.p2) -- ponto central da sala
-	room.roomType = roomType -- tipo de sala
 	room.color = blueprint.color -- cor da sala
 	room.sprites = sprites -- os sprites da sala em camadas
 	-- atributos fixos na instanciação
@@ -113,7 +112,7 @@ end
 function Room:populate(spawnpoints)
 	for _, sp in pairs(spawnpoints) do
 		local n = math.random()
-		for _, sd in pairs(sp.spawns) do
+		for _, sd in ipairs(sp.spawns) do
 			if n < sd.chance then
 				self:spawn(sd.entity, sp.pos)
 				goto nextspawnpoint
@@ -141,24 +140,24 @@ function newRoom(pos, dimensions)
 	if not rooms[pos.y] then
 		rooms:insert(pos.y, BiList.new())
 	end
-
+	-- escolhendo uma blueprint para a sala
 	local roomType = randRoomType()
 	local blueprint = randRoomBlueprint(roomType)
-
+	-- gerando os atributos derivadoss
 	local p1 = vec(pos.x * Room.stdDim.width, pos.y * Room.stdDim.height)
 	local p2 = vec(p1.x + dimensions.width, p1.y + dimensions.height)
 	local hitbox = { p1 = p1, p2 = p2 }
 	local sprites = {}
 	sprites.floor = love.graphics.newImage("assets/sprites/rooms/testRoom.png")
 	sprites.floor:setFilter("nearest", "nearest")
-
+	-- instanciando e populando com entidades (inimigos, destrutíveis, etc)
 	local room = Room.new(pos, dimensions, hitbox, blueprint, sprites)
-
 	room:populate(blueprint.spawnpoints)
 	rooms[pos.y]:insert(pos.x, room)
 end
 
 function createInitialRooms()
+	-- cria a sala inicial do jogo e suas vizinhas
 	newRoom({ x = 0, y = 0 }, Room.stdDim)
 	rooms[0][0]:setExplored()
 end

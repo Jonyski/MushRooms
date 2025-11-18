@@ -390,7 +390,7 @@ function newPlayer()
 		player4.room:visit(player4)
 		table.insert(players, player4)
 	end
-	newCamera()
+	newCamera(players[#players])
 end
 
 return Player

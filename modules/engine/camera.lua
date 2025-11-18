@@ -15,13 +15,13 @@ cameras = {}
 Camera = {}
 Camera.__index = Camera
 
-function Camera.new(pos, viewport, canvas, canvasPos)
+function Camera.new(pos, viewport, canvas, canvasPos, player)
 	local camera = setmetatable({}, Camera)
 
-	camera.pos = pos          -- posição da camera
-	camera.viewport = viewport -- tamanho da câmera (o espaço que ela enxerga)
-	camera.canvas = canvas    -- canvas associado à câmera
-	camera.canvasPos = canvasPos -- posição do canvas na tela
+	camera.playerAttached = player 	            -- jogador associado à câmera
+	camera.viewport = viewport                  -- tamanho da câmera (o espaço que ela enxerga)
+	camera.canvas = canvas                      -- canvas associado à câmera
+	camera.canvasPos = canvasPos                -- posição do canvas na tela
 	camera.cx = (pos.x + viewport.width) / 2
 	camera.cy = (pos.y + viewport.height) / 2
 	camera.targetPos = { x = pos.x, y = pos.y } -- onde a câmera deve ir
@@ -31,15 +31,20 @@ function Camera.new(pos, viewport, canvas, canvasPos)
 	camera.shakeIntensity = 0                -- intensidade do shake
 	camera.shakeDuration = 0                 -- duração total do shake
 	camera.shakeTimer = 0                    -- tempo restante do shake
-	camera.zoom = 1                          -- zoom atual
-	camera.targetZoom = 1                    -- zoom desejado
+	-- atributos de zoom
+	camera.startingZoom = camera:calculateZoom()
+	camera.zoom = camera.startingZoom        -- zoom atual
+	camera.targetZoom = camera.startingZoom  -- zoom desejado
 	camera.zoomSpeed = 3                     -- velocidade da transição
 
 	return camera
 end
 
 function Camera:updatePosition(dt)
-	-- ajuda o viewport de acordo com o zoom
+	-- suaviza o zoom atual
+	self.zoom = lerp(self.zoom, self.targetZoom, dt * self.zoomSpeed)
+
+	-- ajusda o viewport de acordo com o zoom
 	local viewportZoomed = {
 		width = self.viewport.width / self.zoom,
 		height = self.viewport.height / self.zoom,
@@ -61,11 +66,24 @@ function Camera:updatePosition(dt)
 
 		-- limita a posição da câmera ao hitbox da sala
 		self.targetPos.x =
-			clamp(player.pos.x - viewportZoomed.width / 2, room.hitbox.p1.x, room.hitbox.p2.x - viewportZoomed.width)
+			clamp(player.pos.x, room.hitbox.p1.x + viewportZoomed.width / 2, room.hitbox.p2.x - viewportZoomed.width / 2)
 		self.targetPos.y =
-			clamp(player.pos.y - viewportZoomed.height / 2, room.hitbox.p1.y, room.hitbox.p2.y - viewportZoomed.height)
+			clamp(player.pos.y, room.hitbox.p1.y + viewportZoomed.height / 2, room.hitbox.p2.y - viewportZoomed.height / 2)
 	end
 
+	self:updateShake(dt)
+
+	self.cx = lerp(self.cx, self.targetPos.x, dt * self.transitionSpeed) + self.shakeOffset.x
+	self.cy = lerp(self.cy, self.targetPos.y, dt * self.transitionSpeed) + self.shakeOffset.y
+end
+
+function Camera:shake(intensity, duration)
+	self.shakeIntensity = intensity or 10
+	self.shakeDuration = duration or 0.3
+	self.shakeTimer = self.shakeDuration
+end
+
+function Camera:updateShake(dt)
 	-- atualiza shake se estiver ativo
 	if self.shakeTimer > 0 then
 		self.shakeTimer = self.shakeTimer - dt
@@ -81,23 +99,6 @@ function Camera:updatePosition(dt)
 			self.shakeOffset.y = 0
 		end
 	end
-
-	-- suaviza o movimento até o target
-	self.pos.x = lerp(self.pos.x, self.targetPos.x, dt * self.transitionSpeed)
-	self.pos.y = lerp(self.pos.y, self.targetPos.y, dt * self.transitionSpeed)
-
-	-- atualiza centro
-	self.cx = self.pos.x + viewportZoomed.width / 2 + self.shakeOffset.x
-	self.cy = self.pos.y + viewportZoomed.height / 2 + self.shakeOffset.y
-
-	-- suaviza o zoom atual
-	self.zoom = lerp(self.zoom, self.targetZoom, dt * self.zoomSpeed)
-end
-
-function Camera:shake(intensity, duration)
-	self.shakeIntensity = intensity or 10
-	self.shakeDuration = duration or 0.3
-	self.shakeTimer = self.shakeDuration
 end
 
 function Camera:viewPos(entityPos)
@@ -129,10 +130,24 @@ function Camera:draw()
 	love.graphics.draw(self.canvas, self.canvasPos.x, self.canvasPos.y)
 end
 
+function Camera:calculateZoom()
+	
+	if not self.playerAttached then
+		return 1
+	end
+
+	local roomDim = self.playerAttached.room.stdDim
+	local rawZoom = self.viewport.width / window.width
+	local rightZoom = remap(rawZoom, (1/3), 1, 0.7, 1.0)
+
+	return clamp(rightZoom, self.viewport.width / roomDim.width, 2)
+end
+
 ----------------------------------------
 -- Funções Globais
 ----------------------------------------
-function newCamera()
+
+function newCamera(player)
 	-- limite de cameras alcançado
 	if #cameras >= 4 then
 		return
@@ -149,7 +164,8 @@ function newCamera()
 				{ x = 0, y = 0 },
 				{ width = window.width / numOfCams, height = window.height },
 				love.graphics.newCanvas(window.width / numOfCams, window.height),
-				{ x = (i - 1) * (window.width / numOfCams), y = 0 }
+				{ x = (i - 1) * (window.width / numOfCams), y = 0 },
+				player
 			)
 			table.insert(cameras, camera)
 		else -- no caso de 4 câmeras
@@ -163,7 +179,8 @@ function newCamera()
 				{ x = 0, y = 0 },
 				{ width = window.width / 2, height = window.height / 2 },
 				love.graphics.newCanvas(window.width / 2, window.height / 2),
-				canvasPositions[i]
+				canvasPositions[i],
+				player
 			)
 			table.insert(cameras, camera)
 		end

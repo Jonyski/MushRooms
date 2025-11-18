@@ -134,6 +134,11 @@ function range(min, max)
 	return { min = min, max = max }
 end
 
+-- Remapeia um valor em um intervalo [inMin, inMax] para [outMin, outMax]
+function remap(value, inMin, inMax, outMin, outMax)
+	return outMin + (value - inMin) * (outMax - outMin) / (inMax - inMin)
+end
+
 ----------------------------------------
 -- Funções de sistema de arquivos
 ----------------------------------------

@@ -5,6 +5,7 @@ require("modules.utils.utils")
 require("modules.utils.vec")
 require("modules.systems.shaders")
 require("modules.entities.player")
+require("modules.utils.types")
 require("table")
 
 ----------------------------------------
@@ -12,22 +13,22 @@ require("table")
 ----------------------------------------
 Item = {}
 Item.__index = Item
-Item.type = "item"
+Item.type = ITEM
 
 function Item.new(object, pos, room, autoPick, floorY)
 	local item = setmetatable({}, Item)
 
-	item.object = object                  -- objeto associado ao item (arma, recurso, etc)
-	item.pos = vec(room.center.x + pos.x, room.center.y + pos.y)
-	item.room = room                      -- sala onde o item está
-	item.vel = { x = 0, y = 0 }           -- velocidade para física simples
-	item.radius = 50                      -- usado para colisão e dist()
-	item.collected = false                -- flag de coleta
-	item.autoPick = autoPick              -- se o item é coletado automaticamente ou manualmente
-	item.gravity = 600                    -- força da gravidade
+	item.object = object -- objeto associado ao item (arma, recurso, etc)
+	item.pos = pos -- posição do item no mundo
+	item.room = room -- sala onde o item está
+	item.vel = { x = 0, y = 0 } -- velocidade para física simples
+	item.radius = 50 -- usado para colisão e dist()
+	item.collected = false -- flag de coleta
+	item.autoPick = autoPick -- se o item é coletado automaticamente ou manualmente
+	item.gravity = 600 -- força da gravidade
 	item.floorY = item.pos.y + (floorY or 0) -- posição onde irá parar de cair
-	item.idleTimer = 0                    -- timer para oscilar enquanto parado
-	item.shine = false                    -- se está brilhando
+	item.idleTimer = 0 -- timer para oscilar enquanto parado
+	item.shine = false -- se está brilhando
 
 	local sprite_path = pngPathFormat({ "assets", "sprites", "items", object.name })
 	item.image = love.graphics.newImage(sprite_path)
@@ -115,8 +116,8 @@ end
 ----------------------------------------
 -- Funções Globais
 ----------------------------------------
-function newItem(object, pos, room, pickupType, floorY)
-	return Item.new(object, pos, room, pickupType, floorY)
+function newItem(object, pos, room, autoPick, floorY)
+	return Item.new(object, pos, room, autoPick, floorY)
 end
 
 return Item

@@ -39,13 +39,21 @@ function renderEntities(camera)
 				end,
 			})
 		end
-
 		-- Adiciona items
 		for _, i in pairs(r.items) do
 			table.insert(drawList, {
 				y = i.floorY + getAnchor(i, FLOOR),
 				draw = function()
 					i:draw(camera)
+				end,
+			})
+		end
+		-- Adiciona inimigos
+		for _, e in pairs(r.enemies) do
+			table.insert(drawList, {
+				y = e.pos.y + getAnchor(e, FLOOR),
+				draw = function()
+					e:draw(camera)
 				end,
 			})
 		end

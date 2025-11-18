@@ -4,34 +4,29 @@
 require("modules.systems.attacks")
 require("modules.utils.shapes")
 require("modules.engine.animation")
-
-----------------------------------------
--- Variáveis e Enums
-----------------------------------------
-KATANA = "Katana"
-SLING_SHOT = "Sling Shot"
+require("modules.utils.types")
 
 ----------------------------------------
 -- Classe Weapon
 ----------------------------------------
 Weapon = {}
 Weapon.__index = Weapon
-Weapon.type = "weapon"
+Weapon.type = WEAPON
 
 function Weapon.new(name, ammo, cooldown, attack)
 	local weapon = setmetatable({}, Weapon)
 
 	-- atributos que variam
-	weapon.name = name      -- nome do tipo de arma
-	weapon.ammo = ammo      -- número de munições
+	weapon.name = name -- nome do tipo de arma
+	weapon.ammo = ammo -- número de munições
 	weapon.cooldown = cooldown -- tempo de espera entre ataques consecutivos
-	weapon.atk = attack     -- instância de Attack associada à arma
+	weapon.atk = attack -- instância de Attack associada à arma
 	-- atributos fixos na instanciação
 	weapon.canShoot = false
-	weapon.timer = 0      -- timer do cooldown
-	weapon.target = nil   -- inimigo para o qual a arma está mirando
-	weapon.rotation = 0   -- rotação da arma em radianos
-	weapon.state = IDLE   -- estado atual da arma
+	weapon.timer = 0 -- timer do cooldown
+	weapon.target = nil -- inimigo para o qual a arma está mirando
+	weapon.rotation = 0 -- rotação da arma em radianos
+	weapon.state = IDLE -- estado atual da arma
 	weapon.spriteSheets = {} -- no tipo imagem do love
 	weapon.animations = {} -- as chaves são estados e os valores são Animações
 	return weapon
@@ -77,9 +72,7 @@ function Weapon:draw(camera)
 	if self.owner.state == DEFENDING then
 		return
 	end
-
 	local wViewPos = camera:viewPos(self.owner.pos)
-
 	local animation = self.animations[self.state]
 	local quad = animation.frames[animation.currFrame]
 	-- inverte arma no segundo e terceiro quadrantes
@@ -128,7 +121,7 @@ function newKatana()
 	local attack = Attack.new("Katana Slice", atkSettings, atkAnimSettings, createUpdateFunc(), onHitFunc)
 
 	-- Inicialicação da arma em si
-	local katana = Weapon.new(KATANA, math.huge, 0.3, attack)
+	local katana = Weapon.new(KATANA.name, math.huge, 0.3, attack)
 	local idleAnimSettings = newAnimSetting(4, { width = 64, height = 64 }, 0.3, true, 1)
 	local weaponAtkAnimSettings = newAnimSetting(12, { width = 64, height = 64 }, 0.03, false, 1)
 	katana:addAnimations(idleAnimSettings, weaponAtkAnimSettings)
@@ -150,7 +143,7 @@ function newSlingShot()
 	local attack = Attack.new("Pebble Shot", atkSettings, atkAnimSettings, updateFunc, onHitFunc)
 
 	-- Inicialicação da arma em si
-	local slingshot = Weapon.new(SLING_SHOT, math.huge, 0.4, attack)
+	local slingshot = Weapon.new(SLING_SHOT.name, math.huge, 0.4, attack)
 	local idleAnimSettings = newAnimSetting(2, { width = 64, height = 64 }, 0.5, true, 1)
 	local weaponAtkAnimSettings = newAnimSetting(10, { width = 64, height = 64 }, 0.05, false, 1)
 	slingshot:addAnimations(idleAnimSettings, weaponAtkAnimSettings)

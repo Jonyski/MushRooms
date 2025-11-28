@@ -3,12 +3,12 @@
 ----------------------------------------
 
 -- construtor de configuração base para ataques melee
-function newBaseAtkSetting(ally, damage, duration, hitboxShape)
+function newBaseAtkSetting(ally, damage, duration, hitbox)
 	return {
 		ally = ally,
 		damage = damage,
 		duration = duration,
-		hitbox = hitboxShape,
+		hitbox = hitbox,
 		-- por padrão, ataques não terão velocidade, aceleração, quiques e atravessam infinitos alvos (Melee)
 		speed = 0,
 		acc = 0,
@@ -48,7 +48,7 @@ function Attack.new(name, atkSettings, animSettings, updateFunc, onHit)
 	attack.dur = atkSettings.duration -- duração do evento de ataque associado
 	attack.speed = atkSettings.speed -- fator inicial de velocidade do ataque/projétil
 	attack.acc = atkSettings.acc -- fator inicial de aceleração do ataque/projétil
-	attack.hb = atkSettings.hitbox -- formato do ataque (para detecção de colisões)
+	attack.hb = atkSettings.hitbox -- hitbox do ataque
 	attack.bounces = atkSettings.bounces -- quantas vezes o ataque pode ricochetear (caso seja projétil)
 	attack.pierces = atkSettings.pierces -- quantas vezes o ataque pode atravessar um alvo
 	attack.animSettings = animSettings -- configurações da animação de cada evento
@@ -112,6 +112,7 @@ end
 function AttackEvent:baseUpdate(dt)
 	self.vel = addVec(self.vel, self.acc)
 	self.pos = addVec(self.pos, self.vel)
+	self.hb.pos = self.pos
 	self.timer = self.timer - dt
 end
 

@@ -7,6 +7,8 @@ require("modules.utils.vec")
 require("modules.systems.particles")
 require("modules.utils.colors")
 require("modules.utils.types")
+require("modules.utils.shapes")
+require("modules.engine.collision")
 require("table")
 
 ----------------------------------------
@@ -52,6 +54,9 @@ function Player.new(id, name, spawn_pos, controls, colors, room)
 	player.particles = {} -- efeitos de partícula emitidos pelo player
 	player.weapons = {} -- lista das armas que o jogador possui
 	player.weapon = nil -- arma equipada
+	player.hb = hitbox(Circle.new(20), player.pos) -- hitbox do player
+
+	collisionManager.players[player] = player.hb
 	return player
 end
 
@@ -102,7 +107,11 @@ function Player:update(dt)
 	end
 	self:updateState()
 	self:updateParticles(dt)
-	self:checkCollisions()
+end
+
+function Player:setPos(pos)
+	self.pos = pos
+	self.hb.pos = pos
 end
 
 function Player:move(dt)
@@ -132,12 +141,14 @@ function Player:move(dt)
 	normalize(self.movementVec)
 	-- Levando o dt e a velocidade do cogumelo em consideração
 	self.movementVec = scaleVec(self.movementVec, dt * self.vel)
+
 	------------ HACK PARA DEBUG ------------
 	if love.keyboard.isDown("lctrl") then
 		self.movementVec = scaleVec(self.movementVec, 5)
 	end
 	-----------------------------------------
-	self.pos = addVec(self.pos, self.movementVec)
+
+	self:setPos(addVec(self.pos, self.movementVec))
 
 	self:updateParticlesPos()
 	if self.weapon then
@@ -311,32 +322,16 @@ function Player:collectItem(item)
 	end
 end
 
-function Player:checkCollisions()
-	-- TODO: Mover toda lógica de colisão para um detector de colisões centralizado
-
-	-- colisão com destrutíveis
-	for _, d in pairs(self.room.destructibles) do
-		local dist = dist(self.pos, d.pos)
-		if d.state == INTACT and dist < 50 then
-			d:damage(d.health) -- destrói o objeto instantaneamente
-		end
+function Player:tryCollectItem(item)
+	if not item.canPick then
+		return
 	end
-	-- colisão com itens
-	for _, item in pairs(self.room.items) do
-		if item.collected or not nullVec(item.vel) then
-			goto nextitem
-		end
-		local distance = dist(self.pos, item.pos)
-		if distance < item.radius then
-			if item.autoPick then
-				self:collectItem(item)
-				return
-			elseif not item.autoPick and love.keyboard.isDown(self.controls.act2) then
-				self:collectItem(item)
-				return
-			end
-		end
-		::nextitem::
+	if item.autoPick then
+		self:collectItem(item)
+		return
+	elseif love.keyboard.isDown(self.controls.act2) then
+		self:collectItem(item)
+		return
 	end
 end
 
@@ -356,6 +351,11 @@ function Player:draw(camera)
 		y = animation.frameDim.height / 2,
 	}
 	love.graphics.draw(self.spriteSheets[self.state], quad, viewPos.x, viewPos.y, 0, 3, 3, offset.x, offset.y)
+
+	---------- HITBOX DEBUG ----------
+	love.graphics.circle("line", viewPos.x, viewPos.y, self.hb.shape.radius)
+	----------------------------------
+
 	-- desenhando o efeito de partículas da defesa em cima do player
 	love.graphics.draw(self.particles[DEFENDING], particles_offset.x, particles_offset.y)
 end

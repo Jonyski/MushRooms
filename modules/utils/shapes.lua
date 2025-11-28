@@ -1,15 +1,22 @@
+---------------------------------------
+-- Enums
 ----------------------------------------
+CIRCLE = "circle"
+RECTANGLE = "rectangle"
+LINE = "line"
+
+---------------------------------------
 -- Classe Circle
 ----------------------------------------
 
 Circle = {}
 Circle.__index = Circle
-Circle.shape = "circle" -- We use this type for the dispatch
+Circle.shape = CIRCLE
 
 function Circle.new(radius)
-    local circle = setmetatable({}, Circle)
-    circle.radius = radius
-    return circle
+	local circle = setmetatable({}, Circle)
+	circle.radius = radius
+	return circle
 end
 
 ----------------------------------------
@@ -18,15 +25,15 @@ end
 
 Rectangle = {}
 Rectangle.__index = Rectangle
-Rectangle.shape = "rectangle" -- We use this type for the dispatch
+Rectangle.shape = RECTANGLE
 
 function Rectangle.new(width, height)
-    local rect = setmetatable({}, Rectangle)
-    rect.width = width
-    rect.height = height
-    rect.half_w = width / 2
-    rect.half_h = height / 2
-    return rect
+	local rect = setmetatable({}, Rectangle)
+	rect.width = width
+	rect.height = height
+	rect.halfW = width / 2
+	rect.halfH = height / 2
+	return rect
 end
 
 ----------------------------------------
@@ -35,10 +42,10 @@ end
 
 Line = {}
 Line.__index = Line
-Line.shape = "line"
+Line.shape = LINE
 
 function Line.new(angle, length)
-    local line = setmetatable({}, Line)
-    line.angle = angle
-    line.length = length
+	local line = setmetatable({}, Line)
+	line.angle = angle
+	line.length = length
 end

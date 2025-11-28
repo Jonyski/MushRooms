@@ -14,6 +14,7 @@ ATTACK_EVENT = "attack event"
 BLUEPRINT = "blueprint"
 SPAWNPOINT = "spawnpoint"
 SPAWN_DATA = "spawn data"
+COLLISION_MANAGER = "collision manager"
 
 ----------------------------------------
 -- Registro das entidades do jogo

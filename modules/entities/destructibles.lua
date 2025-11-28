@@ -5,6 +5,7 @@ require("modules.engine.animation")
 require("modules.utils.utils")
 require("modules.systems.loots")
 require("modules.utils.types")
+require("modules.engine.collision")
 require("table")
 
 ----------------------------------------
@@ -22,7 +23,7 @@ Destructible = {}
 Destructible.__index = Destructible
 Destructible.type = DESTRUCTIBLE
 
-function Destructible.new(name, pos, room, loot)
+function Destructible.new(name, pos, room, loot, hitbox)
 	local obj = setmetatable({}, Destructible)
 
 	obj.name = name -- nome do objeto
@@ -33,6 +34,7 @@ function Destructible.new(name, pos, room, loot)
 	obj.spriteSheets = {}
 	obj.animations = {}
 	obj.loot = loot or LOOT_TABLE[name] or Loot.new() -- pode ser sobrescrito na criação
+	obj.hb = hitbox -- hitbox do destrutível
 
 	obj:addAnimations()
 	return obj
@@ -98,6 +100,20 @@ function Destructible:draw(camera)
 		y = anim.frameDim.height / 2,
 	}
 	love.graphics.draw(self.spriteSheets[self.state], quad, viewPos.x, viewPos.y, 0, 3, 3, offset.x, offset.y)
+
+	---------- HITBOX DEBUG ----------
+	if self.hb.shape.shape == CIRCLE then
+		love.graphics.circle("line", viewPos.x, viewPos.y, self.hb.shape.radius)
+	elseif self.hb.shape.shape == RECTANGLE then
+		love.graphics.rectangle(
+			"line",
+			viewPos.x - self.hb.shape.halfW,
+			viewPos.y - self.hb.shape.halfH,
+			self.hb.shape.width,
+			self.hb.shape.height
+		)
+	end
+	----------------------------------
 end
 
 function Destructible:spawnLoot()
@@ -112,7 +128,7 @@ function Destructible:spawnLoot()
 			local amount = math.random(el.amountRange.min, el.amountRange.max)
 			for j = 1, amount do
 				local item_pos = { x = self.pos.x, y = self.pos.y }
-				local item = newItem(el.object, item_pos, self.room, el.autoPick, math.random(-20, 20))
+				local item = newItem(el.object, item_pos, self.room, el.autoPick, math.random(0, 20))
 				item:applyImpulse(math.random(-100, 100), -math.random(150, 200))
 			end
 		end
@@ -127,12 +143,14 @@ function newBarrel(pos, room)
 	local loot = Loot.new(newSlingShot(), 0.2, range(1, 1), false)
 	loot:insert(newKatana(), 0.2, range(1, 1), false)
 	loot:insert(COIN, 0.6, range(1, 5), true)
-	return Destructible.new(BARREL.name, pos, room, loot)
+	local hitbox = hitbox(Rectangle.new(40, 60), pos)
+	return Destructible.new(BARREL.name, pos, room, loot, hitbox)
 end
 
 function newJar(pos, room)
 	local loot = Loot.new(COIN, 0.8, range(1, 3), true)
-	return Destructible.new(JAR.name, pos, room, loot)
+	local hitbox = hitbox(Circle.new(10), pos)
+	return Destructible.new(JAR.name, pos, room, loot, hitbox)
 end
 
 return Destructible

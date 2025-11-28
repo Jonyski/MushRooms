@@ -90,6 +90,17 @@ function Set:iter()
 	end
 end
 
+function Set:copy(src)
+	-- esvaziando a si mesmo primeiro
+	for k, _ in self:iter() do
+		self:remove(k)
+	end
+
+	for k, v in src:iter() do
+		self:add(k, v)
+	end
+end
+
 ----------------------------------------
 -- Funções para tabelas
 ----------------------------------------

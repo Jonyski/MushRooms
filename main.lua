@@ -11,6 +11,7 @@ require("modules.entities.enemy")
 require("modules.entities.weapon")
 require("modules.entities.destructibles")
 require("modules.entities.items")
+require("modules.engine.collision")
 
 ----------------------------------------
 -- Variáveis Globais
@@ -77,6 +78,7 @@ function love.load()
 	window.cy = 400 -- centro no eixo y
 	sec_timer = { prev = 0, curr = 0 }
 	createInitialRooms()
+	collisionManager = CollisionManager.init() -- gerenciador global de colisões
 	newPlayer()
 
 	-- métodos de estado do love
@@ -99,6 +101,9 @@ function love.update(dt)
 	for _, r in activeRooms:iter() do
 		r:update(dt)
 	end
+	----------- Colisões ----------
+	collisionManager:updateHitboxLists()
+	collisionManager:handleCollisions()
 end
 
 ----------------------------------------

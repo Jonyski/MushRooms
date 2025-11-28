@@ -19,7 +19,7 @@ NPC_ROOM = "npc room"
 RESOURCE_ROOM = "resource room"
 BATTLE_ROOM = "battle room"
 BOSS_ROOM = "boss room"
-EVENT_ROOM = "blessing room"
+EVENT_ROOM = "event room"
 
 ----------------------------------------
 -- Classe Player

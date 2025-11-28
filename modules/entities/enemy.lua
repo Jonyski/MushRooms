@@ -1,5 +1,6 @@
 require("modules.entities.player")
 require("modules.utils.types")
+require("modules.engine.collision")
 require("table")
 
 ----------------------------------------
@@ -14,7 +15,7 @@ Enemy = {}
 Enemy.__index = Enemy
 Enemy.type = ENEMY
 
-function Enemy.new(name, hp, spawnPos, velocity, move, attack)
+function Enemy.new(name, hp, spawnPos, velocity, move, attack, hitbox)
 	local enemy = setmetatable({}, Enemy)
 
 	-- atributos que variam
@@ -24,6 +25,7 @@ function Enemy.new(name, hp, spawnPos, velocity, move, attack)
 	enemy.vel = velocity -- velocidade de movimento do inimigo
 	enemy.move = move -- função de movimento do inimigo
 	enemy.attack = attack -- função de ataque do inimigo
+	enemy.hb = hitbox -- hitbox do inimigo
 	-- atributos fixos na instanciação
 	enemy.size = { height = 32, width = 32 }
 	enemy.cooldown = 0
@@ -48,6 +50,11 @@ function Enemy:update(dt)
 	self.animations[self.state]:update(dt)
 end
 
+function Enemy:setPos(pos)
+	self.pos = pos
+	self.hb.pos = pos
+end
+
 ----------------------------------------
 -- Funções de Movimento
 ----------------------------------------
@@ -59,9 +66,8 @@ function Enemy:moveFollowPlayer(dt)
 	if distance > 100 then
 		dx = dx / distance
 		dy = dy / distance
-
-		self.pos.x = self.pos.x + dx * self.vel * dt
-		self.pos.y = self.pos.y + dy * self.vel * dt
+		local newPos = vec(self.pos.x + dx * self.vel * dt, self.pos.y + dy * self.vel * dt)
+		self:setPos(newPos)
 	end
 end
 
@@ -91,6 +97,20 @@ function Enemy:draw(camera)
 		y = animation.frameDim.height / 2,
 	}
 	love.graphics.draw(self.spriteSheets[self.state], quad, viewPos.x, viewPos.y, 0, 3, 3, offset.x, offset.y)
+
+	---------- HITBOX DEBUG ----------
+	if self.hb.shape.shape == CIRCLE then
+		love.graphics.circle("line", viewPos.x, viewPos.y, self.hb.shape.radius)
+	elseif self.hb.shape.shape == RECTANGLE then
+		love.graphics.rectangle(
+			"line",
+			viewPos.x - self.hb.shape.halfW,
+			viewPos.y - self.hb.shape.halfH,
+			self.hb.shape.width,
+			self.hb.shape.height
+		)
+	end
+	----------------------------------
 end
 
 ----------------------------------------
@@ -107,7 +127,8 @@ end
 function newNuclearCat(spawnPos)
 	local movementFunc = Enemy.moveFollowPlayer
 	local attackFunc = Enemy.simpleAttack
-	local enemy = Enemy.new(NUCLEAR_CAT.name, 30, spawnPos, 180, movementFunc, attackFunc)
+	local hitbox = hitbox(Rectangle.new(40, 70), spawnPos)
+	local enemy = Enemy.new(NUCLEAR_CAT.name, 30, spawnPos, 180, movementFunc, attackFunc, hitbox)
 	local idleAnimSettings = newAnimSetting(6, { width = 32, height = 32 }, 0.15, true, 1)
 	enemy:addAnimations(idleAnimSettings)
 	table.insert(enemies, enemy)
@@ -117,7 +138,8 @@ end
 function newSpiderDuck(spawnPos)
 	local movementFunc = Enemy.moveFollowPlayer
 	local attackFunc = Enemy.simpleAttack
-	local enemy = Enemy.new(SPIDER_DUCK.name, 20, spawnPos, 180, movementFunc, attackFunc)
+	local hitbox = hitbox(Circle.new(25), spawnPos)
+	local enemy = Enemy.new(SPIDER_DUCK.name, 20, spawnPos, 180, movementFunc, attackFunc, hitbox)
 	local idleAnimSettings = newAnimSetting(4, { width = 32, height = 32 }, 0.4, true, 1)
 	enemy:addAnimations(idleAnimSettings)
 	table.insert(enemies, enemy)

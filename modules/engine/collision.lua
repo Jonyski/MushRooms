@@ -208,6 +208,12 @@ function CollisionManager:updateHitboxLists()
 	for k, room in self.activeRoomsCopy:iter() do
 		self:fetchHitboxesByRoom(room)
 	end
+	-- eliminando hitboxes de ataques não mais ativos
+	for atkEvent, _ in pairs(self.playerAttacks) do
+		if not atkEvent.active then
+			self.playerAttacks[atkEvent] = nil
+		end
+	end
 end
 
 function CollisionManager:handleCollisions()
@@ -221,7 +227,6 @@ function CollisionManager:handleCollisions()
 			local hit = checkCollision(itemhb, playerhb)
 			if hit then
 				-- ao colidir -> tenta coletar item
-				--print("COLISÃO PLAYER/ITEM")
 				player:tryCollectItem(item)
 			end
 			item:setShine(hit)
@@ -237,12 +242,12 @@ function CollisionManager:handleCollisions()
 				-- TODO: Implementar efeitos de ataques em inimigos
 
 				-- ao colidir -> dano no inimigo
-				--print("tome")
+				print("tome")
 			end
 		end
 	end
 
-	--------- INIMIGO / ATAQUE ----------
+	--------- INIMIGO / PLAYER ----------
 	for enemy, enemyhb in pairs(self.enemies) do
 		for player, playerhb in pairs(self.players) do
 			local hit = checkCollision(enemyhb, playerhb)
@@ -250,7 +255,7 @@ function CollisionManager:handleCollisions()
 				-- TODO: Implementar efeitos de colisão do player com inimigos
 
 				-- ao colidir -> dano no player
-				--print("ui")
+				print("ui")
 			end
 		end
 	end
@@ -261,7 +266,6 @@ function CollisionManager:handleCollisions()
 			local hit = checkCollision(destrhb, playerhb)
 			if hit then
 				-- ao colidir -> destrói objeto
-				--print("COLISÃO PLAYER/DESTRUTIVEL")
 				destr:damage(math.huge)
 			end
 		end
@@ -273,7 +277,6 @@ function CollisionManager:handleCollisions()
 			local hit = checkCollision(destrhb, attackhb)
 			if hit then
 				-- ao colidir -> destrói objeto
-				--print("COLISÃO ATAQUE/DESTRUTIVEL")
 				destr:damage(math.huge)
 			end
 		end

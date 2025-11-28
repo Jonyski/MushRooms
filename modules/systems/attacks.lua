@@ -106,6 +106,14 @@ function AttackEvent.new(attackState, attacker, origin, direction)
 	-- Atributos fixos na instanciação
 	atkEvent.active = true -- se o ataque atualmente pode dar dano
 	atkEvent.targetsDamaged = {} -- lista de alvos feridos pelo ataque
+
+	-- adicionando à respectiva lista de hitboxes
+	if attacker.type == PLAYER then
+		collisionManager.playerAttacks[atkEvent] = atkEvent.hb
+	elseif attacker.type == ENEMY then
+		collisionManager.enemyAttacks[atkEvent] = atkEvent.hb
+	end
+
 	return atkEvent
 end
 

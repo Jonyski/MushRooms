@@ -116,7 +116,8 @@ function newKatana()
 		print("Katana acertou um " .. target.type .. " por " .. atkEvent.dmg .. " de dano!")
 		target.hp = target.hp - atkEvent.dmg
 	end
-	local atkSettings = newBaseAtkSetting(true, 15, 0.5, Circle.new(200))
+	local hb = hitbox(Circle.new(100), vec(0, 0))
+	local atkSettings = newBaseAtkSetting(true, 15, 0.5, hb)
 	local atkAnimSettings = newAnimSetting(12, { width = 64, height = 64 }, 0.03, false, 1)
 	local attack = Attack.new("Katana Slice", atkSettings, atkAnimSettings, createUpdateFunc(), onHitFunc)
 
@@ -137,7 +138,8 @@ function newSlingShot()
 		print("Estilingue acertou um " .. target.type .. " por " .. atkEvent.dmg .. " de dano!")
 		target.hp = target.hp - atkEvent.dmg
 	end
-	local baseAtkSettings = newBaseAtkSetting(true, 15, 1.5, Circle.new(200))
+	local hb = hitbox(Circle.new(15), vec(0, 0))
+	local baseAtkSettings = newBaseAtkSetting(true, 15, 1.5, hb)
 	local atkSettings = newProjectileAtkSetting(baseAtkSettings, 10, 1, 0, 2)
 	local atkAnimSettings = newAnimSetting(5, { width = 16, height = 16 }, 0.1, true, 1)
 	local attack = Attack.new("Pebble Shot", atkSettings, atkAnimSettings, updateFunc, onHitFunc)

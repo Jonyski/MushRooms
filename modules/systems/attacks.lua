@@ -137,7 +137,7 @@ function AttackEvent:addAnimation(settings)
 end
 
 function AttackEvent:draw(camera)
-	local wViewPos = camera:viewPos(self.pos)
+	local viewPos = camera:viewPos(self.pos)
 	local animation = self.animation
 	local quad = animation.frames[animation.currFrame]
 	local flipY = (self.direction / math.pi < -0.5 and self.direction / math.pi >= -1.5) and -1 or 1
@@ -145,12 +145,28 @@ function AttackEvent:draw(camera)
 	love.graphics.draw(
 		self.spriteSheet,
 		quad,
-		wViewPos.x,
-		wViewPos.y,
+		viewPos.x,
+		viewPos.y,
 		self.direction,
 		3,
 		3 * flipY,
 		animation.frameDim.width / 2,
 		animation.frameDim.height / 2
 	)
+
+	---------- HITBOX DEBUG ----------
+	love.graphics.setColor(0, 0, 1, 1)
+	if self.hb.shape.shape == CIRCLE then
+		love.graphics.circle("line", viewPos.x, viewPos.y, self.hb.shape.radius)
+	elseif self.hb.shape.shape == RECTANGLE then
+		love.graphics.rectangle(
+			"line",
+			viewPos.x - self.hb.shape.halfW,
+			viewPos.y - self.hb.shape.halfH,
+			self.hb.shape.width,
+			self.hb.shape.height
+		)
+	end
+	love.graphics.setColor(1, 1, 1, 1)
+	----------------------------------
 end

@@ -62,7 +62,7 @@ function Item:move(dt)
 		newPos.x = self.pos.x + self.vel.x * dt
 
 		-- colisão simples com o chão
-		if newPos.y > self.floorY and newPos.y > 0 then
+		if newPos.y > self.floorY and self.vel.y > 0 then
 			newPos.y = self.floorY
 			self.vel.y = 0
 			self.vel.x = 0

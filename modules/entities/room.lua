@@ -22,7 +22,7 @@ BOSS_ROOM = "boss room"
 EVENT_ROOM = "event room"
 
 ----------------------------------------
--- Classe Player
+-- Classe Room
 ----------------------------------------
 Room = {}
 Room.__index = Room

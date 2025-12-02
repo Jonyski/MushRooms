@@ -1,5 +1,5 @@
-require("modules.entities.player")
 require("modules.utils.types")
+require("modules.utils.states")
 require("modules.engine.collision")
 require("table")
 
@@ -38,11 +38,40 @@ function Enemy.new(name, hp, spawnPos, velocity, move, attack, hitbox)
 end
 
 function Enemy:addAnimations(idleSettings)
-	-- animação idle
+	----------------- IDLE -----------------
 	local path = pngPathFormat({ "assets", "animations", "enemies", self.name, IDLE })
 	addAnimation(self, path, IDLE, idleSettings)
+	---------------- DYING -----------------
+--	local path = pngPathFormat({ "assets", "animations", "enemies", self.name, DYING })
+--	addAnimation(self, path, DYING, dyingSettings)
+
 	-- TODO: adicionar o resto das animações
 end
+
+function Enemy:takeDamage(damage)
+	if self.state == DYING then
+		return
+	end
+
+	self.hp = self.hp - damage
+	if this.hp <= 0 then
+		self:die()
+	end
+
+	---- debug ----
+	print(self.hp)
+end
+
+function Enemy:die()
+	self.state = DYING
+	local anim = self.animations[DYING]
+	anim.onFinish = function()
+		collisionManager.enemies[self] = nil
+		-- TODO: descobrir a sala para saber de onde remover a tabela
+		table.remove(room.enemies, tableIndexOf(room.enemies, self))
+	end
+end
+
 
 function Enemy:update(dt)
 	self:move(dt)

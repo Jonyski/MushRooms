@@ -39,7 +39,7 @@ Attack = {}
 Attack.__index = Attack
 Attack.type = ATTACK
 
--- Attack States guardam apenas dados iniciais sobre ataques, e não comportamentos
+-- Attacks guardam apenas dados iniciais sobre ataques, e não comportamentos
 function Attack.new(name, atkSettings, animSettings, updateFunc, onHit)
 	local attack = setmetatable({}, Attack)
 	attack.name = name -- nome do tipo de ataque

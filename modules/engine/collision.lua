@@ -12,6 +12,25 @@ function hitbox(shape, pos)
 	return { shape = shape, pos = pos }
 end
 
+function copyHitbox(hb, pos)
+	local shape = copyShape(hb.shape)
+	return {
+		shape = shape,
+		pos = pos or vec(hb.pos.x, hb.pos.y)
+	}
+end
+
+function copyShape(shape)
+	if shape.shape == CIRCLE then
+		return Circle.new(shape.radius)
+	elseif shape.shape == RECTANGLE then
+		return Rectangle.new(shape.width, shape.height)
+	elseif shape.shape == LINE then
+		return Line.new(shape.angle, shape.length)
+	end
+	return nil
+end
+
 ----------------------------------------
 -- Funções auxiliares para colisão
 ----------------------------------------
@@ -63,7 +82,7 @@ end
 function checkCircleRectCollision(circle, rect)
 	local rectCenter = vec(rect.pos.x + rect.shape.halfW, rect.pos.y + rect.shape.halfH)
 	local dist = vec(math.abs(circle.pos.x - rectCenter.x), math.abs(circle.pos.y - rectCenter.y))
-	if dist.x > (rect.shape.halfW + circle.shape.radius) or dist.y > (rect.shape.halfW + circle.shape.radius) then
+	if dist.x > (rect.shape.halfW + circle.shape.radius) or dist.y > (rect.shape.halfH + circle.shape.radius) then
 		return false
 	end
 	if dist.x <= rect.shape.halfW or dist.y <= rect.shape.halfH then
@@ -214,6 +233,12 @@ function CollisionManager:updateHitboxLists()
 			self.playerAttacks[atkEvent] = nil
 		end
 	end
+	
+	for atkEvent, _ in pairs(self.enemyAttacks) do
+		if not atkEvent.active then
+			self.enemyAttacks[atkEvent] = nil
+		end
+	end
 end
 
 function CollisionManager:handleCollisions()
@@ -251,13 +276,39 @@ function CollisionManager:handleCollisions()
 	for enemy, enemyhb in pairs(self.enemies) do
 		for player, playerhb in pairs(self.players) do
 			local hit = checkCollision(enemyhb, playerhb)
-			if hit then
+			if hit and player.invulnerableTimer <= 0 then
 				-- TODO: Implementar efeitos de colisão do player com inimigos
-
+				player.invulnerableTimer = 1.0
 				-- ao colidir -> dano no player
 				print("ui")
 			end
 		end
+	end
+
+	--------- ATAQUE / PLAYER ----------
+	for player, playerhb in pairs(self.players) do
+		for attack, attackhb in pairs(self.enemyAttacks) do
+			-- pula se o ataque já tiver acertado esse jogador
+			if attack.targetsDamaged[player] then
+				goto nextattackplayer
+			end
+			
+			if attack.active and checkCollision(playerhb, attackhb) then
+				attack.targetsDamaged[player] = true
+				attack.piercesLeft = attack.piercesLeft - 1
+
+				-- conta que o projétil atingiu, mas só aplica o efeito se o jogador não estiver invulnerável
+				if player.invulnerableTimer > 0 then
+					goto nextplayer
+				end
+
+				player.invulnerableTimer = 1.0
+				attack:onHitFunc(player)
+				-- goto nextplayer
+			end
+			::nextattackplayer::
+		end
+		::nextplayer::
 	end
 
 	------- PLAYER / DESTRUTIVEL --------

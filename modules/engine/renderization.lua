@@ -94,6 +94,12 @@ function renderEntities(camera)
 				e:draw(camera)
 			end,
 		})
+
+		if e.attackObj then
+			for _, ev in pairs(e.attackObj.events) do
+				ev:draw(camera)
+			end
+		end
 	end
 
 	-- Ordena por posição Y

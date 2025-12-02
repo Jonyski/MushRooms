@@ -1,3 +1,5 @@
+require("modules.utils.utils")
+
 ----------------------------------------
 -- Funções auxiliares para Ataques
 ----------------------------------------
@@ -40,7 +42,7 @@ Attack.__index = Attack
 Attack.type = ATTACK
 
 -- Attack States guardam apenas dados iniciais sobre ataques, e não comportamentos
-function Attack.new(name, atkSettings, animSettings, updateFunc, onHit)
+function Attack.new(name, atkSettings, animSettings, updateFunc, onHit, trajectoryFunc)
 	local attack = setmetatable({}, Attack)
 	attack.name = name -- nome do tipo de ataque
 	attack.ally = atkSettings.ally -- true se for de um player e false se for de um inimigo
@@ -54,6 +56,7 @@ function Attack.new(name, atkSettings, animSettings, updateFunc, onHit)
 	attack.animSettings = animSettings -- configurações da animação de cada evento
 	attack.updateEvent = updateFunc -- função executada para cada AttackEvent, atualizando seu estado atual
 	attack.onHit = onHit -- função executada toda vez que um ataque acertar um alvo
+	attack.trajectoryFunc = trajectoryFunc -- função que define a trajetória do ataque/projétil
 	-- Atributos fixos na instanciação
 	attack.events = {}
 	return attack
@@ -70,7 +73,8 @@ function Attack:update(dt)
 		local e = self.events[i]
 		self.updateEvent(dt, e)
 
-		if e.timer <= 0 then
+		if e.timer <= 0 or e.piercesLeft <= 0 then
+			e.active = false
 			table.remove(self.events, i)
 		else
 			e.animation:update(dt)
@@ -97,13 +101,18 @@ function AttackEvent.new(attackState, attacker, origin, direction)
 	atkEvent.dmg = attackState.dmg -- dano atual do ataque (caso mude com o tempo)
 	atkEvent.timer = attackState.dur -- tempo até o ataque terminar
 	atkEvent.speed = attackState.speed -- coeficiente de velocidade do ataque/projétil
+	atkEvent.dur = attackState.dur -- duração total do ataque/projétil
 	atkEvent.direction = direction -- ângulo do ataque em radianos
 	atkEvent.vel = scaleVec(dirVec, attackState.speed) -- vetor de velocidade atual do ataque
 	atkEvent.acc = scaleVec(dirVec, attackState.acc) -- aceleração atual do ataque
-	atkEvent.hb = attackState.hb -- formato da hitbox
+	atkEvent.hb = copyHitbox(attackState.hb, origin) -- formato da hitbox
 	atkEvent.bouncesLeft = attackState.bounces -- número de ricochetes restantes
 	atkEvent.piercesLeft = attackState.pierces -- número de alvos atravessáveis restantes
+	atkEvent.trajectoryFunc = attackState.trajectoryFunc -- função que define a trajetória do ataque/projétil
+	atkEvent.onHitFunc = attackState.onHit -- função executada ao acertar um alvo
+	atkEvent.target = attacker.target -- alvo do ataque
 	-- Atributos fixos na instanciação
+	atkEvent.age = 0 -- tempo desde a criação do ataque
 	atkEvent.active = true -- se o ataque atualmente pode dar dano
 	atkEvent.targetsDamaged = {} -- lista de alvos feridos pelo ataque
 
@@ -118,6 +127,14 @@ function AttackEvent.new(attackState, attacker, origin, direction)
 end
 
 function AttackEvent:baseUpdate(dt)
+	self.age = self.age + dt
+
+	-- aplica função de trajetória se existir
+	if self.trajectoryFunc then
+		self.vel = self.trajectoryFunc(self, dt)
+	end
+
+	-- movimenta padrão
 	self.vel = addVec(self.vel, self.acc)
 	self.pos = addVec(self.pos, self.vel)
 	self.hb.pos = self.pos
@@ -162,19 +179,86 @@ function AttackEvent:draw(camera)
 		animation.frameDim.height / 2
 	)
 
+	local hitboxViewPos = camera:viewPos(self.hb.pos)
+
 	---------- HITBOX DEBUG ----------
 	love.graphics.setColor(0, 0, 1, 1)
 	if self.hb.shape.shape == CIRCLE then
-		love.graphics.circle("line", viewPos.x, viewPos.y, self.hb.shape.radius)
+		love.graphics.circle("line", hitboxViewPos.x, hitboxViewPos.y, self.hb.shape.radius)
 	elseif self.hb.shape.shape == RECTANGLE then
 		love.graphics.rectangle(
 			"line",
-			viewPos.x - self.hb.shape.halfW,
-			viewPos.y - self.hb.shape.halfH,
+			hitboxViewPos.x - self.hb.shape.halfW,
+			hitboxViewPos.y - self.hb.shape.halfH,
 			self.hb.shape.width,
 			self.hb.shape.height
 		)
 	end
 	love.graphics.setColor(1, 1, 1, 1)
 	----------------------------------
+end
+
+----------------------------------------
+--- Funções de Trajetória
+-----------------------------------------
+
+function QuadraticTrajectory(self, dt)
+	if not self.target then
+		return self.vel
+	end
+
+	local dx = self.target.pos.x - self.pos.x
+	local dy = self.target.pos.y - self.pos.y
+
+	local newDir = self.vel
+	local threshold = 80
+
+	if math.abs(dx) > math.abs(dy) + threshold then
+		newDir.x = dx
+		newDir.y = 0
+	elseif math.abs(dy) > math.abs(dx) + threshold then
+		newDir.y = dy
+		newDir.x = 0
+	end
+
+	newDir = normalize(newDir)
+	return scaleVec(newDir, self.speed)
+end
+
+function HomingTrajectory(self, dt)
+	if not self.target then
+		return self.vel
+	end
+
+	local velDir = normalize(self.vel)
+	local toTargetDir = normalize(subVec(self.target.pos, self.pos))
+
+	local angleDiff = math.atan2(toTargetDir.y, toTargetDir.x)
+									- math.atan2(velDir.y, velDir.x)
+
+	angleDiff = (angleDiff + math.pi) % (2 * math.pi) - math.pi
+
+	local turnSpeed = math.rad(120)
+	local angle = angleDiff * turnSpeed * dt
+	local newDir = rotateVec(velDir, angle)
+
+	return scaleVec(newDir, self.speed)
+end
+
+function ZigZagTrajectory(self, dt)
+	local ampDeg = math.rad(60)
+	local angle = sign(math.sin(self.age * 10)) * ampDeg
+
+	local newAngle = self.direction + angle
+	local newDir = polarToVec(newAngle, 1)
+
+	return scaleVec(newDir, self.speed)
+end
+
+function SineTrajectory(self, dt)
+	local ampDeg = math.rad(60)
+	local newAngle = self.direction + math.sin(self.age * 5) * ampDeg -- amplitude e frequência
+	local newDir = polarToVec(newAngle, 1)
+
+	return scaleVec(newDir, self.speed)
 end

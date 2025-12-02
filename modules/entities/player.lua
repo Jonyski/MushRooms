@@ -39,13 +39,13 @@ function Player.new(id, name, spawn_pos, controls, colors, room)
 	-- atributos que variam
 	player.id = id -- número do jogador
 	player.name = name -- nome do jogador
-	player.hp = 10 -- pontos de vida
+	player.hp = 100 -- pontos de vida
 	player.pos = spawn_pos -- posição do jogador (inicializa para a posição do spawn)
 	player.controls = controls -- os comandos para controlar o boneco, no formato {up = "", left = "", down = "", right = "", action = ""}
 	player.colors = colors -- paleta de cores do jogador
 	player.room = room -- sala na qual o jogador está atualmente
 	-- atributos fixos na instanciação
-	player.vel = 360 -- velocidade em pixels por segundo
+	player.speed = 360 -- velocidade em pixels por segundo
 	player.size = { height = 32, width = 32 } -- em pixels
 	player.movementVec = { x = 0, y = 0 } -- vetor de direção e magnitude do movimento do jogador
 	player.state = IDLE -- define o estado atual do jogador, estreitamente relacionado às animações
@@ -55,6 +55,8 @@ function Player.new(id, name, spawn_pos, controls, colors, room)
 	player.weapons = {} -- lista das armas que o jogador possui
 	player.weapon = nil -- arma equipada
 	player.hb = hitbox(Circle.new(20), player.pos) -- hitbox do player
+	player.invulnerableTimer = 0 -- timer de invulnerabilidade após levar dano
+	player.blinkTimer = 0 -- timer para piscar o sprite do player quando invulnerável
 
 	collisionManager.players[player] = player.hb
 	return player
@@ -105,6 +107,10 @@ function Player:update(dt)
 		end
 		w:update(dt)
 	end
+	if self.invulnerableTimer > 0 then
+		self.invulnerableTimer = self.invulnerableTimer - dt
+		self.blinkTimer = (self.blinkTimer + dt * 10) % 1
+	end
 	self:updateState()
 	self:updateParticles(dt)
 end
@@ -115,7 +121,7 @@ function Player:setPos(pos)
 end
 
 function Player:move(dt)
-	self.movementVec = { x = 0, y = 0 }
+	self.movementVec = vec(0, 0)
 
 	if self.state == DEFENDING then
 		return
@@ -138,9 +144,9 @@ function Player:move(dt)
 	end
 
 	-- Normalizando para impedir movimentos na diagonal de serem mais rápidos
-	normalize(self.movementVec)
+	self.movementVec = normalize(self.movementVec)
 	-- Levando o dt e a velocidade do cogumelo em consideração
-	self.movementVec = scaleVec(self.movementVec, dt * self.vel)
+	self.movementVec = scaleVec(self.movementVec, dt * self.speed)
 
 	------------ HACK PARA DEBUG ------------
 	if love.keyboard.isDown("lctrl") then
@@ -342,6 +348,10 @@ function Player:draw(camera)
 		y = -camera.cy + camera.viewport.height / 2,
 	}
 	love.graphics.draw(self.particles[WALKING_UP], particles_offset.x, particles_offset.y)
+
+	if self.invulnerableTimer > 0 and self.blinkTimer <= 0.5 then
+		return
+	end
 	-- desenhando o player em si
 	local viewPos = camera:viewPos(self.pos)
 	local animation = self.animations[self.state]

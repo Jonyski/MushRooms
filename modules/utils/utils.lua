@@ -150,6 +150,10 @@ function remap(value, inMin, inMax, outMin, outMax)
 	return outMin + (value - inMin) * (outMax - outMin) / (inMax - inMin)
 end
 
+
+function sign(x)
+	return (x > 0 and 1) or (x == 0 and 0) or -1
+end
 ----------------------------------------
 -- Funções de sistema de arquivos
 ----------------------------------------

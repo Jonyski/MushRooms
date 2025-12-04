@@ -139,6 +139,18 @@ end
 ----------------------------------------
 -- Funções Globais
 ----------------------------------------
+function spawnItem(object, pos, room, autoPick, floorY, impuselVec)
+	local item = newItem(object, pos, room, autoPick, floorY)
+	
+	if nullVec(impuselVec) then
+		item.canPick = true
+		return item
+	end
+
+	item:applyImpulse(impuselVec.x, impuselVec.y)
+	return item
+end
+
 function newItem(object, pos, room, autoPick, floorY)
 	return Item.new(object, pos, room, autoPick, floorY)
 end

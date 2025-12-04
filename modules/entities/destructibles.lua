@@ -120,9 +120,9 @@ function Destructible:spawnLoot()
 		if math.random() < el.chance then
 			local amount = math.random(el.amountRange.min, el.amountRange.max)
 			for j = 1, amount do
-				local item_pos = { x = self.pos.x, y = self.pos.y }
-				local item = newItem(el.object, item_pos, self.room, el.autoPick, math.random(-10, 20))
-				item:applyImpulse(math.random(-100, 100), -math.random(150, 200))
+				local itemPos = vec(self.pos.x, self.pos.y)
+				local impulseVec = vec(math.random(-100, 100), -math.random(150, 200))
+				local item = spawnItem(el.object, itemPos, self.room, el.autoPick, math.random(-10, 20), impulseVec)
 			end
 		end
 	end

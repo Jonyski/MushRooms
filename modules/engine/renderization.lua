@@ -86,16 +86,6 @@ function renderEntities(camera)
 		end
 	end
 
-	-- -- Adiciona inimigos
-	-- for _, e in pairs(enemies) do
-	-- 	table.insert(drawList, {
-	-- 		y = e.pos.y + getAnchor(e, FLOOR),
-	-- 		draw = function()
-	-- 			e:draw(camera)
-	-- 		end,
-	-- 	})
-	-- end
-
 	-- Ordena por posição Y
 	table.sort(drawList, function(a, b)
 		return a.y < b.y

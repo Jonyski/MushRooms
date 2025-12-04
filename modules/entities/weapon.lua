@@ -105,12 +105,10 @@ end
 
 function newKatana()
 	-- configurações do ataque
-	local createUpdateFunc = function()
-		return function(dt, atkEvent)
-			atkEvent:baseUpdate(dt)
-			-- seguindo o jogador
-			atkEvent.pos = atkEvent.attacker.pos
-		end
+	local updateFunc = function(dt, atkEvent)
+		atkEvent:baseUpdate(dt)
+		-- seguindo o jogador
+		atkEvent.pos = atkEvent.attacker.pos
 	end
 	local onHitFunc = function(atkEvent, target)
 		print("Katana acertou um " .. target.type .. " por " .. atkEvent.dmg .. " de dano!")
@@ -119,7 +117,7 @@ function newKatana()
 	local hb = hitbox(Circle.new(100), vec(0, 0))
 	local atkSettings = newBaseAtkSetting(true, 15, 0.5, hb)
 	local atkAnimSettings = newAnimSetting(12, { width = 64, height = 64 }, 0.03, false, 1)
-	local attack = Attack.new("Katana Slice", atkSettings, atkAnimSettings, createUpdateFunc(), onHitFunc)
+	local attack = Attack.new("Katana Slice", atkSettings, atkAnimSettings, updateFunc, onHitFunc)
 
 	-- Inicialicação da arma em si
 	local katana = Weapon.new(KATANA.name, math.huge, 0.3, attack)

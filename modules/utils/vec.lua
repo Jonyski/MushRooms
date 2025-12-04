@@ -17,9 +17,13 @@ end
 
 -- transforma um vetor v em um vetor unitário v'
 function normalize(v)
+	local vec = vec(v.x, v.y)
+
 	local mod = math.sqrt(v.x ^ 2 + v.y ^ 2)
-	v.x = v.x / mod
-	v.y = v.y / mod
+	vec.x = vec.x / mod
+	vec.y = vec.y / mod
+
+	return vec
 end
 
 -- checa se um vetor é nulo
@@ -48,7 +52,7 @@ end
 
 -- constrói um vetor a partir de coordenadas polares
 function polarToVec(angle, r)
-	return vec(math.cos(angle), math.sin(angle))
+	return scaleVec(vec(math.cos(angle), math.sin(angle)), r)
 end
 
 -- retorna o tamanho/módulo de um vetor
@@ -64,4 +68,15 @@ end
 -- produto escalar de dois vetores
 function dotProd(v1, v2)
 	return v1.x * v2.x + v1.y * v2.y
+end
+
+-- multiplica um vetor pela matriz de rotação, dado um ângulo em radianos
+function rotateVec(v, angle)
+	local cosA = math.cos(angle)
+	local sinA = math.sin(angle)
+
+	return vec(
+		v.x * cosA - v.y * sinA,
+		v.x * sinA + v.y * cosA
+	)
 end

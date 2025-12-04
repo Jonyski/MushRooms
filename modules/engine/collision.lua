@@ -16,7 +16,7 @@ function copyHitbox(hb, pos)
 	local shape = copyShape(hb.shape)
 	return {
 		shape = shape,
-		pos = pos or vec(hb.pos.x, hb.pos.y)
+		pos = pos or vec(hb.pos.x, hb.pos.y),
 	}
 end
 
@@ -80,8 +80,7 @@ function checkCircleCircleCollision(circle1, circle2)
 end
 
 function checkCircleRectCollision(circle, rect)
-	local rectCenter = vec(rect.pos.x + rect.shape.halfW, rect.pos.y + rect.shape.halfH)
-	local dist = vec(math.abs(circle.pos.x - rectCenter.x), math.abs(circle.pos.y - rectCenter.y))
+	local dist = vec(math.abs(circle.pos.x - rect.pos.x), math.abs(circle.pos.y - rect.pos.y))
 	if dist.x > (rect.shape.halfW + circle.shape.radius) or dist.y > (rect.shape.halfH + circle.shape.radius) then
 		return false
 	end
@@ -233,7 +232,7 @@ function CollisionManager:updateHitboxLists()
 			self.playerAttacks[atkEvent] = nil
 		end
 	end
-	
+
 	for atkEvent, _ in pairs(self.enemyAttacks) do
 		if not atkEvent.active then
 			self.enemyAttacks[atkEvent] = nil
@@ -290,7 +289,7 @@ function CollisionManager:handleCollisions()
 			if attack.targetsDamaged[player] then
 				goto nextattackplayer
 			end
-			
+
 			if attack.active and checkCollision(playerhb, attackhb) then
 				attack.targetsDamaged[player] = true
 				attack.piercesLeft = attack.piercesLeft - 1

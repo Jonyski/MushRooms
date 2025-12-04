@@ -11,7 +11,7 @@ Enemy = {}
 Enemy.__index = Enemy
 Enemy.type = ENEMY
 
-function Enemy.new(name, hp, spawnPos, velocity, move, attack, hitbox, room)
+function Enemy.new(name, hp, spawnPos, speed, move, attack, hitbox, room)
 	local enemy = setmetatable({}, Enemy)
 
 	-- atributos que variam
@@ -71,7 +71,6 @@ function Enemy:die()
 	end
 end
 
-
 function Enemy:update(dt)
 	self:reduceCooldowns(dt)
 	self:defineTarget()
@@ -119,14 +118,13 @@ function Enemy:reduceCooldowns(dt)
 			self.cooldownTable[key] = value - dt
 		end
 	end
-	
 end
 
 function Enemy:isCooldownActive(cooldownName)
 	if self.cooldownTable[cooldownName] and self.cooldownTable[cooldownName] > 0 then
 		return true
 	end
-	return false	
+	return false
 end
 
 function Enemy:setCooldown(cooldownName, value)
@@ -140,11 +138,11 @@ end
 -- se move na direção de um ponto específico
 function Enemy:moveTowards(pos, dt)
 	if self.easingFunc and self.moveOriginPos and self.moveDuration and self.moveTimer then
-		self.moveTimer = self.moveTimer + dt 
-		local t = math.min(self.moveTimer / self.moveDuration, 1) 
-		local progress = self.easingFunc(t) 
-		local targetPos = addVec(self.moveOriginPos, scaleVec(subVec(pos, self.moveOriginPos), progress)) 
-		local movementVec = subVec(targetPos, self.pos) 
+		self.moveTimer = self.moveTimer + dt
+		local t = math.min(self.moveTimer / self.moveDuration, 1)
+		local progress = self.easingFunc(t)
+		local targetPos = addVec(self.moveOriginPos, scaleVec(subVec(pos, self.moveOriginPos), progress))
+		local movementVec = subVec(targetPos, self.pos)
 
 		self.movementDirections["moveTowards"] = movementVec
 
@@ -158,16 +156,17 @@ end
 
 -- se move na direção contrário do target
 function Enemy:avoidTarget(dt)
-	if self.target == nil or self:isCooldownActive("avoidTarget") then return end
-	
+	if self.target == nil or self:isCooldownActive("avoidTarget") then
+		return
+	end
+
 	local distTarget = dist(self.pos, self.target.pos)
 
 	if nullVec(self.moveTargetPos) and distTarget < 300 then
-
 		local baseDir = normalize(subVec(self.target.pos, self.pos))
 		baseDir = scaleVec(baseDir, -1)
 		local travelDistance = math.random(150, 180)
-		
+
 		self.moveTargetPos = addVec(self.pos, scaleVec(baseDir, travelDistance))
 		self.moveOriginPos = self.pos
 		self.moveTimer = 0
@@ -188,13 +187,15 @@ function Enemy:avoidTarget(dt)
 	else
 		self.movementDirections["moveTowards"] = vec(0, 0)
 		self.moveTargetPos = vec(0, 0)
-		self:setCooldown("avoidTarget", 1.0 + math.random()/2)
+		self:setCooldown("avoidTarget", 1.0 + math.random() / 2)
 	end
 end
 
 -- se move na direção de um target
 function Enemy:moveFollowTarget(dt)
-	if self.target == nil then return end
+	if self.target == nil then
+		return
+	end
 
 	local distance = dist(self.pos, self.target.pos)
 
@@ -204,12 +205,14 @@ function Enemy:moveFollowTarget(dt)
 end
 
 function Enemy:moveTargetDirection(dt)
-	if self.target == nil or self:isCooldownActive("moveTargetDirection") then return end
+	if self.target == nil or self:isCooldownActive("moveTargetDirection") then
+		return
+	end
 
 	if nullVec(self.moveTargetPos) then
 		local baseDir = normalize(subVec(self.target.pos, self.pos))
 		local randAngle = math.rad(45) * (math.random() - 0.5) * 2
-		
+
 		local newDir = rotateVec(baseDir, randAngle)
 		local travelDistance = math.random(110, 200)
 
@@ -252,8 +255,9 @@ end
 -- Funções de Ataque
 ----------------------------------------
 function Enemy:simpleAttack(dt)
-	
-	if self:isCooldownActive("simpleAttack") then return end
+	if self:isCooldownActive("simpleAttack") then
+		return
+	end
 
 	if math.abs(dist(self.pos, self.target.pos)) < 75 then
 		print(self.name .. " ataca")
@@ -264,14 +268,13 @@ function Enemy:simpleAttack(dt)
 end
 
 function Enemy:shootAttack(dt)
-	if self.target == nil or self:isCooldownActive("shootAttack") then return end
+	if self.target == nil or self:isCooldownActive("shootAttack") then
+		return
+	end
 
 	self:setCooldown("shootAttack", 2)
 
-	local dir = math.atan2(
-		self.target.pos.y - self.pos.y,
-		self.target.pos.x - self.pos.x
-	)
+	local dir = math.atan2(self.target.pos.y - self.pos.y, self.target.pos.x - self.pos.x)
 	self.attackObj:attack(self, self.pos, dir)
 end
 
@@ -289,7 +292,7 @@ function Enemy:setProjectileAtk()
 
 	local hb = hitbox(Circle.new(15), vec(0, 0))
 	local baseAtkSettings = newBaseAtkSetting(true, 15, 5, hb)
-	local atkSettings = newProjectileAtkSetting(baseAtkSettings, 4, 0.0, 0, 1)
+	local atkSettings = newProjectileAtkSetting(baseAtkSettings, 10, 5, 0, 1)
 	local atkAnimSettings = newAnimSetting(5, { width = 16, height = 16 }, 0.1, true, 1)
 	local trajectoryFunc = SineTrajectory
 
@@ -328,23 +331,26 @@ end
 -- Construtores
 ----------------------------------------
 function newNuclearCat(spawnPos, room)
-	local movementFunc = Enemy.moveFollowPlayer
-	local attackFunc = Enemy.simpleAttack
+	local movementFunc = Enemy.avoidTarget
+	local attackFunc = Enemy.shootAttack
 	local hitbox = hitbox(Rectangle.new(40, 70), spawnPos)
 	local enemy = Enemy.new(NUCLEAR_CAT.name, 30, spawnPos, 180, movementFunc, attackFunc, hitbox, room)
 	local idleAnimSettings = newAnimSetting(6, { width = 32, height = 32 }, 0.15, true, 1)
 	local dyingAnimSettings = newAnimSetting(6, { width = 32, height = 32 }, 0.001, false, 1)
 	enemy:addAnimations(idleAnimSettings, dyingAnimSettings)
+	enemy:setProjectileAtk()
+	enemy.easingFunc = Easing.outQuad
 	return enemy
 end
 
 function newSpiderDuck(spawnPos, room)
-	local movementFunc = Enemy.moveFollowPlayer
+	local movementFunc = Enemy.moveTargetDirection
 	local attackFunc = Enemy.simpleAttack
 	local hitbox = hitbox(Circle.new(25), spawnPos)
 	local enemy = Enemy.new(SPIDER_DUCK.name, 20, spawnPos, 180, movementFunc, attackFunc, hitbox, room)
 	local idleAnimSettings = newAnimSetting(4, { width = 32, height = 32 }, 0.4, true, 1)
 	local dyingAnimSettings = newAnimSetting(4, { width = 32, height = 32 }, 0.001, false, 1)
 	enemy:addAnimations(idleAnimSettings, dyingAnimSettings)
+	enemy.easingFunc = Easing.outQuad
 	return enemy
 end

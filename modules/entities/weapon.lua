@@ -138,7 +138,7 @@ function newSlingShot()
 	end
 	local hb = hitbox(Circle.new(15), vec(0, 0))
 	local baseAtkSettings = newBaseAtkSetting(true, 15, 1.5, hb)
-	local atkSettings = newProjectileAtkSetting(baseAtkSettings, 10, -4, 0, 2)
+	local atkSettings = newProjectileAtkSetting(baseAtkSettings, 30, -15, 0, 2)
 	local atkAnimSettings = newAnimSetting(5, { width = 16, height = 16 }, 0.1, true, 1)
 	local attack = Attack.new("Pebble Shot", atkSettings, atkAnimSettings, updateFunc, onHitFunc)
 

@@ -135,7 +135,8 @@ function AttackEvent:baseUpdate(dt)
 	end
 
 	-- movimenta padrão
-	self.vel = addVec(self.vel, self.acc)
+	local acc = scaleVec(self.acc, dt)
+	self.vel = addVec(self.vel, acc)
 	self.pos = addVec(self.pos, self.vel)
 	self.hb.pos = self.pos
 	self.timer = self.timer - dt
@@ -233,8 +234,7 @@ function HomingTrajectory(self, dt)
 	local velDir = normalize(self.vel)
 	local toTargetDir = normalize(subVec(self.target.pos, self.pos))
 
-	local angleDiff = math.atan2(toTargetDir.y, toTargetDir.x)
-									- math.atan2(velDir.y, velDir.x)
+	local angleDiff = math.atan2(toTargetDir.y, toTargetDir.x) - math.atan2(velDir.y, velDir.x)
 
 	angleDiff = (angleDiff + math.pi) % (2 * math.pi) - math.pi
 

@@ -56,6 +56,12 @@ function renderEntities(camera)
 					e:draw(camera)
 				end,
 			})
+			-- Adiciona ataques de inimigos
+			if e.attackObj then
+				for _, ev in pairs(e.attackObj.events) do
+					ev:draw(camera)
+				end
+			end
 		end
 	end
 

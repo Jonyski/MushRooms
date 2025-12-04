@@ -4,18 +4,13 @@ require("modules.engine.collision")
 require("table")
 
 ----------------------------------------
--- Variáveis
-----------------------------------------
-enemies = {}
-
-----------------------------------------
 -- Classe Enemy
 ----------------------------------------
 Enemy = {}
 Enemy.__index = Enemy
 Enemy.type = ENEMY
 
-function Enemy.new(name, hp, spawnPos, velocity, move, attack, hitbox)
+function Enemy.new(name, hp, spawnPos, velocity, move, attack, hitbox, room)
 	local enemy = setmetatable({}, Enemy)
 
 	-- atributos que variam
@@ -26,6 +21,7 @@ function Enemy.new(name, hp, spawnPos, velocity, move, attack, hitbox)
 	enemy.move = move -- função de movimento do inimigo
 	enemy.attack = attack -- função de ataque do inimigo
 	enemy.hb = hitbox -- hitbox do inimigo
+	enemy.room = room -- sala do inimigo
 	-- atributos fixos na instanciação
 	enemy.size = { height = 32, width = 32 }
 	enemy.cooldown = 0
@@ -37,13 +33,13 @@ function Enemy.new(name, hp, spawnPos, velocity, move, attack, hitbox)
 	return enemy
 end
 
-function Enemy:addAnimations(idleSettings)
+function Enemy:addAnimations(idleSettings, dyingSettings)
 	----------------- IDLE -----------------
 	local path = pngPathFormat({ "assets", "animations", "enemies", self.name, IDLE })
 	addAnimation(self, path, IDLE, idleSettings)
 	---------------- DYING -----------------
---	local path = pngPathFormat({ "assets", "animations", "enemies", self.name, DYING })
---	addAnimation(self, path, DYING, dyingSettings)
+	local path = pngPathFormat({ "assets", "animations", "enemies", self.name, IDLE })
+	addAnimation(self, path, DYING, dyingSettings)
 
 	-- TODO: adicionar o resto das animações
 end
@@ -54,12 +50,9 @@ function Enemy:takeDamage(damage)
 	end
 
 	self.hp = self.hp - damage
-	if this.hp <= 0 then
+	if self.hp <= 0 then
 		self:die()
 	end
-
-	---- debug ----
-	print(self.hp)
 end
 
 function Enemy:die()
@@ -67,8 +60,7 @@ function Enemy:die()
 	local anim = self.animations[DYING]
 	anim.onFinish = function()
 		collisionManager.enemies[self] = nil
-		-- TODO: descobrir a sala para saber de onde remover a tabela
-		table.remove(room.enemies, tableIndexOf(room.enemies, self))
+		table.remove(self.room.enemies, tableIndexOf(self.room.enemies, self))
 	end
 end
 
@@ -145,32 +137,24 @@ end
 ----------------------------------------
 -- Construtores
 ----------------------------------------
-function newEnemy(enemy, spawnPos)
-	if enemy == NUCLEAR_CAT then
-		newNuclearCat(spawnPos)
-	elseif enemy == SPIDER_DUCK then
-		newSpiderDuck(spawnPos)
-	end
-end
-
-function newNuclearCat(spawnPos)
+function newNuclearCat(spawnPos, room)
 	local movementFunc = Enemy.moveFollowPlayer
 	local attackFunc = Enemy.simpleAttack
 	local hitbox = hitbox(Rectangle.new(40, 70), spawnPos)
-	local enemy = Enemy.new(NUCLEAR_CAT.name, 30, spawnPos, 180, movementFunc, attackFunc, hitbox)
+	local enemy = Enemy.new(NUCLEAR_CAT.name, 30, spawnPos, 180, movementFunc, attackFunc, hitbox, room)
 	local idleAnimSettings = newAnimSetting(6, { width = 32, height = 32 }, 0.15, true, 1)
-	enemy:addAnimations(idleAnimSettings)
-	table.insert(enemies, enemy)
+	local dyingAnimSettings = newAnimSetting(6, { width = 32, height = 32 }, 0.001, false, 1)
+	enemy:addAnimations(idleAnimSettings, dyingAnimSettings)
 	return enemy
 end
 
-function newSpiderDuck(spawnPos)
+function newSpiderDuck(spawnPos, room)
 	local movementFunc = Enemy.moveFollowPlayer
 	local attackFunc = Enemy.simpleAttack
 	local hitbox = hitbox(Circle.new(25), spawnPos)
-	local enemy = Enemy.new(SPIDER_DUCK.name, 20, spawnPos, 180, movementFunc, attackFunc, hitbox)
+	local enemy = Enemy.new(SPIDER_DUCK.name, 20, spawnPos, 180, movementFunc, attackFunc, hitbox, room)
 	local idleAnimSettings = newAnimSetting(4, { width = 32, height = 32 }, 0.4, true, 1)
-	enemy:addAnimations(idleAnimSettings)
-	table.insert(enemies, enemy)
+	local dyingAnimSettings = newAnimSetting(4, { width = 32, height = 32 }, 0.001, false, 1)
+	enemy:addAnimations(idleAnimSettings, dyingAnimSettings)
 	return enemy
 end

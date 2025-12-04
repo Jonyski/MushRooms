@@ -127,7 +127,7 @@ function Room:spawn(entity, pos)
 	local constructor = CONSTRUCTORS[entity.type][entity.name]
 	local real_pos = addVec(pos, self.center)
 	if entity.type == ENEMY then
-		table.insert(self.enemies, constructor(real_pos))
+		table.insert(self.enemies, constructor(real_pos, self))
 	elseif entity.type == DESTRUCTIBLE then
 		table.insert(self.destructibles, constructor(real_pos, self))
 	end

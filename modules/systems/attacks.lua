@@ -118,7 +118,8 @@ function AttackEvent.new(attackState, attacker, origin, direction)
 end
 
 function AttackEvent:baseUpdate(dt)
-	self.vel = addVec(self.vel, self.acc)
+	local acc = scaleVec(self.acc, dt)
+	self.vel = addVec(self.vel, acc)
 	self.pos = addVec(self.pos, self.vel)
 	self.hb.pos = self.pos
 	self.timer = self.timer - dt

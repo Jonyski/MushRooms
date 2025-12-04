@@ -88,6 +88,9 @@ function love.load()
 	createInitialRooms()
 	collisionManager = CollisionManager.init() -- gerenciador global de colisões
 	newPlayer()
+	-- debug
+	players[1]:collectWeapon(newSlingShot())
+	players[1]:equipWeapon(SLING_SHOT.name)
 
 	-- métodos de estado do love
 	love.window.setMode(window.width, window.height, { resizable = true })

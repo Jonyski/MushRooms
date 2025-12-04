@@ -7,6 +7,7 @@ require("modules.utils.vec")
 require("modules.systems.particles")
 require("modules.utils.colors")
 require("modules.utils.types")
+require("modules.utils.states")
 require("modules.utils.shapes")
 require("modules.engine.collision")
 require("table")
@@ -15,15 +16,6 @@ require("table")
 -- Variáveis e Enums
 ----------------------------------------
 players = {}
-
--- Cada estado está relacionado a uma animação do cogumelinho
-IDLE = "idle"
-WALKING_UP = "walking up"
-WALKING_DOWN = "walking down"
-WALKING_LEFT = "walking left"
-WALKING_RIGHT = "walking right"
-DEFENDING = "defending"
-ATTACKING = "attacking"
 
 ----------------------------------------
 -- Classe Player

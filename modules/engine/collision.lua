@@ -198,15 +198,15 @@ function CollisionManager:fetchHitboxesByRoom(room)
 end
 
 function CollisionManager:clearHitboxesByRoom(room)
-	-- pegando hitboxes de inimigos
+	-- removendo hitboxes de inimigos
 	for _, enemy in pairs(room.enemies) do
 		self.enemies[enemy] = nil
 	end
-	-- pegando hitboxes de destrutiveis
+	-- removendo hitboxes de destrutiveis
 	for _, destr in pairs(room.destructibles) do
 		self.destructibles[destr] = nil
 	end
-	-- pegando hitboxes de itens
+	-- removendo hitboxes de itens
 	for _, item in pairs(room.items) do
 		self.items[item] = nil
 	end
@@ -264,10 +264,8 @@ function CollisionManager:handleCollisions()
 		for attack, attackhb in pairs(self.playerAttacks) do
 			local hit = checkCollision(enemyhb, attackhb)
 			if hit then
-				-- TODO: Implementar efeitos de ataques em inimigos
-
 				-- ao colidir -> dano no inimigo
-				print("tome")
+				enemy:takeDamage(attack.dmg)
 			end
 		end
 	end

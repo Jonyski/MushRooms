@@ -5,16 +5,9 @@ require("modules.engine.animation")
 require("modules.utils.utils")
 require("modules.systems.loots")
 require("modules.utils.types")
+require("modules.utils.states")
 require("modules.engine.collision")
 require("table")
-
-----------------------------------------
--- Variáveis e Enums
-----------------------------------------
-
-INTACT = "intact"
-BREAKING = "breaking"
-BROKEN = "broken"
 
 ----------------------------------------
 -- Classe Destructible

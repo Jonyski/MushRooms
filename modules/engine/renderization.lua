@@ -1,3 +1,4 @@
+require("modules.utils.anchors")
 require("modules.engine.camera")
 
 ----------------------------------------
@@ -32,28 +33,42 @@ function renderEntities(camera)
 		-- Adiciona destrutíveis
 		for _, d in pairs(r.destructibles) do
 			table.insert(drawList, {
-				y = d.pos.y,
+				y = d.pos.y + getAnchor(d, FLOOR),
 				draw = function()
 					d:draw(camera)
 				end,
 			})
 		end
-
 		-- Adiciona items
 		for _, i in pairs(r.items) do
 			table.insert(drawList, {
-				y = i.floorY,
+				y = i.floorY + getAnchor(i, FLOOR),
 				draw = function()
 					i:draw(camera)
 				end,
 			})
+		end
+		-- Adiciona inimigos
+		for _, e in pairs(r.enemies) do
+			table.insert(drawList, {
+				y = e.pos.y + getAnchor(e, FLOOR),
+				draw = function()
+					e:draw(camera)
+				end,
+			})
+			-- Adiciona ataques de inimigos
+			if e.attackObj then
+				for _, ev in pairs(e.attackObj.events) do
+					ev:draw(camera)
+				end
+			end
 		end
 	end
 
 	-- Adiciona jogadores e suas possíveis armas
 	for _, p in pairs(players) do
 		table.insert(drawList, {
-			y = p.pos.y, -- referência para ordenação
+			y = p.pos.y + getAnchor(p, FLOOR),
 			draw = function()
 				p:draw(camera)
 			end,
@@ -63,7 +78,7 @@ function renderEntities(camera)
 			local w = p.weapon
 			local offsetY = (w.rotation / math.pi < -1 or w.rotation / math.pi > 0) and 2 or -2
 			table.insert(drawList, {
-				y = p.pos.y + offsetY, -- mesma altura do jogador, mas deslocado para frente ou para trás
+				y = p.pos.y + getAnchor(p, FLOOR) + offsetY, -- mesma altura do jogador, mas deslocado para frente ou para trás
 				draw = function()
 					w:draw(camera)
 				end,
@@ -75,16 +90,6 @@ function renderEntities(camera)
 				e:draw(camera)
 			end
 		end
-	end
-
-	-- Adiciona inimigos
-	for _, e in pairs(enemies) do
-		table.insert(drawList, {
-			y = e.pos.y,
-			draw = function()
-				e:draw(camera)
-			end,
-		})
 	end
 
 	-- Ordena por posição Y

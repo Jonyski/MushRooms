@@ -353,10 +353,6 @@ function Player:draw(camera)
 	}
 	love.graphics.draw(self.spriteSheets[self.state], quad, viewPos.x, viewPos.y, 0, 3, 3, offset.x, offset.y)
 
-	---------- HITBOX DEBUG ----------
-	love.graphics.circle("line", viewPos.x, viewPos.y, self.hb.shape.radius)
-	----------------------------------
-
 	-- desenhando o efeito de partículas da defesa em cima do player
 	love.graphics.draw(self.particles[DEFENDING], particles_offset.x, particles_offset.y)
 end

@@ -181,24 +181,6 @@ function AttackEvent:draw(camera)
 		animation.frameDim.width / 2,
 		animation.frameDim.height / 2
 	)
-
-	local hitboxViewPos = camera:viewPos(self.hb.pos)
-
-	---------- HITBOX DEBUG ----------
-	love.graphics.setColor(0, 0, 1, 1)
-	if self.hb.shape.shape == CIRCLE then
-		love.graphics.circle("line", hitboxViewPos.x, hitboxViewPos.y, self.hb.shape.radius)
-	elseif self.hb.shape.shape == RECTANGLE then
-		love.graphics.rectangle(
-			"line",
-			hitboxViewPos.x - self.hb.shape.halfW,
-			hitboxViewPos.y - self.hb.shape.halfH,
-			self.hb.shape.width,
-			self.hb.shape.height
-		)
-	end
-	love.graphics.setColor(1, 1, 1, 1)
-	----------------------------------
 end
 
 ----------------------------------------

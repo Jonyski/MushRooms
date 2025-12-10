@@ -103,20 +103,6 @@ function Item:draw(camera)
 	else
 		love.graphics.draw(self.image, viewPos.x, viewPos.y, 0, scale, scale, offset.x, offset.y)
 	end
-
-	---------- HITBOX DEBUG ----------
-	if self.hb.shape.shape == CIRCLE then
-		love.graphics.circle("line", viewPos.x, viewPos.y, self.hb.shape.radius)
-	elseif self.hb.shape.shape == RECTANGLE then
-		love.graphics.rectangle(
-			"line",
-			viewPos.x - self.hb.shape.halfW,
-			viewPos.y - self.hb.shape.halfH,
-			self.hb.shape.width,
-			self.hb.shape.height
-		)
-	end
-	----------------------------------
 end
 
 function Item:setCollected()

@@ -99,20 +99,6 @@ function Destructible:draw(camera)
 		y = anim.frameDim.height / 2,
 	}
 	love.graphics.draw(self.spriteSheets[self.state], quad, viewPos.x, viewPos.y, 0, 3, 3, offset.x, offset.y)
-
-	---------- HITBOX DEBUG ----------
-	if self.hb.shape.shape == CIRCLE then
-		love.graphics.circle("line", viewPos.x, viewPos.y, self.hb.shape.radius)
-	elseif self.hb.shape.shape == RECTANGLE then
-		love.graphics.rectangle(
-			"line",
-			viewPos.x - self.hb.shape.halfW,
-			viewPos.y - self.hb.shape.halfH,
-			self.hb.shape.width,
-			self.hb.shape.height
-		)
-	end
-	----------------------------------
 end
 
 function Destructible:spawnLoot()

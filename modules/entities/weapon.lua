@@ -91,14 +91,3 @@ function Weapon:draw(camera)
 		animation.frameDim.height / 2 - 5
 	)
 end
-
-----------------------------------------
--- Construtores
-----------------------------------------
-function newWeapon(type)
-	if type == KATANA then
-		return newKatana()
-	elseif type == SLING_SHOT then
-		return newSlingShot()
-	end
-end

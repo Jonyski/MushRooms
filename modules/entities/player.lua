@@ -56,28 +56,25 @@ function Player.new(name, spawn_pos, controls, colors, room)
 	return player
 end
 
-function Player:addAnimations()
-	-- animação idle
-	self:addAnimation(IDLE, 2, 0.5, true, 1)
-	-- animação defesa
-	self:addAnimation(DEFENDING, 15, 0.05, true, 12)
-	-- animação andar para cima
-	self:addAnimation(WALKING_UP, 4, 0.18, true, 1)
-	-- animação andar para baixo
-	self:addAnimation(WALKING_DOWN, 4, 0.18, true, 1)
-	-- animação andar para esquerda
-	self:addAnimation(WALKING_LEFT, 4, 0.18, true, 1)
-	-- animação andar para direita
-	self:addAnimation(WALKING_RIGHT, 4, 0.18, true, 1)
-end
-
-function Player:addAnimation(action, numFrames, frameDur, looping, loopFrame)
-	local path = pngPathFormat({ "assets", "animations", "players", self.name, action })
-	local quadSize = { width = 32, height = 32 }
-	local animation = newAnimation(path, numFrames, quadSize, frameDur, looping, loopFrame, quadSize)
-	self.animations[action] = animation
-	self.spriteSheets[action] = love.graphics.newImage(path)
-	self.spriteSheets[action]:setFilter("nearest", "nearest")
+function Player:addAnimations(idleSettings, defSettings, WalkSettings)
+	----------------- IDLE -----------------
+	local path = pngPathFormat({ "assets", "animations", "players", self.name, IDLE })
+	addAnimation(self, path, IDLE, idleSettings)
+	--------------- DEFENDING --------------
+	path = pngPathFormat({ "assets", "animations", "players", self.name, DEFENDING })
+	addAnimation(self, path, DEFENDING, defSettings)
+	-------------- WALKING UP --------------
+	path = pngPathFormat({ "assets", "animations", "players", self.name, WALKING_UP })
+	addAnimation(self, path, WALKING_UP, WalkSettings)
+	------------- WALKING DOWN -------------
+	path = pngPathFormat({ "assets", "animations", "players", self.name, WALKING_DOWN })
+	addAnimation(self, path, WALKING_DOWN, WalkSettings)
+	------------- WALKING LEFT -------------
+	path = pngPathFormat({ "assets", "animations", "players", self.name, WALKING_LEFT })
+	addAnimation(self, path, WALKING_LEFT, WalkSettings)
+	------------- WALKING RIGHT ------------
+	path = pngPathFormat({ "assets", "animations", "players", self.name, WALKING_RIGHT })
+	addAnimation(self, path, WALKING_RIGHT, WalkSettings)
 end
 
 function Player:addParticles()

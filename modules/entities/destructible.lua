@@ -30,17 +30,22 @@ function Destructible.new(name, pos, room, loot, hitbox)
 	obj.loot = loot or LOOT_TABLE[name] or Loot.new() -- pode ser sobrescrito na criação
 	obj.hb = hitbox                                -- hitbox do destrutível
 
-	obj:addAnimations()
 	return obj
 end
 
 ----------------------------------------
 -- Animações
 ----------------------------------------
-function Destructible:addAnimations()
-	self:addAnimation(INTACT, 1, 1, true)
-	self:addAnimation(BREAKING, 7, 0.05, false)
-	self:addAnimation(BROKEN, 1, 1, true)
+function Destructible:addAnimations(intactSettings, breakingSettings, brokenSettings)
+	---------------- INTACT ----------------
+	local path = pngPathFormat({ "assets", "animations", "destructibles", self.name, INTACT })
+	addAnimation(self, path, INTACT, intactSettings)
+	--------------- BREAKING ---------------
+	path = pngPathFormat({ "assets", "animations", "destructibles", self.name, BREAKING })
+	addAnimation(self, path, BREAKING, breakingSettings)
+	---------------- BROKEN ----------------
+	path = pngPathFormat({ "assets", "animations", "destructibles", self.name, BROKEN })
+	addAnimation(self, path, BROKEN, brokenSettings)
 end
 
 function Destructible:addAnimation(state, numFrames, frameDur, looping)

@@ -1,3 +1,11 @@
+function getPlayersAnimSettings()
+    local quadSize = { width = 32, height = 32 }
+    local idleAnimSettings = newAnimSetting(2, quadSize, 0.5, true, 1)
+    local defAnimSettings = newAnimSetting(15, quadSize, 0.05, true, 12)
+    local walkAnimSettings = newAnimSetting(4, quadSize, 0.18, true, 1)
+    return idleAnimSettings, defAnimSettings, walkAnimSettings
+end
+
 function initPlayer1()
     local firstSpawnPoint = { x = rooms[0][0].center.x, y = rooms[0][0].center.y }
     player1 = Player.new(
@@ -7,7 +15,7 @@ function initPlayer1()
         getP1ColorPalette(),
         rooms[0][0]
     )
-    player1:addAnimations()
+    player1:addAnimations(getPlayersAnimSettings())
     player1:addParticles()
     player1.room:visit(player1)
     table.insert(players, player1)
@@ -21,7 +29,7 @@ function initPlayer2()
         getP2ColorPalette(),
         players[1].room
     )
-    player2:addAnimations()
+    player2:addAnimations(getPlayersAnimSettings())
     player2:addParticles()
     player2.room:visit(player2)
     table.insert(players, player2)
@@ -35,7 +43,7 @@ function initPlayer3()
         getP3ColorPalette(),
         players[1].room
     )
-    player3:addAnimations()
+    player3:addAnimations(getPlayersAnimSettings())
     player3:addParticles()
     player3.room:visit(player3)
     table.insert(players, player3)
@@ -49,7 +57,7 @@ function initPlayer4()
         getP4ColorPalette(),
         players[1].room
     )
-    player4:addAnimations()
+    player4:addAnimations(getPlayersAnimSettings())
     player4:addParticles()
     player4.room:visit(player4)
     table.insert(players, player4)

@@ -7,6 +7,7 @@ require("modules.systems.loots")
 require("modules.utils.types")
 require("modules.utils.states")
 require("modules.engine.collision")
+require("modules.entities.constructors.weapon")
 require("table")
 
 ----------------------------------------
@@ -27,7 +28,7 @@ function Destructible.new(name, pos, room, loot, hitbox)
 	obj.spriteSheets = {}
 	obj.animations = {}
 	obj.loot = loot or LOOT_TABLE[name] or Loot.new() -- pode ser sobrescrito na criação
-	obj.hb = hitbox -- hitbox do destrutível
+	obj.hb = hitbox                                -- hitbox do destrutível
 
 	obj:addAnimations()
 	return obj
@@ -119,31 +120,13 @@ function Destructible:spawnLoot()
 		local el = loot[i] -- elemento do loot
 		if math.random() < el.chance then
 			local amount = math.random(el.amountRange.min, el.amountRange.max)
-			for j = 1, amount do
+			for _ = 1, amount do
 				local itemPos = vec(self.pos.x, self.pos.y)
 				local impulseVec = vec(math.random(-100, 100), -math.random(150, 200))
-				local item = spawnItem(el.object, itemPos, self.room, el.autoPick, math.random(-10, 20), impulseVec)
+				spawnItem(el.object, itemPos, self.room, el.autoPick, math.random(-10, 20), impulseVec)
 			end
 		end
 	end
-end
-
-----------------------------------------
--- Construtores
-----------------------------------------
-
-function newBarrel(pos, room)
-	local loot = Loot.new(newSlingShot(), 0.2, range(1, 1), false)
-	loot:insert(newKatana(), 0.2, range(1, 1), false)
-	loot:insert(COIN, 0.6, range(1, 5), true)
-	local hitbox = hitbox(Rectangle.new(40, 60), pos)
-	return Destructible.new(BARREL.name, pos, room, loot, hitbox)
-end
-
-function newJar(pos, room)
-	local loot = Loot.new(COIN, 0.8, range(1, 3), true)
-	local hitbox = hitbox(Circle.new(10), pos)
-	return Destructible.new(JAR.name, pos, room, loot, hitbox)
 end
 
 return Destructible

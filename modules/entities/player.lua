@@ -9,6 +9,7 @@ require("modules.utils.colors")
 require("modules.utils.types")
 require("modules.utils.states")
 require("modules.utils.shapes")
+require("modules.utils.constructors")
 require("modules.engine.collision")
 require("table")
 
@@ -25,30 +26,31 @@ Player.__index = Player
 Player.type = PLAYER
 
 -- Construtor
-function Player.new(id, name, spawn_pos, controls, colors, room)
+function Player.new(name, spawn_pos, controls, colors, room)
 	local player = setmetatable({}, Player)
 
 	-- atributos que variam
-	player.id = id -- número do jogador
-	player.name = name -- nome do jogador
-	player.hp = 100 -- pontos de vida
-	player.pos = spawn_pos -- posição do jogador (inicializa para a posição do spawn)
-	player.controls = controls -- os comandos para controlar o boneco, no formato {up = "", left = "", down = "", right = "", action = ""}
-	player.colors = colors -- paleta de cores do jogador
-	player.room = room -- sala na qual o jogador está atualmente
+	player.id = #players + 1                    -- número do jogador
+	player.name = name                          -- nome do jogador
+	player.hp = 100                             -- pontos de vida
+	player.pos = spawn_pos                      -- posição do jogador (inicializa para a posição do spawn)
+	player.controls =
+	controls                                    -- os comandos para controlar o boneco, no formato {up = "", left = "", down = "", right = "", action = ""}
+	player.colors = colors                      -- paleta de cores do jogador
+	player.room = room                          -- sala na qual o jogador está atualmente
 	-- atributos fixos na instanciação
-	player.speed = 360 -- velocidade em pixels por segundo
-	player.size = { height = 32, width = 32 } -- em pixels
-	player.movementVec = { x = 0, y = 0 } -- vetor de direção e magnitude do movimento do jogador
-	player.state = IDLE -- define o estado atual do jogador, estreitamente relacionado às animações
-	player.spriteSheets = {} -- no tipo imagem do love
-	player.animations = {} -- as chaves são estados e os valores são Animações
-	player.particles = {} -- efeitos de partícula emitidos pelo player
-	player.weapons = {} -- lista das armas que o jogador possui
-	player.weapon = nil -- arma equipada
+	player.speed = 360                          -- velocidade em pixels por segundo
+	player.size = { height = 32, width = 32 }   -- em pixels
+	player.movementVec = { x = 0, y = 0 }       -- vetor de direção e magnitude do movimento do jogador
+	player.state = IDLE                         -- define o estado atual do jogador, estreitamente relacionado às animações
+	player.spriteSheets = {}                    -- no tipo imagem do love
+	player.animations = {}                      -- as chaves são estados e os valores são Animações
+	player.particles = {}                       -- efeitos de partícula emitidos pelo player
+	player.weapons = {}                         -- lista das armas que o jogador possui
+	player.weapon = nil                         -- arma equipada
 	player.hb = hitbox(Circle.new(20), player.pos) -- hitbox do player
-	player.invulnerableTimer = 0 -- timer de invulnerabilidade após levar dano
-	player.blinkTimer = 0 -- timer para piscar o sprite do player quando invulnerável
+	player.invulnerableTimer = 0                -- timer de invulnerabilidade após levar dano
+	player.blinkTimer = 0                       -- timer para piscar o sprite do player quando invulnerável
 
 	collisionManager.players[player] = player.hb
 	return player
@@ -370,61 +372,7 @@ function newPlayer()
 	if #players >= 4 then
 		return false
 	end
-
-	if #players == 0 then
-		local firstSpawnPoint = { x = rooms[0][0].center.x, y = rooms[0][0].center.y }
-		player1 = Player.new(
-			1,
-			"Mush",
-			firstSpawnPoint,
-			{ up = "w", left = "a", down = "s", right = "d", act1 = "space", act2 = "lshift" },
-			getP1ColorPalette(),
-			rooms[0][0]
-		)
-		player1:addAnimations()
-		player1:addParticles()
-		player1.room:visit(player1)
-		table.insert(players, player1)
-	elseif #players == 1 then
-		player2 = Player.new(
-			2,
-			"Shroom",
-			{ x = player1.pos.x + 75, y = player1.pos.y },
-			{ up = "up", left = "left", down = "down", right = "right", act1 = "rctrl", act2 = "rshift" },
-			getP2ColorPalette(),
-			players[1].room
-		)
-		player2:addAnimations()
-		player2:addParticles()
-		player2.room:visit(player2)
-		table.insert(players, player2)
-	elseif #players == 2 then
-		player3 = Player.new(
-			3,
-			"Musho",
-			{ x = player1.pos.x + 75, y = player1.pos.y },
-			{ up = "t", left = "f", down = "g", right = "h", act1 = "r", act2 = "y" },
-			getP3ColorPalette(),
-			players[1].room
-		)
-		player3:addAnimations()
-		player3:addParticles()
-		player3.room:visit(player3)
-		table.insert(players, player3)
-	else
-		player4 = Player.new(
-			4,
-			"Roomy",
-			{ x = player1.pos.x + 75, y = player1.pos.y },
-			{ up = "i", left = "j", down = "k", right = "l", act1 = "u", act2 = "o" },
-			getP4ColorPalette(),
-			players[1].room
-		)
-		player4:addAnimations()
-		player4:addParticles()
-		player4.room:visit(player4)
-		table.insert(players, player4)
-	end
+	CONSTRUCTORS[PLAYER][#players + 1]()
 	newCamera(players[#players])
 end
 

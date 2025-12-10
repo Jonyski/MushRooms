@@ -38,3 +38,5 @@ BARREL = registerEntity(DESTRUCTIBLE, "barrel")
 
 ----------------- ITEM -----------------
 COIN = registerEntity(ITEM, "coin")
+
+----------------- ROOM -----------------

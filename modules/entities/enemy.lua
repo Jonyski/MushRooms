@@ -1,3 +1,6 @@
+----------------------------------------
+-- Importações de Módulos
+----------------------------------------
 require("modules.utils.types")
 require("modules.utils.states")
 require("modules.engine.collision")
@@ -15,27 +18,27 @@ function Enemy.new(name, hp, spawnPos, speed, move, attack, hitbox, room)
 	local enemy = setmetatable({}, Enemy)
 
 	-- atributos que variam
-	enemy.name = name -- nome do tipo de inimigo
-	enemy.hp = hp -- pontos de vida do inimigo
+	enemy.name = name  -- nome do tipo de inimigo
+	enemy.hp = hp      -- pontos de vida do inimigo
 	enemy.pos = spawnPos -- posição do inimigo
 	enemy.speed = speed -- velocidade de movimento do inimigo
-	enemy.move = move -- função de movimento do inimigo
+	enemy.move = move  -- função de movimento do inimigo
 	enemy.attack = attack -- função de ataque do inimigo
-	enemy.hb = hitbox -- hitbox do inimigo
-	enemy.room = room -- sala do inimigo
+	enemy.hb = hitbox  -- hitbox do inimigo
+	enemy.room = room  -- sala do inimigo
 	-- atributos fixos na instanciação
 	enemy.size = { height = 32, width = 32 }
-	enemy.cooldownTable = {} -- tabela para cooldowns múltiplos, caso necessário
+	enemy.cooldownTable = {}     -- tabela para cooldowns múltiplos, caso necessário
 	enemy.movementDirections = {} -- tabela com as direções de movimento atualmente ativas
-	enemy.state = IDLE -- define o estado atual do inimigo, estreitamente relacionado às animações
-	enemy.spriteSheets = {} -- no tipo imagem do love
-	enemy.animations = {} -- as chaves são estados e os valores são Animações
-	enemy.target = nil -- alvo atual do inimigo
+	enemy.state = IDLE           -- define o estado atual do inimigo, estreitamente relacionado às animações
+	enemy.spriteSheets = {}      -- no tipo imagem do love
+	enemy.animations = {}        -- as chaves são estados e os valores são Animações
+	enemy.target = nil           -- alvo atual do inimigo
 	enemy.moveTargetPos = vec(0, 0) -- posição alvo para movimentação randômica
 	enemy.moveOriginPos = vec(0, 0) -- posição inicial para movimentação com easing
-	enemy.moveTimer = 0 -- timer para movimentação com easing
-	enemy.moveDuration = 0 -- duração da movimentação com easing
-	enemy.attackObj = nil -- objeto Attack associado ao inimigo (caso possua)
+	enemy.moveTimer = 0          -- timer para movimentação com easing
+	enemy.moveDuration = 0       -- duração da movimentação com easing
+	enemy.attackObj = nil        -- objeto Attack associado ao inimigo (caso possua)
 
 	return enemy
 end
@@ -45,7 +48,7 @@ function Enemy:addAnimations(idleSettings, dyingSettings)
 	local path = pngPathFormat({ "assets", "animations", "enemies", self.name, IDLE })
 	addAnimation(self, path, IDLE, idleSettings)
 	---------------- DYING -----------------
-	local path = pngPathFormat({ "assets", "animations", "enemies", self.name, IDLE })
+	path = pngPathFormat({ "assets", "animations", "enemies", self.name, IDLE })
 	addAnimation(self, path, DYING, dyingSettings)
 
 	-- TODO: adicionar o resto das animações
@@ -311,46 +314,4 @@ function Enemy:draw(camera)
 		y = animation.frameDim.height / 2,
 	}
 	love.graphics.draw(self.spriteSheets[self.state], quad, viewPos.x, viewPos.y, 0, 3, 3, offset.x, offset.y)
-
-	---------- HITBOX DEBUG ----------
-	if self.hb.shape.shape == CIRCLE then
-		love.graphics.circle("line", viewPos.x, viewPos.y, self.hb.shape.radius)
-	elseif self.hb.shape.shape == RECTANGLE then
-		love.graphics.rectangle(
-			"line",
-			viewPos.x - self.hb.shape.halfW,
-			viewPos.y - self.hb.shape.halfH,
-			self.hb.shape.width,
-			self.hb.shape.height
-		)
-	end
-	----------------------------------
-end
-
-----------------------------------------
--- Construtores
-----------------------------------------
-function newNuclearCat(spawnPos, room)
-	local movementFunc = Enemy.avoidTarget
-	local attackFunc = Enemy.shootAttack
-	local hitbox = hitbox(Rectangle.new(40, 70), spawnPos)
-	local enemy = Enemy.new(NUCLEAR_CAT.name, 30, spawnPos, 180, movementFunc, attackFunc, hitbox, room)
-	local idleAnimSettings = newAnimSetting(6, { width = 32, height = 32 }, 0.15, true, 1)
-	local dyingAnimSettings = newAnimSetting(6, { width = 32, height = 32 }, 0.001, false, 1)
-	enemy:addAnimations(idleAnimSettings, dyingAnimSettings)
-	enemy:setProjectileAtk()
-	enemy.easingFunc = Easing.outQuad
-	return enemy
-end
-
-function newSpiderDuck(spawnPos, room)
-	local movementFunc = Enemy.moveTargetDirection
-	local attackFunc = Enemy.simpleAttack
-	local hitbox = hitbox(Circle.new(25), spawnPos)
-	local enemy = Enemy.new(SPIDER_DUCK.name, 20, spawnPos, 180, movementFunc, attackFunc, hitbox, room)
-	local idleAnimSettings = newAnimSetting(4, { width = 32, height = 32 }, 0.4, true, 1)
-	local dyingAnimSettings = newAnimSetting(4, { width = 32, height = 32 }, 0.001, false, 1)
-	enemy:addAnimations(idleAnimSettings, dyingAnimSettings)
-	enemy.easingFunc = Easing.outQuad
-	return enemy
 end

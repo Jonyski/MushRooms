@@ -2,6 +2,7 @@
 -- Importações de Módulos
 ----------------------------------------
 require("modules.utils.types")
+require("modules.entities.constructors.room")
 
 ----------------------------------------
 -- Classe SpawnData
@@ -108,73 +109,25 @@ end
 -- TODO: criar mais blueprints e tornar estas funções aleatórias
 
 function randPuzzleRoomBP()
-	return Blueprint.new(PUZZLE_ROOM, "Test Puzzle Room", rgba8(12, 253, 255, 255))
+	return newPuzzleRoom1()
 end
 
 function randNPCRoomBP()
-	local bp = Blueprint.new(NPC_ROOM, "Test NPC Room", rgba8(120, 58, 242, 255))
-	local sp1 = SpawnPoint.new(vec(100, 0))
-	local sp2 = SpawnPoint.new(vec(200, 0))
-	local sp3 = SpawnPoint.new(vec(300, 0))
-	local barrelData = SpawnData.new(BARREL, 0.5)
-	local jarData = SpawnData.new(JAR, 0.8)
-	sp1:insert(barrelData):insert(jarData)
-	sp2:insert(barrelData):insert(jarData)
-	sp3:insert(barrelData):insert(jarData)
-	bp:insert(sp1):insert(sp2):insert(sp3)
-	return bp
+	return newNPCRoom1()
 end
 
 function randResourceRoomBP()
-	local bp = Blueprint.new(RESOURCE_ROOM, "Test Resource Room", rgba8(255, 248, 122, 255))
-	local sp1 = SpawnPoint.new(vec(100, 0))
-	local sp2 = SpawnPoint.new(vec(200, 0))
-	local sp3 = SpawnPoint.new(vec(300, 0))
-	local sp4 = SpawnPoint.new(vec(400, 0))
-	local barrelData = SpawnData.new(BARREL, 0.5)
-	local jarData = SpawnData.new(JAR, 1.0)
-	sp1:insert(barrelData):insert(jarData)
-	sp2:insert(barrelData):insert(jarData)
-	sp3:insert(barrelData):insert(jarData)
-	sp4:insert(barrelData):insert(jarData)
-	bp:insert(sp1):insert(sp2):insert(sp3):insert(sp4)
-	return bp
+	return newResourceRoom1()
 end
 
 function randBattleRoomBP()
-	local bp = Blueprint.new(BATTLE_ROOM, "Test Battle Room", rgba8(255, 255, 255, 255))
-	local sp1 = SpawnPoint.new(vec(100, -100))
-	local sp2 = SpawnPoint.new(vec(-100, 100))
-	local sp3 = SpawnPoint.new(vec(100, 100))
-	local sp4 = SpawnPoint.new(vec(-100, -100))
-	local enemyData1 = SpawnData.new(SPIDER_DUCK, 0.5)
-	local enemyData2 = SpawnData.new(NUCLEAR_CAT, 1.0)
-	sp1:insert(enemyData1):insert(enemyData2)
-	sp2:insert(enemyData1):insert(enemyData2)
-	sp3:insert(enemyData1):insert(enemyData2)
-	sp4:insert(enemyData1):insert(enemyData2)
-	bp:insert(sp1):insert(sp2):insert(sp3):insert(sp4)
-	return bp
+	return newBattleRoom1()
 end
 
 function randBossRoomBP()
-	local bp = Blueprint.new(BOSS_ROOM, "Test Boss Room", rgba8(255, 41, 41, 255))
-	local sp1 = SpawnPoint.new(vec(0, 0))
-	local enemyData1 = SpawnData.new(SPIDER_DUCK, 0.5)
-	local enemyData2 = SpawnData.new(NUCLEAR_CAT, 1.0)
-	sp1:insert(enemyData1):insert(enemyData2)
-	bp:insert(sp1)
-	return bp
+	return newBossRoom1()
 end
 
 function randEventRoomBP()
-	local bp = Blueprint.new(EVENT_ROOM, "Test Event Room", rgba8(104, 237, 102, 255))
-	local sp1 = SpawnPoint.new(vec(0, 0))
-	local barrelData = SpawnData.new(BARREL, 0.25)
-	local jarData = SpawnData.new(JAR, 0.5)
-	local enemyData1 = SpawnData.new(SPIDER_DUCK, 0.75)
-	local enemyData2 = SpawnData.new(NUCLEAR_CAT, 1.0)
-	sp1:insert(barrelData):insert(jarData):insert(enemyData1):insert(enemyData2)
-	bp:insert(sp1)
-	return bp
+	return newEventRoom1()
 end

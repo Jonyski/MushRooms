@@ -9,8 +9,8 @@ require("modules.engine.camera")
 require("modules.engine.animation")
 require("modules.entities.enemy")
 require("modules.entities.weapon")
-require("modules.entities.destructibles")
-require("modules.entities.items")
+require("modules.entities.destructible")
+require("modules.entities.item")
 require("modules.engine.collision")
 
 ----------------------------------------
@@ -41,11 +41,11 @@ function love.keypressed(key, scancode, isrepeat)
 	end
 
 	if key == "1" then
-		spawnItem(newKatana(), players[1].pos, players[1].room, false, getAnchor(players[1], FLOOR), vec(0,0))
+		spawnItem(newKatana(), players[1].pos, players[1].room, false, getAnchor(players[1], FLOOR), vec(0, 0))
 	end
 
 	if key == "2" then
-		spawnItem(newSlingShot(), players[1].pos, players[1].room, false, getAnchor(players[1], FLOOR), vec(0,0))
+		spawnItem(newSlingShot(), players[1].pos, players[1].room, false, getAnchor(players[1], FLOOR), vec(0, 0))
 	end
 
 	if not isrepeat then

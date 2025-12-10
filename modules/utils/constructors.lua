@@ -2,8 +2,9 @@
 -- Importações de Módulos
 ----------------------------------------
 require("modules.utils.types")
-require("modules.entities.enemy")
-require("modules.entities.destructibles")
+require("modules.entities.constructors.enemy")
+require("modules.entities.constructors.player")
+require("modules.entities.constructors.destructible")
 
 ----------------------------------------
 -- Mapa de construtores
@@ -11,8 +12,15 @@ require("modules.entities.destructibles")
 
 -- útil para a lógica de spawn, pois só descobrimos o tipo
 -- e o nome da entidade em tempo de execução
--- Indexado pelo tipo da entidade e então pelo nome dela
+-- Indexado pelo tipo da entidade e então pelo nome dela (exceto os players)
 CONSTRUCTORS = {}
+
+CONSTRUCTORS[PLAYER] = {
+	initPlayer1,
+	initPlayer2,
+	initPlayer3,
+	initPlayer4,
+}
 
 CONSTRUCTORS[ENEMY] = {
 	[SPIDER_DUCK.name] = newSpiderDuck,

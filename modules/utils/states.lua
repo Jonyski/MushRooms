@@ -2,8 +2,10 @@
 -- Enums de estado
 ----------------------------------------
 -- Cada estado está relacionado a uma animação de uma entidade
+---@alias State string
 
 ---------- PLAYERS E INIMIGOS ----------
+
 IDLE = "idle"
 WALKING_UP = "walking up"
 WALKING_DOWN = "walking down"
@@ -15,6 +17,7 @@ HURTING = "hurting" -- tomando dano
 DYING = "dying"
 
 ------------- DESTRUTÍVEIS -------------
+
 INTACT = "intact"
 BREAKING = "breaking"
 BROKEN = "broken"

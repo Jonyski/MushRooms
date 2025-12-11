@@ -1,6 +1,7 @@
 ----------------------------------------
 -- Enum dos tipos do jogo
 ----------------------------------------
+---@alias Type string
 PLAYER = "player"
 ENEMY = "enemy"
 ROOM = "room"
@@ -20,6 +21,13 @@ COLLISION_MANAGER = "collision manager"
 -- Registro das entidades do jogo
 ----------------------------------------
 
+---@class EntityReg
+---@field type Type
+---@field name string
+
+---@param type Type
+---@param name string
+---@return EntityReg
 function registerEntity(type, name)
 	return { type = type, name = name }
 end

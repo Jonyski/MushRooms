@@ -1,11 +1,15 @@
 ----------------------------------------
 -- Estrutura BiList
 ----------------------------------------
+---@class BiList Uma lista que cresce para os dois lados (índices negativos ou positivos)
+---@field minIndex number
+---@field maxIndex number
+---@field length number
 BiList = {}
 BiList.__index = BiList
 
--- uma BiList é uma lista que pode crescer para os dois lados
--- ou seja, para índices negativos ou positivos
+---@return BiList
+-- cria uma `BiList` vazia
 function BiList.new()
 	local biList = setmetatable({}, BiList)
 	biList.minIndex = 0
@@ -14,6 +18,9 @@ function BiList.new()
 	return biList
 end
 
+---@param el any
+---@return nil
+-- insere um valor `el` uma posição à frente de `maxIndex`
 function BiList:insertRight(el)
 	if el == nil then
 		return
@@ -23,6 +30,9 @@ function BiList:insertRight(el)
 	self.length = self.length + 1
 end
 
+---@param el any
+---@return nil
+-- insere um valor `el` uma posição atrás de `minIndex`
 function BiList:insertLeft(el)
 	if el == nil then
 		return
@@ -32,7 +42,11 @@ function BiList:insertLeft(el)
 	self.length = self.length + 1
 end
 
--- cuidado, esta função pode deixar buracos na lista
+---@param index number
+---@param el any
+---@return nil
+-- insere um valor `el` na posição `index`
+-- **cuidado:** esta função pode deixar buracos na lista
 function BiList:insert(index, el)
 	if el == nil then
 		return
@@ -49,31 +63,49 @@ end
 -------------------------------------------------
 --- Estrutura Set
 -------------------------------------------------
+---@class Set Um conjunto de valores sem repetição
+---@field __data table<any, any> Tabela de valores no Set
 Set = {}
 Set.__index = Set
 
--- um Set não permite elementos repetidos
+---@return Set
+-- cria um `Set` vazio
 function Set.new()
 	local set = setmetatable({ __data = {} }, Set)
 	return set
 end
 
+---@param key any
+---@param value any
+---@return nil
+-- adiciona um par chave-valor à um `Set`
 function Set:add(key, value)
 	self.__data[key] = value
 end
 
+---@param key any
+---@return nil
+-- remove uma entrada do `Set` por meio da chave (`key`)
 function Set:remove(key)
 	self.__data[key] = nil
 end
 
+---@param key any
+---@return boolean
+-- verifica se o `Set` contém um valor associado à uma chave `key`
 function Set:has(key)
 	return self.__data[key] ~= nil
 end
 
+---@param key any
+---@return any
+-- acessa um valor através de sua chave no `Set`
 function Set:get(key)
 	return self.__data[key]
 end
 
+---@return number
+-- conta o número de elementos no `Set`
 function Set:size()
 	local count = 0
 	for _, _ in pairs(self.__data) do
@@ -82,6 +114,8 @@ function Set:size()
 	return count
 end
 
+---@return fun(): (any, any)
+-- cria um iterador para os elementos do `Set`
 function Set:iter()
 	local k, v
 	return function()
@@ -90,6 +124,9 @@ function Set:iter()
 	end
 end
 
+---@param src Set
+---@return nil
+-- modifica o `Set` para que fique com os mesmos elementos de `src`
 function Set:copy(src)
 	-- esvaziando a si mesmo primeiro
 	for k, _ in self:iter() do
@@ -104,6 +141,11 @@ end
 ----------------------------------------
 -- Funções para tabelas
 ----------------------------------------
+
+---@param table table
+---@param value any
+---@return unknown
+-- retorna a chave do valor `value` na tabela `table`
 function tableFind(table, value)
 	for k, v in pairs(table) do
 		if v == value then
@@ -113,6 +155,10 @@ function tableFind(table, value)
 	return nil
 end
 
+---@param table table
+---@param value any
+---@return integer | nil
+-- retorna o índice do valor `value` na tabela `table`
 function tableIndexOf(table, value)
 	for i, v in ipairs(table) do
 		if v == value then
@@ -125,7 +171,12 @@ end
 ----------------------------------------
 -- Funções matemáticas
 ----------------------------------------
--- Retorna x limitado ao intervalo [a, b]
+
+---@param x number
+---@param a number
+---@param b number
+---@return number
+-- retorna `x` limitado ao intervalo `[a, b]`
 function clamp(x, a, b)
 	if x < a then
 		return a
@@ -136,32 +187,57 @@ function clamp(x, a, b)
 	return x
 end
 
--- Função de interpolação linear
+---@param a number
+---@param b number
+---@param t number
+---@return number
+-- retorna a interpolação linear entre `a` e `b` no ponto `t`
 function lerp(a, b, t)
 	return a + (b - a) * t
 end
 
+---@alias range {min: number, max: number}
+
+---@param min number
+---@param max number
+---@return range
+-- cria uma faixa de valores com mínimo e máximo
 function range(min, max)
 	return { min = min, max = max }
 end
 
--- Remapeia um valor em um intervalo [inMin, inMax] para [outMin, outMax]
+---@param value number
+---@param inMin number
+---@param inMax number
+---@param outMin number
+---@param outMax number
+---@return number
+-- remapeia um valor em um intervalo [inMin, inMax] para [outMin, outMax]
 function remap(value, inMin, inMax, outMin, outMax)
 	return outMin + (value - inMin) * (outMax - outMin) / (inMax - inMin)
 end
 
-
+---@param x number
+---@return -1 | 0 | 1
+-- retorna o sinal de `x`
 function sign(x)
 	return (x > 0 and 1) or (x == 0 and 0) or -1
 end
+
 ----------------------------------------
 -- Funções de sistema de arquivos
 ----------------------------------------
--- transforma uma string em um formato padronizado para caminhos
+
+---@param s string
+---@return string
+-- transforma uma string em um formato padronizado para caminhos,
+-- substituindo espaços por `_` e  letras maiúsculas em minúsculas
 function pathlizeName(s)
 	return string.lower(string.gsub(s, " ", "_"))
 end
 
+---@param parts string[]
+---@return string
 -- transforma uma lista de pastas e um nome de arquivo em um caminho para o arquivo
 function pngPathFormat(parts)
 	local path = ""

@@ -3,9 +3,16 @@
 ----------------------------------------
 require("modules.utils.utils")
 
+---@class Anchor
+---@field y number
+
 ----------------------------------------
 -- Funções locais
 ----------------------------------------
+
+---@param y number
+---@return Anchor
+-- cria uma âncora que indica onde uma sprite toca o chão
 local function floorAnchor(y)
 	return { floor = y }
 end
@@ -13,10 +20,14 @@ end
 ----------------------------------------
 -- Variáveis e Enums
 ----------------------------------------
+
+---@alias anchorType string
 FLOOR = "floor"
 
--- Observação: os valores aqui são relativos ao centro do sprite
--- No futuro, outros anchors podem ser adicionados (head, hand, etc)
+---@type table<string, Anchor>
+-- tabela de âncoras indexada pelo nome da entidade.
+-- **observação:** os valores aqui são relativos ao centro do sprite.
+-- no futuro, outros tipos de âncora podem ser adicionados (head, hand, etc)
 ANCHORS = {
 	-- Items
 	katana = floorAnchor(11),
@@ -41,6 +52,13 @@ ANCHORS = {
 ----------------------------------------
 -- Funções Globais
 ----------------------------------------
+
+---@param obj any
+---@param anchorType anchorType
+---@param scale number?
+---@return Anchor | 0
+-- retorna a âncora do tipo `anchorType` associada ao objeto
+-- `obj` em uma determinada escala
 function getAnchor(obj, anchorType, scale)
 	scale = scale or 3
 

@@ -6,10 +6,22 @@ require("modules.utils.types")
 ----------------------------------------
 -- Classe Color
 ----------------------------------------
+
+---@class Color
+---@field r number
+---@field g number
+---@field b number
+---@field a number
 Color = {}
 Color.__index = Color
 Color.type = COLOR
 
+---@param r number
+---@param g number
+---@param b number
+---@param a number
+---@return Color
+-- cria uma instância de `Color`
 function Color.new(r, g, b, a)
 	local c = setmetatable({}, Color)
 	c.r = clamp(r, 0, 1)
@@ -22,12 +34,23 @@ end
 ----------------------------------------
 -- Construtores
 ----------------------------------------
--- RGBA com componentes entre 0 e 1
+
+---@param r number
+---@param g number
+---@param b number
+---@param a number
+---@return Color
+-- cria uma cor RGBA com componentes entre 0 e 1
 function rgba(r, g, b, a)
 	return Color.new(r, g, b, a)
 end
 
--- RGBA no formato 8-bits [0-255]
+---@param r number
+---@param g number
+---@param b number
+---@param a number
+---@return Color
+-- cria uma cor RGBA a partir de argumentos no formato 8-bits [0-255]
 function rgba8(r, g, b, a)
 	return Color.new(r / 255, g / 255, b / 255, a / 255)
 end
@@ -35,6 +58,9 @@ end
 ----------------------------------------
 -- Paletas de cores dos players
 ----------------------------------------
+
+---@return Color[]
+-- retorna a paleta de cores do player 1
 function getP1ColorPalette()
 	local palette = {}
 	table.insert(palette, rgba(1.0, 0.11, 0.2, 1.0))
@@ -43,6 +69,8 @@ function getP1ColorPalette()
 	return palette
 end
 
+---@return Color[]
+-- retorna a paleta de cores do player 2
 function getP2ColorPalette()
 	local palette = {}
 	table.insert(palette, rgba(0.2, 0.52, 0.89, 1.0))
@@ -51,6 +79,8 @@ function getP2ColorPalette()
 	return palette
 end
 
+---@return Color[]
+-- retorna a paleta de cores do player 3
 function getP3ColorPalette()
 	local palette = {}
 	table.insert(palette, rgba(0.79, 0.06, 0.17, 1.0))
@@ -59,6 +89,8 @@ function getP3ColorPalette()
 	return palette
 end
 
+---@return Color[]
+-- retorna a paleta de cores do player 4
 function getP4ColorPalette()
 	local palette = {}
 	table.insert(palette, rgba(0.92, 0.16, 0.54, 1.0))

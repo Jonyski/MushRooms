@@ -80,6 +80,20 @@ function newAnimation(path, length, quadSize, frameDur, looping, loopFrame, fram
 	return Animation.new(frames, frameDur, looping, loopFrame, frameDim)
 end
 
+---@class AnimSettings
+---@field numFrames number
+---@field quadSize Size
+---@field frameDur number
+---@field looping boolean
+---@field loopFrame number
+
+---@param numFrames number
+---@param quadSize Size
+---@param frameDur number
+---@param looping boolean
+---@param loopFrame number?
+---@return AnimSettings
+-- cria uma cofiguração de animação, usada para criar novas animações
 function newAnimSetting(numFrames, quadSize, frameDur, looping, loopFrame)
 	return {
 		numFrames = numFrames,
@@ -90,6 +104,13 @@ function newAnimSetting(numFrames, quadSize, frameDur, looping, loopFrame)
 	}
 end
 
+---@param entity any
+---@param path any
+---@param action any
+---@param settings any
+-- atrela uma animação com configuração `setting` à ação
+-- `action` da entidade `entity`. `path` é o caminho para
+-- o sprite sheet da animação
 function addAnimation(entity, path, action, settings)
 	local animation = newAnimation(
 		path,

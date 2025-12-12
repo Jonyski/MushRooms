@@ -10,7 +10,7 @@ require("modules.entities.constructors.destructible")
 -- Mapa de construtores
 ----------------------------------------
 
----@type table<Type, table<string | number, (fun(args...: any): any)>>
+---@type table<Type, table<string | number, (fun(pos?: Vec, args?: any): any)>>
 -- Tabela de construtores indexada pelo tipo da entidade e então
 -- pelo nome dela (exceto os players, indexados pelo id).
 -- É útil para a lógica de spawn, pois só descobrimos o tipo

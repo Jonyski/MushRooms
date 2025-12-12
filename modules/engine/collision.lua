@@ -8,6 +8,10 @@ require("modules.utils.utils")
 -- Funções auxiliares para colisão
 ----------------------------------------
 
+---@class Hitbox
+---@field shape Shape
+---@field pos Vec
+
 function hitbox(shape, pos)
 	return { shape = shape, pos = pos }
 end

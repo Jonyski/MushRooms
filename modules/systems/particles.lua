@@ -2,7 +2,13 @@
 -- Funções Globais
 ----------------------------------------
 
--- Emite muitos círculos que sobem, c1 e c2 são as cores do efeito
+---@alias ParticleSystem table sistemas de partícula são estruturas definidas pelo próprio Love2D
+
+---@param c1 Color
+---@param c2 Color
+---@return ParticleSystem
+-- cria um sistema de partículas que emite muitos círculos que sobem.
+-- `c1` e `c2` são as cores do efeito
 function newDefenseParticles(c1, c2)
 	local particleImg = love.graphics.newImage("assets/sprites/circle.png")
 	local defParticles = love.graphics.newParticleSystem(particleImg, 250)
@@ -23,7 +29,8 @@ function newDefenseParticles(c1, c2)
 	return defParticles
 end
 
--- Emite circulos de poeira a uma curta distância
+---@return ParticleSystem
+-- cria um sistema de partículas que emite circulos de poeira a uma curta distância
 function newWalkingParticles()
 	local particleImg = love.graphics.newImage("assets/sprites/circle.png")
 	local defParticles = love.graphics.newParticleSystem(particleImg, 250)

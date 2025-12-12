@@ -2,7 +2,7 @@
 -- Funções Utilitárias
 ----------------------------------------
 
----@class vec Vetor bidimensional
+---@class Vec Vetor bidimensional
 ---@field x number
 ---@field y number
 
@@ -10,15 +10,15 @@
 
 ---@param x number
 ---@param y number
----@return vec
+---@return Vec
 -- constrói um vetor bidimensional
 function vec(x, y)
 	return { x = x, y = y }
 end
 
----@param v1 vec
----@param v2 vec
----@return vec
+---@param v1 Vec
+---@param v2 Vec
+---@return Vec
 -- retorna o ponto médio entre dois vetores
 function midpoint(v1, v2)
 	return {
@@ -27,8 +27,8 @@ function midpoint(v1, v2)
 	}
 end
 
----@param v vec
----@return vec
+---@param v Vec
+---@return Vec
 -- transforma um vetor v em um vetor unitário v'
 function normalize(v)
 	local vec = vec(v.x, v.y)
@@ -40,7 +40,7 @@ function normalize(v)
 	return vec
 end
 
----@param v vec
+---@param v Vec
 ---@return boolean
 -- checa se um vetor é nulo
 function nullVec(v)
@@ -51,25 +51,25 @@ function nullVec(v)
 	end
 end
 
----@param v1 vec
----@param v2 vec
----@return vec
+---@param v1 Vec
+---@param v2 Vec
+---@return Vec
 -- soma dois vetores
 function addVec(v1, v2)
 	return vec(v1.x + v2.x, v1.y + v2.y)
 end
 
----@param v1 vec
----@param v2 vec
----@return vec
+---@param v1 Vec
+---@param v2 Vec
+---@return Vec
 -- subtração de dois vetores
 function subVec(v1, v2)
 	return vec(v1.x - v2.x, v1.y - v2.y)
 end
 
----@param v vec
+---@param v Vec
 ---@param a number
----@return vec
+---@return Vec
 -- escala um vetor v por um fator a
 function scaleVec(v, a)
 	return vec(v.x * a, v.y * a)
@@ -77,38 +77,38 @@ end
 
 ---@param angle rad
 ---@param r number
----@return vec
+---@return Vec
 -- constrói um vetor a partir de coordenadas polares
 function polarToVec(angle, r)
 	return scaleVec(vec(math.cos(angle), math.sin(angle)), r)
 end
 
----@param v vec
+---@param v Vec
 ---@return number
 -- retorna o tamanho/módulo de um vetor
 function lenVec(v)
 	return math.sqrt(v.x ^ 2 + v.y ^ 2)
 end
 
----@param v1 vec
----@param v2 vec
+---@param v1 Vec
+---@param v2 Vec
 ---@return number
 -- retorna a distância de dois entre dois vetores
 function dist(v1, v2)
 	return lenVec(subVec(v1, v2))
 end
 
----@param v1 vec
----@param v2 vec
+---@param v1 Vec
+---@param v2 Vec
 ---@return number
 -- produto escalar de dois vetores
 function dotProd(v1, v2)
 	return v1.x * v2.x + v1.y * v2.y
 end
 
----@param v vec
+---@param v Vec
 ---@param angle rad
----@return vec
+---@return Vec
 -- multiplica um vetor pela matriz de rotação, dado um ângulo em radianos
 function rotateVec(v, angle)
 	local cosA = math.cos(angle)

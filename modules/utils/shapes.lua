@@ -5,6 +5,12 @@ CIRCLE = "circle"
 RECTANGLE = "rectangle"
 LINE = "line"
 
+---@alias Shape `Circle` | `Rectangle` | `Line`
+
+---@class Size
+---@field width number
+---@field height number
+
 ---------------------------------------
 -- Classe Circle
 ----------------------------------------

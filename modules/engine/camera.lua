@@ -12,30 +12,41 @@ cameras = {}
 ----------------------------------------
 -- Classe Camera
 ----------------------------------------
+
+---@class Camera
+---@field viewPos function
+
 Camera = {}
 Camera.__index = Camera
 
+---@param pos Vec
+---@param viewport Size
+---@param canvas table
+---@param canvasPos Vec
+---@param player any
+---@return Camera
+-- cria uma câmera atrelada a um jogador e um canvas
 function Camera.new(pos, viewport, canvas, canvasPos, player)
 	local camera = setmetatable({}, Camera)
 
-	camera.playerAttached = player 	            -- jogador associado à câmera
-	camera.viewport = viewport                  -- tamanho da câmera (o espaço que ela enxerga)
-	camera.canvas = canvas                      -- canvas associado à câmera
-	camera.canvasPos = canvasPos                -- posição do canvas na tela
+	camera.playerAttached = player -- jogador associado à câmera
+	camera.viewport = viewport -- tamanho da câmera (o espaço que ela enxerga)
+	camera.canvas = canvas -- canvas associado à câmera
+	camera.canvasPos = canvasPos -- posição do canvas na tela
 	camera.cx = (pos.x + viewport.width) / 2
 	camera.cy = (pos.y + viewport.height) / 2
 	camera.targetPos = { x = pos.x, y = pos.y } -- onde a câmera deve ir
 	-- atributos fixos na instanciação
-	camera.transitionSpeed = 6               -- controla a suavidade da transição
-	camera.shakeOffset = { x = 0, y = 0 }    -- deslocamento atual do shake
-	camera.shakeIntensity = 0                -- intensidade do shake
-	camera.shakeDuration = 0                 -- duração total do shake
-	camera.shakeTimer = 0                    -- tempo restante do shake
+	camera.transitionSpeed = 6 -- controla a suavidade da transição
+	camera.shakeOffset = { x = 0, y = 0 } -- deslocamento atual do shake
+	camera.shakeIntensity = 0 -- intensidade do shake
+	camera.shakeDuration = 0 -- duração total do shake
+	camera.shakeTimer = 0 -- tempo restante do shake
 	-- atributos de zoom
 	camera.startingZoom = camera:calculateZoom()
-	camera.zoom = camera.startingZoom        -- zoom atual
-	camera.targetZoom = camera.startingZoom  -- zoom desejado
-	camera.zoomSpeed = 3                     -- velocidade da transição
+	camera.zoom = camera.startingZoom -- zoom atual
+	camera.targetZoom = camera.startingZoom -- zoom desejado
+	camera.zoomSpeed = 3 -- velocidade da transição
 
 	return camera
 end
@@ -65,10 +76,16 @@ function Camera:updatePosition(dt)
 		local room = player.room
 
 		-- limita a posição da câmera ao hitbox da sala
-		self.targetPos.x =
-			clamp(player.pos.x, room.hitbox.p1.x + viewportZoomed.width / 2, room.hitbox.p2.x - viewportZoomed.width / 2)
-		self.targetPos.y =
-			clamp(player.pos.y, room.hitbox.p1.y + viewportZoomed.height / 2, room.hitbox.p2.y - viewportZoomed.height / 2)
+		self.targetPos.x = clamp(
+			player.pos.x,
+			room.hitbox.p1.x + viewportZoomed.width / 2,
+			room.hitbox.p2.x - viewportZoomed.width / 2
+		)
+		self.targetPos.y = clamp(
+			player.pos.y,
+			room.hitbox.p1.y + viewportZoomed.height / 2,
+			room.hitbox.p2.y - viewportZoomed.height / 2
+		)
 	end
 
 	self:updateShake(dt)
@@ -131,14 +148,13 @@ function Camera:draw()
 end
 
 function Camera:calculateZoom()
-	
 	if not self.playerAttached then
 		return 1
 	end
 
 	local roomDim = self.playerAttached.room.stdDim
 	local rawZoom = self.viewport.width / window.width
-	local rightZoom = remap(rawZoom, (1/3), 1, 0.7, 1.0)
+	local rightZoom = remap(rawZoom, (1 / 3), 1, 0.7, 1.0)
 
 	return clamp(rightZoom, self.viewport.width / roomDim.width, 2)
 end
@@ -170,9 +186,9 @@ function newCamera(player)
 			table.insert(cameras, camera)
 		else -- no caso de 4 câmeras
 			local canvasPositions = {
-				{ x = 0,                y = 0 },
+				{ x = 0, y = 0 },
 				{ x = window.width / 2, y = 0 },
-				{ x = 0,                y = window.height / 2 },
+				{ x = 0, y = window.height / 2 },
 				{ x = window.width / 2, y = window.height / 2 },
 			}
 			local camera = Camera.new(

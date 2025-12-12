@@ -4,15 +4,31 @@
 require("modules.utils.utils")
 
 ----------------------------------------
--- Funções auxiliares para Ataques
+-- Classe AtkSetting e construtores
 ----------------------------------------
+
+---@class AtkSetting
+---@field ally boolean
+---@field dmg number
+---@field dur number
+---@field hb Hitbox
+---@field speed number
+---@field acc number
+---@field bounces number
+---@field pierces number
+
+---@param ally boolean
+---@param damage number
+---@param duration number
+---@param hitbox Hitbox
+---@return AtkSetting
 -- construtor de configuração base para ataques melee
 function newBaseAtkSetting(ally, damage, duration, hitbox)
 	return {
 		ally = ally,
-		damage = damage,
-		duration = duration,
-		hitbox = hitbox,
+		dmg = damage,
+		dur = duration,
+		hb = hitbox,
 		-- por padrão, ataques não terão velocidade, aceleração, quiques e atravessam infinitos alvos (Melee)
 		speed = 0,
 		acc = 0,
@@ -21,13 +37,19 @@ function newBaseAtkSetting(ally, damage, duration, hitbox)
 	}
 end
 
+---@param baseSettings AtkSetting
+---@param speed number
+---@param acceleration number
+---@param bounces number
+---@param pierces number
+---@return AtkSetting
 -- construtor complementar ao anterior, usado para ataques de projétil
 function newProjectileAtkSetting(baseSettings, speed, acceleration, bounces, pierces)
 	return {
 		ally = baseSettings.ally,
-		damage = baseSettings.damage,
-		duration = baseSettings.duration,
-		hitbox = baseSettings.hitbox,
+		dmg = baseSettings.dmg,
+		dur = baseSettings.dur,
+		hb = baseSettings.hb,
 		speed = speed,
 		acc = acceleration,
 		bounces = bounces,
@@ -39,6 +61,13 @@ end
 -- Classe AttackState
 ----------------------------------------
 
+---@class Attack: AtkSetting
+---@field name string
+---@field animSettings table
+---@field updateEvent function
+---@field onHit function
+---@field trajectoryFunc function
+---@field events AtkEvent[]
 Attack = {}
 Attack.__index = Attack
 Attack.type = ATTACK
@@ -46,30 +75,37 @@ Attack.type = ATTACK
 -- Attack States guardam apenas dados iniciais sobre ataques, e não comportamentos
 function Attack.new(name, atkSettings, animSettings, updateFunc, onHit, trajectoryFunc)
 	local attack = setmetatable({}, Attack)
-	attack.name = name                  -- nome do tipo de ataque
-	attack.ally = atkSettings.ally      -- true se for de um player e false se for de um inimigo
-	attack.dmg = atkSettings.damage     -- dano base do ataque
-	attack.dur = atkSettings.duration   -- duração do evento de ataque associado
-	attack.speed = atkSettings.speed    -- fator inicial de velocidade do ataque/projétil
-	attack.acc = atkSettings.acc        -- fator inicial de aceleração do ataque/projétil
-	attack.hb = atkSettings.hitbox      -- hitbox do ataque
+	attack.name = name -- nome do tipo de ataque
+	attack.ally = atkSettings.ally -- true se for de um player e false se for de um inimigo
+	attack.dmg = atkSettings.dmg -- dano base do ataque
+	attack.dur = atkSettings.dur -- duração do evento de ataque associado
+	attack.speed = atkSettings.speed -- fator inicial de velocidade do ataque/projétil
+	attack.acc = atkSettings.acc -- fator inicial de aceleração do ataque/projétil
+	attack.hb = atkSettings.hb -- hitbox do ataque
 	attack.bounces = atkSettings.bounces -- quantas vezes o ataque pode ricochetear (caso seja projétil)
 	attack.pierces = atkSettings.pierces -- quantas vezes o ataque pode atravessar um alvo
-	attack.animSettings = animSettings  -- configurações da animação de cada evento
-	attack.updateEvent = updateFunc     -- função executada para cada AttackEvent, atualizando seu estado atual
-	attack.onHit = onHit                -- função executada toda vez que um ataque acertar um alvo
+	attack.animSettings = animSettings -- configurações da animação de cada evento
+	attack.updateEvent = updateFunc -- função executada para cada AttackEvent, atualizando seu estado atual
+	attack.onHit = onHit -- função executada toda vez que um ataque acertar um alvo
 	attack.trajectoryFunc = trajectoryFunc -- função que define a trajetória do ataque/projétil
 	-- Atributos fixos na instanciação
 	attack.events = {}
 	return attack
 end
 
+---@param attacker any
+---@param origin Vec
+---@param direction rad
+-- inicia um evento de ataque no ponto `origin` com direção `direction`.
+-- `attacker` é a entidade (player ou inimigo) iniciando o ataque
 function Attack:attack(attacker, origin, direction)
 	local atkEvent = AttackEvent.new(self, attacker, origin, direction)
 	atkEvent:addAnimation(self.animSettings)
 	table.insert(self.events, atkEvent)
 end
 
+---@param dt number
+-- atualiza os eventos de ataque e gerencia a lista `Attack.events`
 function Attack:update(dt)
 	for i = #self.events, 1, -1 do
 		local e = self.events[i]
@@ -88,35 +124,52 @@ end
 -- Classe AttackEvent
 ----------------------------------------
 
+---@class AtkEvent : Attack
+---@field attacker any
+---@field origin Vec
+---@field direction rad
+---@field vel Vec
+---@field acc Vec
+---@field bouncesLeft number
+---@field piercesLeft number
+---@field target any
+---@field age number
+---@field active boolean
+---@field targetsDamaged any[]
 AttackEvent = {}
 AttackEvent.__index = AttackEvent
 AttackEvent.type = ATTACK_EVENT
 
--- Attack Events armazenam o comportamento de um ataque
+---@param attackState Attack
+---@param attacker any
+---@param origin Vec
+---@param direction rad
+---@return AtkEvent
+-- AttackEvents armazenam o comportamento de um ataque
 -- são instanciados a cada ataque e destruídos ao fim do timer
 function AttackEvent.new(attackState, attacker, origin, direction)
 	local atkEvent = setmetatable({}, AttackEvent)
 	local dirVec = polarToVec(direction, 1)
-	atkEvent.name = attackState.name                  -- para descobrirmos o caminho até os assets
-	atkEvent.attacker = attacker                      -- jogador ou inimigo que desferiu o ataque
-	atkEvent.pos = origin                             -- posição atual do ataque
-	atkEvent.dmg = attackState.dmg                    -- dano atual do ataque (caso mude com o tempo)
-	atkEvent.timer = attackState.dur                  -- tempo até o ataque terminar
-	atkEvent.speed = attackState.speed                -- coeficiente de velocidade do ataque/projétil
-	atkEvent.dur = attackState.dur                    -- duração total do ataque/projétil
-	atkEvent.direction = direction                    -- ângulo do ataque em radianos
+	atkEvent.name = attackState.name -- para descobrirmos o caminho até os assets
+	atkEvent.attacker = attacker -- jogador ou inimigo que desferiu o ataque
+	atkEvent.pos = origin -- posição atual do ataque
+	atkEvent.dmg = attackState.dmg -- dano atual do ataque (caso mude com o tempo)
+	atkEvent.timer = attackState.dur -- tempo até o ataque terminar
+	atkEvent.speed = attackState.speed -- coeficiente de velocidade do ataque/projétil
+	atkEvent.dur = attackState.dur -- duração total do ataque/projétil
+	atkEvent.direction = direction -- ângulo do ataque em radianos
 	atkEvent.vel = scaleVec(dirVec, attackState.speed) -- vetor de velocidade atual do ataque
-	atkEvent.acc = scaleVec(dirVec, attackState.acc)  -- aceleração atual do ataque
-	atkEvent.hb = copyHitbox(attackState.hb, origin)  -- formato da hitbox
-	atkEvent.bouncesLeft = attackState.bounces        -- número de ricochetes restantes
-	atkEvent.piercesLeft = attackState.pierces        -- número de alvos atravessáveis restantes
+	atkEvent.acc = scaleVec(dirVec, attackState.acc) -- aceleração atual do ataque
+	atkEvent.hb = copyHitbox(attackState.hb, origin) -- formato da hitbox
+	atkEvent.bouncesLeft = attackState.bounces -- número de ricochetes restantes
+	atkEvent.piercesLeft = attackState.pierces -- número de alvos atravessáveis restantes
 	atkEvent.trajectoryFunc = attackState.trajectoryFunc -- função que define a trajetória do ataque/projétil
-	atkEvent.onHitFunc = attackState.onHit            -- função executada ao acertar um alvo
-	atkEvent.target = attacker.target                 -- alvo do ataque
-	-- Atributos fixos na instanciação
-	atkEvent.age = 0                                  -- tempo desde a criação do ataque
-	atkEvent.active = true                            -- se o ataque atualmente pode dar dano
-	atkEvent.targetsDamaged = {}                      -- lista de alvos feridos pelo ataque
+	atkEvent.onHit = attackState.onHit -- função executada ao acertar um alvo
+	atkEvent.target = attacker.target -- alvo do ataque
+	-- atributos fixos na instanciação
+	atkEvent.age = 0 -- tempo desde a criação do ataque
+	atkEvent.active = true -- se o ataque atualmente pode dar dano
+	atkEvent.targetsDamaged = {} -- lista de alvos feridos pelo ataque
 
 	-- adicionando à respectiva lista de hitboxes
 	if attacker.type == PLAYER then
@@ -125,9 +178,12 @@ function AttackEvent.new(attackState, attacker, origin, direction)
 		collisionManager.enemyAttacks[atkEvent] = atkEvent.hb
 	end
 
+	---@cast atkEvent AtkEvent
 	return atkEvent
 end
 
+---@param dt number
+-- atualiza o estado interno de um evento de ataque (`AttackEvent`)
 function AttackEvent:baseUpdate(dt)
 	self.age = self.age + dt
 
@@ -148,6 +204,9 @@ end
 -- Funções de AttackEvents
 ----------------------------------------
 
+---@param settings AnimSettings
+-- adiciona as animações à lista `AttackEvents.animations` de acordo
+-- com as `settings` fornecidas como argumento
 function AttackEvent:addAnimation(settings)
 	local path = pngPathFormat({ "assets", "animations", "attacks", self.name, "sheet" })
 	local animation = newAnimation(
@@ -164,6 +223,8 @@ function AttackEvent:addAnimation(settings)
 	self.spriteSheet:setFilter("nearest", "nearest")
 end
 
+---@param camera Camera
+-- desenha o evento de ataque no canvas atual segundo a perpectiva da `camera`
 function AttackEvent:draw(camera)
 	local viewPos = camera:viewPos(self.pos)
 	local animation = self.animation
@@ -187,6 +248,10 @@ end
 --- Funções de Trajetória
 -----------------------------------------
 
+---@param self AtkEvent
+---@param dt number
+---@return Vec
+-- trajetória quadrática de ataque
 function QuadraticTrajectory(self, dt)
 	if not self.target then
 		return self.vel
@@ -210,6 +275,10 @@ function QuadraticTrajectory(self, dt)
 	return scaleVec(newDir, self.speed)
 end
 
+---@param self AtkEvent
+---@param dt number
+---@return Vec
+-- trajetória de ataque teleguiado ao alvo
 function HomingTrajectory(self, dt)
 	if not self.target then
 		return self.vel
@@ -229,6 +298,10 @@ function HomingTrajectory(self, dt)
 	return scaleVec(newDir, self.speed)
 end
 
+---@param self AtkEvent
+---@param dt number
+---@return Vec
+-- trajetória de ataque teleguiado ao alvo
 function ZigZagTrajectory(self, dt)
 	local ampDeg = math.rad(60)
 	local angle = sign(math.sin(self.age * 10)) * ampDeg
@@ -239,6 +312,10 @@ function ZigZagTrajectory(self, dt)
 	return scaleVec(newDir, self.speed)
 end
 
+---@param self AtkEvent
+---@param dt number
+---@return Vec
+-- trajetória de ataque teleguiado ao alvo
 function SineTrajectory(self, dt)
 	local ampDeg = math.rad(60)
 	local newAngle = self.direction + math.sin(self.age * 5) * ampDeg -- amplitude e frequência

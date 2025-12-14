@@ -4,6 +4,9 @@ require("modules.engine.camera")
 ----------------------------------------
 -- Funções Globais
 ----------------------------------------
+
+---@param camera Camera
+-- renderiza as salas na perspectiva da `camera`
 function renderRooms(camera)
 	for i = rooms.minIndex, rooms.maxIndex do
 		for j = rooms[i].minIndex, rooms[i].maxIndex do
@@ -26,6 +29,9 @@ end
 ----------------------------------------
 -- Funções de Renderização Global
 ----------------------------------------
+
+---@param camera Camera
+-- renderiza as demais entidades (além das salas) na perspecitiva da `camera`
 function renderEntities(camera)
 	local drawList = {}
 

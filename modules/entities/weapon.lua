@@ -9,29 +9,51 @@ require("modules.utils.types")
 ----------------------------------------
 -- Classe Weapon
 ----------------------------------------
+
+---@class Weapon
+---@field name string
+---@field ammo number
+---@field cooldown number
+---@field atk Attack
+---@field canShoot boolean
+---@field timer number
+---@field target any
+---@field rotation rad
+---@field state string
+---@field spriteSheets table<string, table>
+---@field animations table<string, Animation>
+
 Weapon = {}
 Weapon.__index = Weapon
 Weapon.type = WEAPON
 
+---@param name string
+---@param ammo number
+---@param cooldown number
+---@param attack Attack
+---@return Weapon
+-- cria uma instância de `Weapon`
 function Weapon.new(name, ammo, cooldown, attack)
 	local weapon = setmetatable({}, Weapon)
 
 	-- atributos que variam
-	weapon.name = name      -- nome do tipo de arma
-	weapon.ammo = ammo      -- número de munições
+	weapon.name = name -- nome do tipo de arma
+	weapon.ammo = ammo -- número de munições
 	weapon.cooldown = cooldown -- tempo de espera entre ataques consecutivos
-	weapon.atk = attack     -- instância de Attack associada à arma
+	weapon.atk = attack -- instância de Attack associada à arma
 	-- atributos fixos na instanciação
 	weapon.canShoot = false
-	weapon.timer = 0      -- timer do cooldown
-	weapon.target = nil   -- inimigo para o qual a arma está mirando
-	weapon.rotation = 0   -- rotação da arma em radianos
-	weapon.state = IDLE   -- estado atual da arma
+	weapon.timer = 0 -- timer do cooldown
+	weapon.target = nil -- inimigo para o qual a arma está mirando
+	weapon.rotation = 0 -- rotação da arma em radianos
+	weapon.state = IDLE -- estado atual da arma
 	weapon.spriteSheets = {} -- no tipo imagem do love
 	weapon.animations = {} -- as chaves são estados e os valores são Animações
 	return weapon
 end
 
+---@param dirVec Vec
+-- atualiza a orientação (ângulo em radianos) de `Weapon`
 function Weapon:updateOrientation(dirVec)
 	if dirVec.x == 0 and dirVec.y == 0 then
 		self.rotation = -math.pi * 0.5
@@ -40,6 +62,9 @@ function Weapon:updateOrientation(dirVec)
 	end
 end
 
+---@param idleSettings AnimSettings
+---@param weaponAtkSettings AnimSettings
+-- inicializa as animações de `Weapon` e as associa com seus respectivos estados
 function Weapon:addAnimations(idleSettings, weaponAtkSettings)
 	-- animação idle
 	local path = pngPathFormat({ "assets", "animations", "weapons", self.name, IDLE })
@@ -49,6 +74,8 @@ function Weapon:addAnimations(idleSettings, weaponAtkSettings)
 	addAnimation(self, path, ATTACKING, weaponAtkSettings)
 end
 
+---@param dt number
+-- atualiza o estado, o cooldown e o ataque da arma
 function Weapon:update(dt)
 	-- atualizando o cooldown
 	if self.canShoot == false then
@@ -67,6 +94,9 @@ end
 ----------------------------------------
 -- Funções de Renderização
 ----------------------------------------
+
+---@param camera Camera
+-- renderiza a arma na perspectiva da `camera`
 function Weapon:draw(camera)
 	-- Não renderiza armas de jogadores se defendendo
 	if self.owner.state == DEFENDING then

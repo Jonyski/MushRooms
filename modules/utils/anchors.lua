@@ -4,7 +4,7 @@
 require("modules.utils.utils")
 
 ---@class Anchor
----@field y number
+---@field floor? number
 
 ----------------------------------------
 -- Funções locais
@@ -56,8 +56,8 @@ ANCHORS = {
 ---@param obj any
 ---@param anchorType anchorType
 ---@param scale number?
----@return Anchor | 0
--- retorna a âncora do tipo `anchorType` associada ao objeto
+---@return number
+-- retorna o valor da âncora do tipo `anchorType` associada ao objeto
 -- `obj` em uma determinada escala
 function getAnchor(obj, anchorType, scale)
 	scale = scale or 3

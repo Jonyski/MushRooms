@@ -5,7 +5,8 @@ CIRCLE = "circle"
 RECTANGLE = "rectangle"
 LINE = "line"
 
----@alias Shape `Circle` | `Rectangle` | `Line`
+---@class Shape
+---@field shape string
 
 ---@class Size
 ---@field width number
@@ -15,8 +16,9 @@ LINE = "line"
 -- Classe Circle
 ----------------------------------------
 
----@class Circle Um círculo representado pelo raio
+---@class Circle: Shape Um círculo representado pelo raio
 ---@field radius number
+---@field shape string
 Circle = {}
 Circle.__index = Circle
 Circle.shape = CIRCLE
@@ -34,11 +36,12 @@ end
 -- Classe Rectangle
 ----------------------------------------
 
----@class Rectangle Um retângulo representado por sua altura e largura
+---@class Rectangle: Shape Um retângulo representado por sua altura e largura
 ---@field width number
 ---@field height number
 ---@field halfW number
 ---@field halfH number
+---@field shape string
 Rectangle = {}
 Rectangle.__index = Rectangle
 Rectangle.shape = RECTANGLE
@@ -60,9 +63,10 @@ end
 -- Classe Line
 ----------------------------------------
 
----@class Line Uma linha representada em coordenadas polares
+---@class Line: Shape Uma linha representada em coordenadas polares
 ---@field angle rad
 ---@field length number
+---@field shape string
 Line = {}
 Line.__index = Line
 Line.shape = LINE

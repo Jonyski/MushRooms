@@ -16,16 +16,45 @@ require("table")
 ----------------------------------------
 -- Variáveis e Enums
 ----------------------------------------
+
 players = {}
 
 ----------------------------------------
 -- Classe Player
 ----------------------------------------
+
+---@class Player
+---@field id number
+---@field name string
+---@field hp number
+---@field pos Vec
+---@field controls table<string, string>
+---@field colors Color[]
+---@field room Room
+---@field speed number
+---@field size Size
+---@field movementVec Vec
+---@field state string
+---@field spriteSheets table<string, table>
+---@field animations table<string, Animation>
+---@field particles table<string, ParticleSystem>
+---@field weapons table[]
+---@field weapon table
+---@field hb Hitbox
+---@field invulnerableTimer number
+---@field blinkTimer number
+
 Player = {}
 Player.__index = Player
 Player.type = PLAYER
 
--- Construtor
+---@param name string
+---@param spawn_pos Vec
+---@param controls table<string, string>
+---@param colors Color[]
+---@param room Room
+---@return Player
+-- cria uma instância de `Player` e o adiciona à lista global de `players`
 function Player.new(name, spawn_pos, controls, colors, room)
 	local player = setmetatable({}, Player)
 
@@ -55,6 +84,10 @@ function Player.new(name, spawn_pos, controls, colors, room)
 	return player
 end
 
+---@param idleSettings AnimSettings
+---@param defSettings AnimSettings
+---@param WalkSettings AnimSettings
+-- adiciona animações à tabela do `Player`, associando-as aos seus estados respectivos
 function Player:addAnimations(idleSettings, defSettings, WalkSettings)
 	----------------- IDLE -----------------
 	local path = pngPathFormat({ "assets", "animations", "players", self.name, IDLE })
@@ -76,6 +109,8 @@ function Player:addAnimations(idleSettings, defSettings, WalkSettings)
 	addAnimation(self, path, WALKING_RIGHT, WalkSettings)
 end
 
+-- adiciona os efeitos de partícula à tabela do `Player`,
+-- associando-os aos seus estados respectivos
 function Player:addParticles()
 	-- Efeito de partícula do player se defendendo
 	self.particles[DEFENDING] = newDefenseParticles(self.colors[1], self.colors[3])
@@ -87,6 +122,8 @@ function Player:addParticles()
 	self.particles[WALKING_RIGHT] = walkingParticles
 end
 
+---@param dt number
+-- atualiza o estado do `Player` de suas animações e efeitos de partícula
 function Player:update(dt)
 	self:move(dt)
 	self.animations[self.state]:update(dt)
@@ -105,11 +142,15 @@ function Player:update(dt)
 	self:updateParticles(dt)
 end
 
+---@param pos Vec
+-- redefine a posição do `Player` e de sua hitbox
 function Player:setPos(pos)
 	self.pos = pos
 	self.hb.pos = pos
 end
 
+---@param dt number
+-- movimenta o `Player` de acordo com o input do jogador
 function Player:move(dt)
 	self.movementVec = vec(0, 0)
 
@@ -153,6 +194,7 @@ function Player:move(dt)
 	self:updateRoom()
 end
 
+-- redefine a sala atual onde o `Player` se encontra
 function Player:updateRoom()
 	local roomX = self.room.pos.x
 	local roomY = self.room.pos.y
@@ -185,6 +227,7 @@ function Player:updateRoom()
 	end
 end
 
+-- atualiza o estado do `Player`
 function Player:updateState()
 	local prevState = self.state
 	local isMoving = not nullVec(self.movementVec)
@@ -227,23 +270,32 @@ function Player:updateState()
 	end
 end
 
+---@param dt number
+-- atualiza os efeitos de partícula do `Player`
 function Player:updateParticles(dt)
 	self.particles[DEFENDING]:update(dt)
 	-- atualiza as partículas de caminhada como um todo
 	self.particles[WALKING_UP]:update(dt)
 end
 
+-- atualiza as posições dos efeitos de partícula do `Player`
 function Player:updateParticlesPos()
 	self.particles[DEFENDING]:setPosition(self.pos.x, self.pos.y)
 	self.particles[WALKING_UP]:setPosition(self.pos.x, self.pos.y + 24)
 end
 
+---@param key string
+-- verifica se o `Player` está pressionando a tecla de ação 1,
+-- caso positivo, chama a função de ataque dele
 function Player:checkAction1(key)
 	if key == self.controls.act1 then
 		self:attack()
 	end
 end
 
+---@param key string
+-- verifica se o `Player` está pressionando a tecla de ação 2
+-- caso positivo, executa a ação correta dependendo do contexto
 function Player:checkAction2(key)
 	if key == self.controls.act2 and self.movementVec.x ~= 0 then
 		local len = #self.weapons
@@ -263,6 +315,9 @@ function Player:checkAction2(key)
 	end
 end
 
+---@param weapon any
+---@return boolean
+-- adiciona uma arma ao arsenal do `Player` caso ele não a tenha
 function Player:collectWeapon(weapon)
 	-- previne de pegar a mesma arma novamente
 	if self:hasWeapon(weapon.name) then
@@ -273,6 +328,8 @@ function Player:collectWeapon(weapon)
 	return true
 end
 
+---@param weaponName string
+-- equipa uma arma com nome `weaponName` caso o `Player` a tenha
 function Player:equipWeapon(weaponName)
 	for _, w in pairs(self.weapons) do
 		if w.name == weaponName then
@@ -281,6 +338,9 @@ function Player:equipWeapon(weaponName)
 	end
 end
 
+---@param weaponName string
+---@return boolean
+-- verifica se o `Player` possui uma arma com nome `weaponName`
 function Player:hasWeapon(weaponName)
 	for _, w in pairs(self.weapons) do
 		if w.name == weaponName then
@@ -290,6 +350,7 @@ function Player:hasWeapon(weaponName)
 	return false
 end
 
+-- executa o ataque da arma equipada caso possível
 function Player:attack()
 	if self.weapon and self.weapon.canShoot then
 		self.weapon.atk:attack(self, self.pos, self.weapon.rotation)
@@ -298,11 +359,15 @@ function Player:attack()
 	end
 end
 
+---@return boolean
+-- coleta uma moeda; função não séria
 function Player:collectCoin()
 	print("moedinhaaa")
 	return true
 end
 
+---@param item Item
+-- coleta um item e o marca como coletado
 function Player:collectItem(item)
 	local result = false
 	if item.object.type == WEAPON then
@@ -318,6 +383,9 @@ function Player:collectItem(item)
 	end
 end
 
+---@param item Item
+-- verifica se condições-chave para a coleta de um item
+-- são verdadeiras, caso positivo, coleta o item
 function Player:tryCollectItem(item)
 	if not item.canPick then
 		return
@@ -331,6 +399,8 @@ function Player:tryCollectItem(item)
 	end
 end
 
+---@param camera Camera
+-- renderiza o `Player` na perspectiva da `camera`
 function Player:draw(camera)
 	-- desenhando o efeito de partículas de caminhada atrás do player
 	local particles_offset = {
@@ -359,6 +429,10 @@ end
 ----------------------------------------
 -- Funções Globais
 ----------------------------------------
+
+---@return boolean?
+-- inicializa o próximo jogador, caso os 4 jogadores
+-- já tenham sido inicializados, retorna `false`
 function newPlayer()
 	-- limite de jogadores alcançado
 	if #players >= 4 then

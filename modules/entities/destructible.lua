@@ -13,10 +13,30 @@ require("table")
 ----------------------------------------
 -- Classe Destructible
 ----------------------------------------
+
+---@class Destructible
+---@field name string
+---@field pos Vec
+---@field room Room
+---@field state string
+---@field health number
+---@field spriteSheets table<string, table>
+---@field animations table<string, Animation>
+---@field loot Loot
+---@field hb Hitbox
+---@field addAnimations fun(self: Destructible, intactSettings: AnimSettings, breakingSettings: AnimSettings, brokenSettings: AnimSettings)
+
 Destructible = {}
 Destructible.__index = Destructible
 Destructible.type = DESTRUCTIBLE
 
+---@param name string
+---@param pos Vec
+---@param room Room
+---@param loot Loot
+---@param hitbox Hitbox
+---@return Destructible
+-- cria um objeto destrutível contendo um certo `loot`
 function Destructible.new(name, pos, room, loot, hitbox)
 	local obj = setmetatable({}, Destructible)
 
@@ -28,7 +48,7 @@ function Destructible.new(name, pos, room, loot, hitbox)
 	obj.spriteSheets = {}
 	obj.animations = {}
 	obj.loot = loot or LOOT_TABLE[name] or Loot.new() -- pode ser sobrescrito na criação
-	obj.hb = hitbox                                -- hitbox do destrutível
+	obj.hb = hitbox -- hitbox do destrutível
 
 	return obj
 end
@@ -36,6 +56,11 @@ end
 ----------------------------------------
 -- Animações
 ----------------------------------------
+
+---@param intactSettings AnimSettings
+---@param breakingSettings AnimSettings
+---@param brokenSettings AnimSettings
+-- aplica as animações dos estados `INTACT`, `BREAKING` e `BROKEN` ao `Destructible`
 function Destructible:addAnimations(intactSettings, breakingSettings, brokenSettings)
 	---------------- INTACT ----------------
 	local path = pngPathFormat({ "assets", "animations", "destructibles", self.name, INTACT })
@@ -48,18 +73,12 @@ function Destructible:addAnimations(intactSettings, breakingSettings, brokenSett
 	addAnimation(self, path, BROKEN, brokenSettings)
 end
 
-function Destructible:addAnimation(state, numFrames, frameDur, looping)
-	local path = pngPathFormat({ "assets", "animations", "destructibles", self.name, state })
-	local quadSize = { width = 64, height = 64 }
-	local animation = newAnimation(path, numFrames, quadSize, frameDur, looping, 1, quadSize)
-	self.animations[state] = animation
-	self.spriteSheets[state] = love.graphics.newImage(path)
-	self.spriteSheets[state]:setFilter("nearest", "nearest")
-end
-
 ----------------------------------------
 -- Lógica de dano e destruição
 ----------------------------------------
+
+---@param amount number
+-- causa dano ao `Destructible`. Caso sua vida chegue a 0, ele quebra
 function Destructible:damage(amount)
 	if self.state == BROKEN or self.state == BREAKING then
 		return
@@ -71,6 +90,7 @@ function Destructible:damage(amount)
 	end
 end
 
+-- quebra o `Destructible`
 function Destructible:breakApart()
 	self.state = BREAKING
 	self:spawnLoot()
@@ -83,6 +103,8 @@ end
 ----------------------------------------
 -- Atualização
 ----------------------------------------
+
+-- atualiza a animação do `Destructible`
 function Destructible:update(dt)
 	self.animations[self.state]:update(dt)
 end
@@ -90,6 +112,9 @@ end
 ----------------------------------------
 -- Desenho
 ----------------------------------------
+
+---@param camera Camera
+-- função de renderização do `Destructible`
 function Destructible:draw(camera)
 	local viewPos = camera:viewPos(self.pos)
 	local anim = self.animations[self.state]
@@ -101,6 +126,8 @@ function Destructible:draw(camera)
 	love.graphics.draw(self.spriteSheets[self.state], quad, viewPos.x, viewPos.y, 0, 3, 3, offset.x, offset.y)
 end
 
+-- spawna todo o `loot` contido no `Destructible` de forma aleatória,
+-- seguindo as chances definidas no próprio `loot`
 function Destructible:spawnLoot()
 	local loot = self.loot
 	if not loot or loot.len == 0 then

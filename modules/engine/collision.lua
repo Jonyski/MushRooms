@@ -12,10 +12,23 @@ require("modules.utils.utils")
 ---@field shape Shape
 ---@field pos Vec
 
+---@alias CircleHitbox {pos: Vec, shape: Circle}
+---@alias RectHitbox {pos: Vec, shape: Rectangle}
+---@alias LineHitbox {pos: Vec, shape: Line}
+
+---@param shape Shape
+---@param pos Vec
+---@return Hitbox
+-- cria uma `Hitbox`, estrutura com forma e posição
 function hitbox(shape, pos)
 	return { shape = shape, pos = pos }
 end
 
+---@param hb Hitbox
+---@param pos? Vec
+---@return Hitbox
+-- retorna uma cópia de `hb` podendo ou não distinguir sua posição
+-- da hitbox original com o uso do parâmetro `pos`
 function copyHitbox(hb, pos)
 	local shape = copyShape(hb.shape)
 	return {
@@ -24,20 +37,26 @@ function copyHitbox(hb, pos)
 	}
 end
 
+---@param shape Shape | Circle | Rectangle | Line
+---@return Shape
+-- retorna uma cópia do formato passado como argumento
 function copyShape(shape)
 	if shape.shape == CIRCLE then
 		return Circle.new(shape.radius)
 	elseif shape.shape == RECTANGLE then
 		return Rectangle.new(shape.width, shape.height)
-	elseif shape.shape == LINE then
+	else
 		return Line.new(shape.angle, shape.length)
 	end
-	return nil
 end
 
 ----------------------------------------
 -- Funções auxiliares para colisão
 ----------------------------------------
+
+---@param hb1 Hitbox
+---@param hb2 Hitbox
+---@return boolean
 -- recebe duas hitboxes, retorna true se elas se tocam
 function checkCollision(hb1, hb2)
 	if hb1.shape.shape == CIRCLE then
@@ -60,15 +79,19 @@ function checkCollision(hb1, hb2)
 		if hb2.shape.shape == CIRCLE then
 			return checkCircleLineCollision(hb2, hb1)
 		elseif hb2.shape.shape == RECTANGLE then
-			return checkRectLineCollision(hb2.hb1)
+			return checkRectLineCollision(hb2, hb1)
 		elseif hb2.shape.shape == LINE then
 			return checkLineLineCollision(hb1, hb2)
 		end
 	end
 
-	return nil
+	return false
 end
 
+---@param point Vec
+---@param line {pos: Vec, shape: Line} Hitbox em formato de linha
+---@return boolean
+-- verifica se a linha `line` contém o ponto `point`
 function pointOnLine(point, line)
 	local d1 = dist(point, line.pos)
 	local d2 = dist(point, polarToVec(line.shape.angle, line.shape.length) + line.pos)
@@ -79,6 +102,10 @@ function pointOnLine(point, line)
 	return false
 end
 
+---@param circle1 CircleHitbox
+---@param circle2 CircleHitbox
+---@return boolean
+-- checa se dois círculos estão colidindo
 function checkCircleCircleCollision(circle1, circle2)
 	return dist(circle1.pos, circle2.pos) <= circle1.shape.radius + circle2.shape.radius
 end
@@ -95,6 +122,10 @@ function checkCircleRectCollision(circle, rect)
 	return cornerDist <= circle.shape.radius ^ 2
 end
 
+---@param circle CircleHitbox
+---@param line LineHitbox
+---@return boolean
+-- checa se um círculo e uma linha estão colidindo
 function checkCircleLineCollision(circle, line)
 	local p1 = line.pos
 	local p2 = addVec(p1, polarToVec(line.shape.angle, line.shape.length))
@@ -116,6 +147,10 @@ function checkCircleLineCollision(circle, line)
 	return false
 end
 
+---@param rect1 RectHitbox
+---@param rect2 RectHitbox
+---@return boolean
+-- checa se dois retângulos estão colidindo
 function checkRectRectCollision(rect1, rect2)
 	if
 		rect1.pos.x + rect1.shape.width >= rect2.pos.x
@@ -128,6 +163,10 @@ function checkRectRectCollision(rect1, rect2)
 	return false
 end
 
+---@param rect RectHitbox
+---@param line LineHitbox
+---@return boolean
+-- checa se um retângulo e uma linha estão colidindo
 function checkRectLineCollision(rect, line)
 	local leftSide = hitbox(Line.new(math.pi * 3 / 2, rect.shape.height), rect.pos)
 	local upSide = hitbox(Line.new(0, rect.shape.width), rect.pos)
@@ -144,6 +183,10 @@ function checkRectLineCollision(rect, line)
 	return false
 end
 
+---@param line1 LineHitbox
+---@param line2 LineHitbox
+---@return boolean
+-- checa se duas linhas estão colidindo
 function checkLineLineCollision(line1, line2)
 	local p1 = line1.pos
 	local p2 = addVec(p1, polarToVec(line1.shape.angle, line1.shape.length))
@@ -185,6 +228,9 @@ function CollisionManager.init()
 	return cm
 end
 
+---@param room Room
+-- adiciona as hitboxes das entidades em `room` à respectiva
+-- lista do `CollisionManager`
 function CollisionManager:fetchHitboxesByRoom(room)
 	-- pegando hitboxes de inimigos
 	for _, enemy in pairs(room.enemies) do
@@ -200,6 +246,9 @@ function CollisionManager:fetchHitboxesByRoom(room)
 	end
 end
 
+---@param room Room
+-- remove as hitboxes das entidades em `room` das suas
+-- respectivas listas do `CollisionManager`
 function CollisionManager:clearHitboxesByRoom(room)
 	-- removendo hitboxes de inimigos
 	for _, enemy in pairs(room.enemies) do
@@ -227,7 +276,7 @@ function CollisionManager:updateHitboxLists()
 	-- atualizando nossa cópia das salas ativas
 	self.activeRoomsCopy:copy(activeRooms)
 	-- pegando as hitboxes de todas as salas ativas
-	for k, room in self.activeRoomsCopy:iter() do
+	for _, room in self.activeRoomsCopy:iter() do
 		self:fetchHitboxesByRoom(room)
 	end
 	-- eliminando hitboxes de ataques não mais ativos
@@ -244,6 +293,8 @@ function CollisionManager:updateHitboxLists()
 	end
 end
 
+-- verifica e trata todas as colisões entre entidades
+-- contidas nas listas do `CollisionManager`
 function CollisionManager:handleCollisions()
 	----------- PLAYER / ITEM -----------
 	for item, itemhb in pairs(self.items) do
@@ -304,7 +355,7 @@ function CollisionManager:handleCollisions()
 				end
 
 				player.invulnerableTimer = 1.0
-				attack:onHitFunc(player)
+				attack:onHit(player)
 				-- goto nextplayer
 			end
 			::nextattackplayer::

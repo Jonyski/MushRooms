@@ -10,39 +10,77 @@ require("table")
 ----------------------------------------
 -- Classe Enemy
 ----------------------------------------
+
+---@class Enemy
+---@field name string
+---@field hp number
+---@field pos Vec
+---@field speed number
+---@field move function
+---@field attack Attack | function
+---@field hb Hitbox
+---@field room Room
+---@field size Size
+---@field cooldownTable table<string, number>
+---@field movementDirections Vec[]
+---@field state string
+---@field spriteSheets table<string, table>
+---@field animations table<string, Animation>
+---@field target any
+---@field moveTargetPos Vec
+---@field moveOriginPos Vec
+---@field moveTimer number
+---@field moveDuration number
+---@field attackObj Attack
+---@field addAnimations function
+---@field setProjectileAtk function
+
 Enemy = {}
 Enemy.__index = Enemy
 Enemy.type = ENEMY
 
+---@param name string
+---@param hp number
+---@param spawnPos Vec
+---@param speed number
+---@param move function
+---@param attack Attack | function
+---@param hitbox Hitbox
+---@param room Room
+---@return Enemy
+-- cria uma instância de `Enemy`
 function Enemy.new(name, hp, spawnPos, speed, move, attack, hitbox, room)
 	local enemy = setmetatable({}, Enemy)
 
 	-- atributos que variam
-	enemy.name = name  -- nome do tipo de inimigo
-	enemy.hp = hp      -- pontos de vida do inimigo
+	enemy.name = name -- nome do tipo de inimigo
+	enemy.hp = hp -- pontos de vida do inimigo
 	enemy.pos = spawnPos -- posição do inimigo
 	enemy.speed = speed -- velocidade de movimento do inimigo
-	enemy.move = move  -- função de movimento do inimigo
+	enemy.move = move -- função de movimento do inimigo
 	enemy.attack = attack -- função de ataque do inimigo
-	enemy.hb = hitbox  -- hitbox do inimigo
-	enemy.room = room  -- sala do inimigo
+	enemy.hb = hitbox -- hitbox do inimigo
+	enemy.room = room -- sala do inimigo
 	-- atributos fixos na instanciação
 	enemy.size = { height = 32, width = 32 }
-	enemy.cooldownTable = {}     -- tabela para cooldowns múltiplos, caso necessário
+	enemy.cooldownTable = {} -- tabela para cooldowns múltiplos, caso necessário
 	enemy.movementDirections = {} -- tabela com as direções de movimento atualmente ativas
-	enemy.state = IDLE           -- define o estado atual do inimigo, estreitamente relacionado às animações
-	enemy.spriteSheets = {}      -- no tipo imagem do love
-	enemy.animations = {}        -- as chaves são estados e os valores são Animações
-	enemy.target = nil           -- alvo atual do inimigo
+	enemy.state = IDLE -- define o estado atual do inimigo, estreitamente relacionado às animações
+	enemy.spriteSheets = {} -- no tipo imagem do love
+	enemy.animations = {} -- as chaves são estados e os valores são Animações
+	enemy.target = nil -- alvo atual do inimigo
 	enemy.moveTargetPos = vec(0, 0) -- posição alvo para movimentação randômica
 	enemy.moveOriginPos = vec(0, 0) -- posição inicial para movimentação com easing
-	enemy.moveTimer = 0          -- timer para movimentação com easing
-	enemy.moveDuration = 0       -- duração da movimentação com easing
-	enemy.attackObj = nil        -- objeto Attack associado ao inimigo (caso possua)
+	enemy.moveTimer = 0 -- timer para movimentação com easing
+	enemy.moveDuration = 0 -- duração da movimentação com easing
+	enemy.attackObj = nil -- objeto Attack associado ao inimigo (caso possua)
 
 	return enemy
 end
 
+---@param idleSettings AnimSettings
+---@param dyingSettings AnimSettings
+-- adiciona as animações dos estados dos inimigos à sua tabela de animações
 function Enemy:addAnimations(idleSettings, dyingSettings)
 	----------------- IDLE -----------------
 	local path = pngPathFormat({ "assets", "animations", "enemies", self.name, IDLE })
@@ -54,6 +92,9 @@ function Enemy:addAnimations(idleSettings, dyingSettings)
 	-- TODO: adicionar o resto das animações
 end
 
+---@param damage number
+-- reduz a vida do `Enemy` em `damage` pontos. Caso a vida
+-- chegue abaixo de 0, mata o inimigo
 function Enemy:takeDamage(damage)
 	if self.state == DYING then
 		return
@@ -65,6 +106,7 @@ function Enemy:takeDamage(damage)
 	end
 end
 
+-- inicia o processo de morte do inimigo
 function Enemy:die()
 	self.state = DYING
 	local anim = self.animations[DYING]
@@ -74,6 +116,8 @@ function Enemy:die()
 	end
 end
 
+---@param dt number
+-- atualiza os estados do inimigo e seus ataques, além de movê-lo
 function Enemy:update(dt)
 	self:reduceCooldowns(dt)
 	self:defineTarget()
@@ -88,6 +132,8 @@ function Enemy:update(dt)
 	self.animations[self.state]:update(dt)
 end
 
+---@param pos Vec
+-- atualiza a posição do inimigo e sua hitbox
 function Enemy:setPos(pos)
 	self.pos = pos
 	self.hb.pos = pos
@@ -97,10 +143,13 @@ end
 -- Funções de Estado
 ----------------------------------------
 
+-- define o alvo atual do `Enemy`
 function Enemy:defineTarget()
 	self.target = self:getClosestPlayer()
 end
 
+---@return any
+-- encontra o jogador mais próximo ao `Enemy`
 function Enemy:getClosestPlayer()
 	local closestDist = math.huge
 	local closestPlayer = nil
@@ -115,6 +164,8 @@ function Enemy:getClosestPlayer()
 	return closestPlayer
 end
 
+---@param dt number
+-- reduz os cooldowns dos ataques do `Enemy`
 function Enemy:reduceCooldowns(dt)
 	for key, value in pairs(self.cooldownTable) do
 		if value > 0 then
@@ -123,6 +174,9 @@ function Enemy:reduceCooldowns(dt)
 	end
 end
 
+---@param cooldownName string
+---@return boolean
+-- checa se o cooldown com nome `cooldownName` está ativo ou já chegou a 0
 function Enemy:isCooldownActive(cooldownName)
 	if self.cooldownTable[cooldownName] and self.cooldownTable[cooldownName] > 0 then
 		return true
@@ -130,6 +184,9 @@ function Enemy:isCooldownActive(cooldownName)
 	return false
 end
 
+---@param cooldownName string
+---@param value number
+-- cria ou atualiza um cooldown com nome `cooldownName` para ter o valor `value`
 function Enemy:setCooldown(cooldownName, value)
 	self.cooldownTable[cooldownName] = value
 end
@@ -138,6 +195,8 @@ end
 -- Funções de Movimento
 ----------------------------------------
 
+---@param pos Vec
+---@param dt number
 -- se move na direção de um ponto específico
 function Enemy:moveTowards(pos, dt)
 	if self.easingFunc and self.moveOriginPos and self.moveDuration and self.moveTimer then
@@ -157,7 +216,8 @@ function Enemy:moveTowards(pos, dt)
 	self.movementDirections["moveTowards"] = scaleVec(direction, self.speed * dt)
 end
 
--- se move na direção contrário do target
+---@param dt number
+-- se move na direção contrária do alvo (`Enemy.target`)
 function Enemy:avoidTarget(dt)
 	if self.target == nil or self:isCooldownActive("avoidTarget") then
 		return
@@ -194,7 +254,8 @@ function Enemy:avoidTarget(dt)
 	end
 end
 
--- se move na direção de um target
+---@param dt number
+-- se move constantemente na direção do alvo (`Enemy.target`)
 function Enemy:moveFollowTarget(dt)
 	if self.target == nil then
 		return
@@ -207,6 +268,8 @@ function Enemy:moveFollowTarget(dt)
 	end
 end
 
+---@param dt number
+-- se move em "pulos" na direção do alvo (`Enemy.target`)
 function Enemy:moveTargetDirection(dt)
 	if self.target == nil or self:isCooldownActive("moveTargetDirection") then
 		return
@@ -257,6 +320,9 @@ end
 ----------------------------------------
 -- Funções de Ataque
 ----------------------------------------
+
+---@param dt? number
+-- ataque que ainda não faz nada
 function Enemy:simpleAttack(dt)
 	if self:isCooldownActive("simpleAttack") then
 		return
@@ -270,6 +336,8 @@ function Enemy:simpleAttack(dt)
 	end
 end
 
+---@param dt? number
+-- ataque de projétil
 function Enemy:shootAttack(dt)
 	if self.target == nil or self:isCooldownActive("shootAttack") then
 		return
@@ -281,6 +349,8 @@ function Enemy:shootAttack(dt)
 	self.attackObj:attack(self, self.pos, dir)
 end
 
+-- define o ataque de `Enemy` como sendo um ataque de projétil
+-- com trajetória senoidal
 function Enemy:setProjectileAtk()
 	local updateFunc = function(dt, atkEvent)
 		atkEvent:baseUpdate(dt)
@@ -305,6 +375,9 @@ end
 ----------------------------------------
 -- Funções de Renderização
 ----------------------------------------
+
+---@param camera Camera
+-- função de renderização de `Enemy`
 function Enemy:draw(camera)
 	local viewPos = camera:viewPos(self.pos)
 	local animation = self.animations[self.state]

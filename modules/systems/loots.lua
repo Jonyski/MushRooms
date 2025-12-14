@@ -4,6 +4,7 @@
 
 ---@class Loot
 ---@field len number
+---@field insert function
 
 Loot = {}
 Loot.__index = Loot

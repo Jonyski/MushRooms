@@ -132,7 +132,7 @@ function randRoomType()
 end
 
 ---@param roomType any
----@return Blueprint?
+---@return Blueprint
 -- retorna um `Blueprint` de uma sala aleatória do tipo `roomType`
 function randRoomBlueprint(roomType)
 	if roomType == PUZZLE_ROOM then
@@ -145,7 +145,7 @@ function randRoomBlueprint(roomType)
 		return randBattleRoomBP()
 	elseif roomType == BOSS_ROOM then
 		return randBossRoomBP()
-	elseif roomType == EVENT_ROOM then
+	else
 		return randEventRoomBP()
 	end
 end

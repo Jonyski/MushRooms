@@ -14,6 +14,22 @@ cameras = {}
 ----------------------------------------
 
 ---@class Camera
+---@field playerAttached Player
+---@field viewport Size
+---@field canvas table
+---@field canvasPos Vec
+---@field cx number
+---@field cy number
+---@field targetPos Vec
+---@field transitionSpeed number
+---@field shakeOffset Vec
+---@field shakeIntensity number
+---@field shakeDuration number
+---@field shakeTimer number
+---@field startingZoom number
+---@field zoom number
+---@field targetZoom number
+---@field zoomSpeed number
 ---@field viewPos function
 
 Camera = {}
@@ -23,7 +39,7 @@ Camera.__index = Camera
 ---@param viewport Size
 ---@param canvas table
 ---@param canvasPos Vec
----@param player any
+---@param player Player
 ---@return Camera
 -- cria uma câmera atrelada a um jogador e um canvas
 function Camera.new(pos, viewport, canvas, canvasPos, player)
@@ -51,6 +67,8 @@ function Camera.new(pos, viewport, canvas, canvasPos, player)
 	return camera
 end
 
+---@param dt number
+-- atualiza a posição da câmera com certa suavização ao seguir o alvo
 function Camera:updatePosition(dt)
 	-- suaviza o zoom atual
 	self.zoom = lerp(self.zoom, self.targetZoom, dt * self.zoomSpeed)
@@ -94,12 +112,17 @@ function Camera:updatePosition(dt)
 	self.cy = lerp(self.cy, self.targetPos.y, dt * self.transitionSpeed) + self.shakeOffset.y
 end
 
+---@param intensity number
+---@param duration number
+-- causa um tremor na câmera com certa intensidade e duração
 function Camera:shake(intensity, duration)
 	self.shakeIntensity = intensity or 10
 	self.shakeDuration = duration or 0.3
 	self.shakeTimer = self.shakeDuration
 end
 
+---@param dt number
+-- atualiza o estado do tremor da câmera
 function Camera:updateShake(dt)
 	-- atualiza shake se estiver ativo
 	if self.shakeTimer > 0 then
@@ -118,6 +141,23 @@ function Camera:updateShake(dt)
 	end
 end
 
+-- calcula o zoom atual da câmera
+function Camera:calculateZoom()
+	if not self.playerAttached then
+		return 1
+	end
+
+	local roomDim = self.playerAttached.room.stdDim
+	local rawZoom = self.viewport.width / window.width
+	local rightZoom = remap(rawZoom, (1 / 3), 1, 0.7, 1.0)
+
+	return clamp(rightZoom, self.viewport.width / roomDim.width, 2)
+end
+
+---@param entityPos Vec
+---@return Vec
+-- retorna a posição da entidade dada pelo parâmetro `entityPos`
+-- no frame de referência relativo à posição da câmera
 function Camera:viewPos(entityPos)
 	return {
 		x = entityPos.x - self.cx + self.viewport.width / 2,
@@ -128,6 +168,9 @@ end
 ----------------------------------------
 -- Função de Renderização
 ----------------------------------------
+
+-- renderiza o conteúdo visto pela câmera no `canvas`
+-- associado à ela
 function Camera:draw()
 	love.graphics.setCanvas(self.canvas)
 	love.graphics.clear(0.0, 0.0, 0.0, 1.0)
@@ -147,22 +190,12 @@ function Camera:draw()
 	love.graphics.draw(self.canvas, self.canvasPos.x, self.canvasPos.y)
 end
 
-function Camera:calculateZoom()
-	if not self.playerAttached then
-		return 1
-	end
-
-	local roomDim = self.playerAttached.room.stdDim
-	local rawZoom = self.viewport.width / window.width
-	local rightZoom = remap(rawZoom, (1 / 3), 1, 0.7, 1.0)
-
-	return clamp(rightZoom, self.viewport.width / roomDim.width, 2)
-end
-
 ----------------------------------------
 -- Funções Globais
 ----------------------------------------
 
+---@param player Player
+-- cria uma câmera atrelada ao `player` passado como argumento
 function newCamera(player)
 	-- limite de cameras alcançado
 	if #cameras >= 4 then

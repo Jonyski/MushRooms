@@ -4,6 +4,7 @@
 ---@alias Type string
 PLAYER = "player"
 ENEMY = "enemy"
+NPC = "npc"
 ROOM = "room"
 WEAPON = "weapon"
 ITEM = "item"
@@ -35,6 +36,9 @@ end
 --------------- INIMIGOS ---------------
 SPIDER_DUCK = registerEntity(ENEMY, "Spider Duck")
 NUCLEAR_CAT = registerEntity(ENEMY, "Nuclear Cat")
+
+----------------- NPCs -----------------
+GLOB = registerEntity(NPC, "Glob")
 
 ---------------- ARMAS -----------------
 KATANA = registerEntity(WEAPON, "Katana")

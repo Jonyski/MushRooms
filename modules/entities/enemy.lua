@@ -20,7 +20,6 @@ require("table")
 ---@field attack Attack | function
 ---@field hb Hitbox
 ---@field room Room
----@field size Size
 ---@field cooldownTable table<string, number>
 ---@field movementDirections Vec[]
 ---@field state string
@@ -62,7 +61,6 @@ function Enemy.new(name, hp, spawnPos, speed, move, attack, hitbox, room)
 	enemy.hb = hitbox -- hitbox do inimigo
 	enemy.room = room -- sala do inimigo
 	-- atributos fixos na instanciação
-	enemy.size = { height = 32, width = 32 }
 	enemy.cooldownTable = {} -- tabela para cooldowns múltiplos, caso necessário
 	enemy.movementDirections = {} -- tabela com as direções de movimento atualmente ativas
 	enemy.state = IDLE -- define o estado atual do inimigo, estreitamente relacionado às animações

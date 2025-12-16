@@ -5,6 +5,7 @@ require("modules.utils.types")
 require("modules.entities.constructors.enemy")
 require("modules.entities.constructors.player")
 require("modules.entities.constructors.destructible")
+require("modules.entities.constructors.npc")
 
 ----------------------------------------
 -- Mapa de construtores
@@ -27,6 +28,10 @@ CONSTRUCTORS[PLAYER] = {
 CONSTRUCTORS[ENEMY] = {
 	[SPIDER_DUCK.name] = newSpiderDuck,
 	[NUCLEAR_CAT.name] = newNuclearCat,
+}
+
+CONSTRUCTORS[NPC] = {
+	[GLOB.name] = initGlob,
 }
 
 CONSTRUCTORS[DESTRUCTIBLE] = {

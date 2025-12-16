@@ -69,6 +69,15 @@ function renderEntities(camera)
 				end
 			end
 		end
+		-- Adiciona NPCs
+		for _, npc in pairs(r.npcs) do
+			table.insert(drawList, {
+				y = npc.pos.y + getAnchor(npc, FLOOR),
+				draw = function()
+					npc:draw(camera)
+				end,
+			})
+		end
 	end
 
 	-- Adiciona jogadores e suas possíveis armas

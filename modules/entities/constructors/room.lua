@@ -8,15 +8,10 @@ end
 -- Sala de NPC 1: contém barrís e jarros
 function newNPCRoom1()
 	local bp = Blueprint.new(NPC_ROOM, "Test NPC Room", rgba8(120, 58, 242, 255))
-	local sp1 = SpawnPoint.new(vec(100, 0))
-	local sp2 = SpawnPoint.new(vec(200, 0))
-	local sp3 = SpawnPoint.new(vec(300, 0))
-	local barrelData = SpawnData.new(BARREL, 0.5)
-	local jarData = SpawnData.new(JAR, 0.8)
-	sp1:insert(barrelData):insert(jarData)
-	sp2:insert(barrelData):insert(jarData)
-	sp3:insert(barrelData):insert(jarData)
-	bp:insert(sp1):insert(sp2):insert(sp3)
+	local sp1 = SpawnPoint.new(vec(250, 0))
+	local globData = SpawnData.new(GLOB, 1.0)
+	sp1:insert(globData)
+	bp:insert(sp1)
 	return bp
 end
 

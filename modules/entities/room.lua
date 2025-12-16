@@ -47,6 +47,7 @@ EVENT_ROOM = "event room"
 ---@field destructibles Destructible[]
 ---@field items Item[]
 ---@field enemies Enemy[]
+---@field npcs Npc[]
 ---@field playersInRoom Set
 ---@field populate function
 
@@ -77,6 +78,7 @@ function Room.new(pos, dimensions, roomLimits, blueprint, sprites)
 	room.destructibles = {} -- lista de objetos destrutíveis da sala
 	room.items = {} -- lista de itens dropados na sala
 	room.enemies = {} -- lista de inimigos na sala
+	room.npcs = {} -- lista de NPCs na sala
 	room.playersInRoom = Set.new() -- lista de jogadores na sala
 
 	return room
@@ -96,6 +98,10 @@ function Room:update(dt)
 	-- atualiza inimigos
 	for _, e in pairs(self.enemies) do
 		e:update(dt)
+	end
+	-- atualiza NPCs
+	for _, npc in pairs(self.npcs) do
+		npc:update(dt)
 	end
 end
 
@@ -167,12 +173,15 @@ end
 ---@param pos Vec
 -- instancia uma entidade e a insere na lista correspondente da sala
 function Room:spawn(entity, pos)
+	print("Tipo: " .. entity.type .. " Nome: " .. entity.name)
 	local constructor = CONSTRUCTORS[entity.type][entity.name]
 	local real_pos = addVec(pos, self.center)
 	if entity.type == ENEMY then
 		table.insert(self.enemies, constructor(real_pos, self))
 	elseif entity.type == DESTRUCTIBLE then
 		table.insert(self.destructibles, constructor(real_pos, self))
+	elseif entity.type == NPC then
+		table.insert(self.npcs, constructor(real_pos, self))
 	end
 end
 

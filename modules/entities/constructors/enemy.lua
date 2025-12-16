@@ -1,6 +1,6 @@
 ---@param spawnPos Vec
 ---@param room Room
----@return Destructible
+---@return Enemy
 -- cria um inimigo do tipo Gato Nuclear
 function newNuclearCat(spawnPos, room)
 	local movementFunc = Enemy.avoidTarget
@@ -17,7 +17,7 @@ end
 
 ---@param spawnPos Vec
 ---@param room Room
----@return Destructible
+---@return Enemy
 -- cria um inimigo do tipo Pato Aranha
 function newSpiderDuck(spawnPos, room)
 	local movementFunc = Enemy.moveTargetDirection

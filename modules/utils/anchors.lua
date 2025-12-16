@@ -47,6 +47,9 @@ ANCHORS = {
 	musho = floorAnchor(10),
 	roomy = floorAnchor(11),
 	shroom = floorAnchor(13),
+
+	-- NPCs
+	glob = floorAnchor(16),
 }
 
 ----------------------------------------

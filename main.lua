@@ -12,6 +12,8 @@ require("modules.entities.weapon")
 require("modules.entities.destructible")
 require("modules.entities.item")
 require("modules.engine.collision")
+require("modules.systems.dialogue.dialogue_manager")
+require("modules.systems.dialogue.dialogue_constructors")
 
 ----------------------------------------
 -- Variáveis Globais
@@ -27,6 +29,12 @@ function love.keypressed(key, scancode, isrepeat)
 	if key == "escape" then
 		love.event.quit()
 	end
+
+	-- se há diálogo ativo
+	if DialogueManager.current then
+		DialogueManager.keypressed(key)
+	end
+
 	-- n adiciona um player ao jogo
 	if key == "n" then
 		newPlayer()
@@ -46,6 +54,12 @@ function love.keypressed(key, scancode, isrepeat)
 
 	if key == "2" then
 		spawnItem(newSlingShot(), players[1].pos, players[1].room, false, getAnchor(players[1], FLOOR), vec(0, 0))
+	end
+
+	if key == "3" then
+		print("Iniciando diálogo de teste...")
+		local dialogue = npcTestDialogue("robert")
+		DialogueManager.start(dialogue)
 	end
 
 	if not isrepeat then
@@ -100,6 +114,7 @@ end
 -- Atualização
 ----------------------------------------
 function love.update(dt)
+	DialogueManager.update(dt)
 	---------- Jogadores ----------
 	for _, p in pairs(players) do
 		p:update(dt)
@@ -124,4 +139,6 @@ function love.draw()
 	for _, c in pairs(cameras) do
 		c:draw()
 	end
+
+	DialogueManager.draw()
 end

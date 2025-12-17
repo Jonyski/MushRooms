@@ -30,10 +30,8 @@ function love.keypressed(key, scancode, isrepeat)
 		love.event.quit()
 	end
 
-	-- se há diálogo ativo
-	if DialogueManager.current then
-		DialogueManager.keypressed(key)
-	end
+
+	DialogueManager:keypressed(key)
 
 	-- n adiciona um player ao jogo
 	if key == "n" then
@@ -57,9 +55,8 @@ function love.keypressed(key, scancode, isrepeat)
 	end
 
 	if key == "3" then
-		print("Iniciando diálogo de teste...")
-		local dialogue = npcTestDialogue("robert")
-		DialogueManager.start(dialogue)
+		local dialogue = npcTestDialogue()
+		DialogueManager:start(dialogue, "robert", players[1])
 	end
 
 	if not isrepeat then
@@ -114,7 +111,7 @@ end
 -- Atualização
 ----------------------------------------
 function love.update(dt)
-	DialogueManager.update(dt)
+	DialogueManager:update(dt)
 	---------- Jogadores ----------
 	for _, p in pairs(players) do
 		p:update(dt)
@@ -139,6 +136,4 @@ function love.draw()
 	for _, c in pairs(cameras) do
 		c:draw()
 	end
-
-	DialogueManager.draw()
 end

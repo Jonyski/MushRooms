@@ -1,51 +1,43 @@
 DialogueManager = {}
+DialogueManager.dialogues = {}
 DialogueManager.current = nil
 DialogueManager.context = {}
 
-function DialogueManager.start(dialogue)
-  if DialogueManager.current then
+function DialogueManager:start(dialogue, owner, player)
+  if self.dialogues[owner] then
     return
   end
 
-  DialogueManager.current = dialogue
+  print("Iniciando diálogo...")
+  self.dialogues[owner] = dialogue
+
+  dialogue.owner = owner
+  dialogue.triggeredBy = player
 
   dialogue:start()
 end
 
-function DialogueManager.endDialogue()
-  if DialogueManager.current then
-    DialogueManager.current:endDialogue()
-  end
-
-  DialogueManager.current = nil
-end
-
-function DialogueManager.update(dt)
-  if not DialogueManager.current then 
-    return 
-  end
-  
-  DialogueManager.current:update(dt)
-
-  if not DialogueManager.current.active then
-    DialogueManager.current = nil
+function DialogueManager:cleanDialogue(dialogue)
+  if self.dialogues[dialogue.owner] then
+    self.dialogues[dialogue.owner] = nil
+    print("Finalizando diálogo...")
   end
 end
 
-function DialogueManager.draw()
-  if not DialogueManager.current then 
-    return 
-  end
+function DialogueManager:update(dt)
+  for _, dialogue in pairs(self.dialogues) do
+    dialogue:update(dt)
 
-  DialogueManager.current:draw(50, love.graphics.getHeight() - 120)
+    if not dialogue.active then
+      self:cleanDialogue(dialogue)
+    end
+  end
 end
 
-function DialogueManager.keypressed(key)
-  if not DialogueManager.current then 
-    return 
-  end
-
-  if key == "return" or key == "space" then
-    DialogueManager.current:advance()
+function DialogueManager:keypressed(key)
+  for _, dialogue in pairs(self.dialogues) do
+    if key == "return" then
+      dialogue:advance()
+    end
   end
 end

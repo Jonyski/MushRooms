@@ -15,16 +15,15 @@ Dialogue = {}
 Dialogue.__index = Dialogue
 Dialogue.type = DIALOGUE
 
-function Dialogue.new(graph, context)
+function Dialogue.new(list)
   local dialogue = setmetatable({}, Dialogue)
 
-  dialogue.graph = graph
-  dialogue.nodes = graph.nodes
-  dialogue.currentId = graph.start
-  dialogue.currentNode = nil
+  dialogue.list = list
+  dialogue.currentId = nil
+  dialogue.idx = -1
 
-  dialogue.context = context or {}
-
+  dialogue.owner = nil
+  dialogue.triggeredBy = nil
   dialogue.active = false
 
   return dialogue
@@ -32,27 +31,20 @@ end
 
 function Dialogue:start()
   self.active = true
-  self:enterNode(self.currentId)
-end
+  self.idx = 1
 
-function Dialogue:enterNode(nodeId)
-  self.currentId = nodeId
-  self.currentNode = self.nodes[nodeId]
+  if self.list["intro"].triggered ~= true then
+    self.currentId = "intro"
+  else
+    for id, entry in pairs(self.list) do
+      if entry.condition and entry.condition(self.triggeredBy) and entry.triggered ~= true then
+        print("Condição satisfeita para diálogo: ", id)
+        self.currentId = id
+        return
+      end
+    end
 
-  if not self.currentNode then
-    print("[Dialogue] Node inexistente:", nodeId)
-    self:endDialogue()
-    return
-  end
-
-  if self.currentNode.onEnter then
-    self.currentNode.onEnter(self.context)
-  end
-end
-
-function Dialogue:exitNode()
-  if self.currentNode and self.currentNode.onExit then
-    self.currentNode.onExit(self.context)
+    self.currentId = "met"
   end
 end
 
@@ -61,29 +53,49 @@ function Dialogue:advance()
     return   
   end
 
-  -- fluxo linear
-  self:exitNode()
-
-  if self.currentNode.next then
-    self:enterNode(self.currentNode.next)
+  if self.idx < #self.list[self.currentId].text then
+    self.idx = self.idx + 1
   else
     self:endDialogue()
   end
 end
 
 function Dialogue:endDialogue()
+  if self.list[self.currentId].triggered ~= nil then
+    self.list[self.currentId].triggered = true
+  end
+
   self.active = false
-  self.currentNode = nil
+  self.idx = -1
+  self.currentId = nil
 end
 
 function Dialogue:update(dt)
   -- reservado para efeitos (typewriter, delays, etc)
 end
 
-function Dialogue:draw(x, y)
-  if not self.active or not self.currentNode then 
+function Dialogue:draw(camera)
+  if not self.active or self.idx == -1 then 
     return
   end
 
-  love.graphics.print(self.currentNode.text, x, y)
+  local text = self.list[self.currentId].text[self.idx]
+
+  if self.owner and self.owner.pos then
+    local viewPos = camera:viewPos(vec(self.owner.pos.x, self.owner.pos.y - 80))
+    local width = 300 -- largura da caixa de diálogo
+
+    love.graphics.setFont(tempFont)
+    love.graphics.printf(
+      text,
+      viewPos.x - width / 2,
+      viewPos.y,
+      width,
+      "center"
+    )
+    
+  else 
+    love.graphics.print(text, 50, love.graphics.getHeight() - 120)
+  end
+
 end

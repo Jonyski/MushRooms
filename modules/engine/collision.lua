@@ -217,6 +217,7 @@ function CollisionManager.init()
 	cm.items = {}
 	cm.enemies = {}
 	cm.players = {}
+	cm.npcs = {}
 	cm.enemyAttacks = {}
 	cm.playerAttacks = {}
 	cm.destructibles = {}
@@ -244,6 +245,10 @@ function CollisionManager:fetchHitboxesByRoom(room)
 	for _, item in pairs(room.items) do
 		self.items[item] = item.hb
 	end
+	-- pegando hitboxes de npcs
+	for _, npc in pairs(room.npcs) do
+		self.npcs[npc] = npc.hb
+	end
 end
 
 ---@param room Room
@@ -261,6 +266,10 @@ function CollisionManager:clearHitboxesByRoom(room)
 	-- removendo hitboxes de itens
 	for _, item in pairs(room.items) do
 		self.items[item] = nil
+	end
+	-- removendo hitboxes de npcs
+	for _, npc in pairs(room.npcs) do
+		self.players[npc] = nil
 	end
 end
 
@@ -381,6 +390,17 @@ function CollisionManager:handleCollisions()
 			if hit then
 				-- ao colidir -> destrói objeto
 				destr:damage(math.huge)
+			end
+		end
+	end
+
+	------- PLAYER / NPC --------
+	for npc, npchb in pairs(self.npcs) do
+		for player, playerhb in pairs(self.players) do
+			local hit = checkCollision(npchb, playerhb)
+			if hit then
+				-- ao colidir -> inicia diálogo
+				DialogueManager:start(npc.dialogue, npc, player)
 			end
 		end
 	end

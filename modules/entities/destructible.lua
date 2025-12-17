@@ -50,6 +50,7 @@ function Destructible.new(name, pos, room, loot, hitbox)
 	obj.loot = loot or LOOT_TABLE[name] or Loot.new() -- pode ser sobrescrito na criação
 	obj.hb = hitbox -- hitbox do destrutível
 
+	table.insert(room.destructibles, obj)
 	return obj
 end
 

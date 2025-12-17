@@ -90,6 +90,7 @@ end
 -- Inicialização
 ----------------------------------------
 function love.load()
+	tempFont = love.graphics.newFont('assets/fonts/PressStart2P-Regular.ttf', 10)
 	math.randomseed(os.time())
 	window.width = 800
 	window.height = 800

@@ -73,6 +73,7 @@ function Enemy.new(name, hp, spawnPos, speed, move, attack, hitbox, room)
 	enemy.moveDuration = 0 -- duração da movimentação com easing
 	enemy.attackObj = nil -- objeto Attack associado ao inimigo (caso possua)
 
+	table.insert(room.enemies, enemy)
 	return enemy
 end
 

@@ -289,7 +289,9 @@ end
 -- caso positivo, chama a função de ataque dele
 function Player:checkAction1(key)
 	if key == self.controls.act1 then
-		self:attack()
+		if self.weapon then
+			self.weapon:attack()
+		end
 	end
 end
 
@@ -348,15 +350,6 @@ function Player:hasWeapon(weaponName)
 		end
 	end
 	return false
-end
-
--- executa o ataque da arma equipada caso possível
-function Player:attack()
-	if self.weapon and self.weapon.canShoot then
-		self.weapon.atk:attack(self, self.pos, self.weapon.rotation)
-		self.weapon.canShoot = false
-		self.weapon.state = ATTACKING
-	end
 end
 
 ---@return boolean

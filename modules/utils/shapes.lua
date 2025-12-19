@@ -23,7 +23,7 @@ Circle = {}
 Circle.__index = Circle
 Circle.shape = CIRCLE
 
----@param radius any
+---@param radius number
 ---@return Circle
 -- cria uma instância de `Circle`
 function Circle.new(radius)

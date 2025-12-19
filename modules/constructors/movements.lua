@@ -3,6 +3,19 @@
 ----------------------------------------
 require("modules.systems.movement")
 
+----------------------------------------
+-- Funções de Movimento
+----------------------------------------
+-- cada uma das funções abaixo é uma closure que retorna uma
+-- função com contexto isolado capaz de mover uma entidade de
+-- acordo com sua estratégia própria. As funções de movimento
+-- em si possuem todas o mesmo protótipo. Portanto, a closure
+-- serve para encapsular o estado do qual aquela função de
+-- movimento específica depende, e recebe como argumento as
+-- "configurações" que podem variar para aquele tipo de
+-- movimento. Ou seja, estamos criando uma implementação do
+-- padrão estratégia baseada em closures
+
 ---@param distanceThreshold number
 ---@return MovementFunc
 -- se move constantemente na direção do alvo
@@ -125,5 +138,86 @@ function avoidTarget(safeDistance, travelDistanceRange, easingFunc)
 				avoidCooldown = 1.0 + math.random() / 2
 			end
 		end
+	end
+end
+
+---@return MovementFunc
+-- trajetória em zig zag
+function zigZagMovement()
+	local time = 0
+
+	return function(entity, dt)
+		local ampDeg = math.rad(60)
+		local angle = sign(math.sin(time * 10)) * ampDeg
+		local newAngle = entity.direction + angle
+		local newDir = polarToVec(newAngle, 1)
+		time = time + dt
+
+		setPos(entity, addVec(entity.pos, scaleVec(newDir, entity.speed)))
+	end
+end
+
+---@return MovementFunc
+-- trajetória em formato de senoide
+function sineMovement()
+	local time = 0
+
+	return function(entity, dt)
+		local ampDeg = math.rad(60)
+		local newAngle = entity.direction + math.sin(time * 5) * ampDeg
+		local newDir = polarToVec(newAngle, 1)
+		time = time + dt
+
+		setPos(entity, addVec(entity.pos, scaleVec(newDir, entity.speed)))
+	end
+end
+
+---@return MovementFunc
+-- trajetória que segue um alvo
+function HomingTrajectory()
+	return function(entity, dt)
+		if not entity.target then
+			return entity.vel
+		end
+
+		local velDir = normalize(entity.vel)
+		local toTargetDir = normalize(subVec(entity.target.pos, entity.pos))
+
+		local angleDiff = math.atan2(toTargetDir.y, toTargetDir.x) - math.atan2(velDir.y, velDir.x)
+
+		angleDiff = (angleDiff + math.pi) % (2 * math.pi) - math.pi
+
+		local turnSpeed = math.rad(120)
+		local angle = angleDiff * turnSpeed * dt
+		local newDir = rotateVec(velDir, angle)
+
+		return scaleVec(newDir, entity.speed)
+	end
+end
+
+---@return MovementFunc
+-- trajetória quadrática de ataque
+function QuadraticTrajectory()
+	return function(entity, dt)
+		if not entity.target then
+			return entity.vel
+		end
+
+		local dx = entity.target.pos.x - entity.pos.x
+		local dy = entity.target.pos.y - entity.pos.y
+
+		local newDir = entity.vel
+		local threshold = 80
+
+		if math.abs(dx) > math.abs(dy) + threshold then
+			newDir.x = dx
+			newDir.y = 0
+		elseif math.abs(dy) > math.abs(dx) + threshold then
+			newDir.y = dy
+			newDir.x = 0
+		end
+
+		newDir = normalize(newDir)
+		return scaleVec(newDir, entity.speed)
 	end
 end

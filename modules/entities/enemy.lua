@@ -323,7 +323,7 @@ end
 ---@param dt? number
 -- ataque que ainda não faz nada
 function Enemy:simpleAttack(dt)
-	if self:isCooldownActive("simpleAttack") then
+	if self:isCooldownActive("simpleAttack") or self.target == nil then
 		return
 	end
 

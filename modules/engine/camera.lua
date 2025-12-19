@@ -15,6 +15,7 @@ cameras = {}
 
 ---@class Camera
 ---@field playerAttached Player
+---@field target Player | Npc | Enemy Alvo que a câmera segue
 ---@field viewport Size
 ---@field canvas table
 ---@field canvasPos Vec
@@ -46,6 +47,7 @@ function Camera.new(pos, viewport, canvas, canvasPos, player)
 	local camera = setmetatable({}, Camera)
 
 	camera.playerAttached = player -- jogador associado à câmera
+	camera.target = player -- alvo que a câmera segue (inicialmente o player)
 	camera.viewport = viewport -- tamanho da câmera (o espaço que ela enxerga)
 	camera.canvas = canvas -- canvas associado à câmera
 	camera.canvasPos = canvasPos -- posição do canvas na tela
@@ -88,22 +90,22 @@ function Camera:updatePosition(dt)
 		self.targetPos.x = pos.x / #players - viewportZoomed.width / 2
 		self.targetPos.y = pos.y / #players - viewportZoomed.height / 2
 	else
-		-- a câmera segue os jogadores individualmente
-		local i = tableFind(cameras, self)
-		local player = players[i]
-		local room = player.room
+		-- a câmera segue o target (que pode ser o player ou outra entidade)
+		if self.target and self.target.pos and self.target.room then
+			local room = self.target.room
 
-		-- limita a posição da câmera ao hitbox da sala
-		self.targetPos.x = clamp(
-			player.pos.x,
-			room.hitbox.p1.x + viewportZoomed.width / 2,
-			room.hitbox.p2.x - viewportZoomed.width / 2
-		)
-		self.targetPos.y = clamp(
-			player.pos.y,
-			room.hitbox.p1.y + viewportZoomed.height / 2,
-			room.hitbox.p2.y - viewportZoomed.height / 2
-		)
+			-- limita a posição da câmera ao hitbox da sala
+			self.targetPos.x = clamp(
+				self.target.pos.x,
+				room.hitbox.p1.x + viewportZoomed.width / 2,
+				room.hitbox.p2.x - viewportZoomed.width / 2
+			)
+			self.targetPos.y = clamp(
+				self.target.pos.y,
+				room.hitbox.p1.y + viewportZoomed.height / 2,
+				room.hitbox.p2.y - viewportZoomed.height / 2
+			)
+		end
 	end
 
 	self:updateShake(dt)
@@ -154,6 +156,12 @@ function Camera:calculateZoom()
 	return clamp(rightZoom, self.viewport.width / roomDim.width, 2)
 end
 
+---@param target Player | Npc | Enemy
+-- muda o alvo que a câmera deve seguir
+function Camera:changeTarget(target)
+	self.target = target
+end
+
 ---@param entityPos Vec
 ---@return Vec
 -- retorna a posição da entidade dada pelo parâmetro `entityPos`
@@ -195,8 +203,21 @@ end
 ----------------------------------------
 
 ---@param player Player
+---@return Camera | nil
+--- retorna a câmera associada ao `player` passado como argumento
+function getCameraByPlayer(player)
+	for _, cam in pairs(cameras) do
+		if cam.playerAttached == player then
+			return cam
+		end
+	end
+	return nil
+end
+
+---@param player Player
 -- cria uma câmera atrelada ao `player` passado como argumento
 function newCamera(player)
+	print("Criando câmera para o jogador " .. player.name)
 	-- limite de cameras alcançado
 	if #cameras >= 4 then
 		return

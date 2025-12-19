@@ -1,6 +1,6 @@
 require("modules.utils.anchors")
 require("modules.engine.camera")
-require("modules.systems.dialogue.dialogue_manager")
+require("modules.systems.dialogue.dialogue")
 
 ----------------------------------------
 -- Funções Globais

@@ -14,6 +14,6 @@ function initGlob(spawnPos, room)
 	npc = Npc.new(description, spawnPos, hitbox, room)
 	local idleAnimSettings = newAnimSetting(1, { width = 32, height = 32 }, 0.15, true, 1)
 	npc:addAnimations(idleAnimSettings)
-	npc.dialogue = npcTestDialogue(npc)
+	npc.dialogue = globDialogue()
 	return npc
 end

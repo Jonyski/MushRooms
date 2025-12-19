@@ -1,50 +1,91 @@
+----------------------------------------
+-- Importações de Módulos
+----------------------------------------
 
 require("modules.systems.dialogue.dialogue")
+require("modules.conditions")
+
+----------------------------------------
+-- Funções auxiliares
+----------------------------------------
+
+function parseDialogueBlocks(path)
+  assert(love.filesystem.getInfo(path), "Diálogo inexistente ou caminho incorreto: "..path)
+
+  local blocks = {}
+  local current = {}
+
+  for line in love.filesystem.lines(path) do
+    -- linha vazia = próximo bloco
+    if line == "" then
+      if #current > 0 then
+        table.insert(blocks, current)
+        current = {}
+      end
+    else
+      table.insert(current, line)
+    end
+  end
+
+  -- último bloco
+  if #current > 0 then
+    table.insert(blocks, current)
+    current = {}
+  end
+
+  return blocks
+end
+
+function newSequence(text, condition)
+  return {
+    text = text,
+    idx = -1,
+    triggered = false,
+    condition = condition or nil,
+  }
+end
+
+function buildDialogueData(blocks)
+  local data = {
+    intro = nil,
+    loop = nil,
+    event = {}
+  }
+
+  if blocks[1] then
+    data.intro = newSequence(blocks[1])
+  end
+
+  if blocks[2] then
+    data.loop = newSequence(blocks[2])
+  end
+
+  for i = 3, #blocks do
+    local block = blocks[i]
+    local key = block[1]
+    
+    local condition = getCondition(key)
+    local text = { unpack(blocks[i], 2) }
+
+    table.insert(data.event, newSequence(text, condition))
+  end
+
+  return data
+end
+
+----------------------------------------
+-- Construtores
+----------------------------------------
 
 ---@return Dialogue
 -- cria um diálogo de teste com algumas falas simples
-function npcTestDialogue()
-  local list = {
-    intro = {
-      text = {
-        "Olá, viajante.",
-        "Faz tempo que não vejo alguém por aqui.",
-        "Essas terras não são mais seguras como antes.",
-        "Tenha cuidado."
-      },
-      triggered = false
-    },
-    met = {
-      text = {
-        "Já lhe disse para ter cuidado por aqui.",
-        "Não é seguro andar sozinho."
-      },
-      triggered = nil,
-    },
-    -- diálogos especiais
-    katana = {
-      text = {
-        "Vejo que você tem uma katana.",
-        "Essas lâminas são forjadas com muita habilidade.",
-        "Use-a bem."
-      },
-      triggered = false,
-      condition = function(player)
-        return player:hasWeapon(KATANA.name)
-      end,
-    },
-    sling_shot = {
-      text = {
-        "Uma estilingue, hein?",
-        "Boa para atacar inimigos de longe.",
-        "Acerte bem seus tiros!"
-      },
-      triggered = false,
-      condition = function(player)
-        return player:hasWeapon(SLING_SHOT.name)
-      end,
-    },
-  }
+function globDialogue()
+  local blocks = parseDialogueBlocks("assets/dialogues/glob.txt")
+  local data = buildDialogueData(blocks)
   
-  return Dialogue.new(list)
+  return Dialogue.new({
+    intro = data.intro,
+    loop = data.loop,
+    event = data.event
+  })
 end

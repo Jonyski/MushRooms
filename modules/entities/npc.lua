@@ -25,6 +25,7 @@ LOYAL = "loyal" -- vai para a base do jogador, caso ela exista
 ---@field animation table<string, Animation>
 ---@field addAnimations function
 ---@field dialogue Dialogue
+---@field inDialogue boolea
 
 Npc = {}
 Npc.__index = Npc
@@ -52,6 +53,7 @@ function Npc.new(description, spawnPos, hitbox, room)
 	npc.spriteSheets = {} -- no tipo imagem do love
 	npc.animations = {} -- as chaves são estados e os valores são Animações
 	npc.dialogue = nil -- diálogo do npc
+	npc.inDialogue = false -- se o npc está em diálogo
 
 	table.insert(room.npcs, npc)
 	return npc

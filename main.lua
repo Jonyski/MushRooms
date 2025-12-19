@@ -12,7 +12,7 @@ require("modules.entities.weapon")
 require("modules.entities.destructible")
 require("modules.entities.item")
 require("modules.engine.collision")
-require("modules.systems.dialogue.dialogue_manager")
+require("modules.systems.dialogue.dialogue")
 require("modules.systems.dialogue.dialogue_constructors")
 
 ----------------------------------------
@@ -29,9 +29,6 @@ function love.keypressed(key, scancode, isrepeat)
 	if key == "escape" then
 		love.event.quit()
 	end
-
-
-	DialogueManager:keypressed(key)
 
 	-- n adiciona um player ao jogo
 	if key == "n" then

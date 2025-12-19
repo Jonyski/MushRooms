@@ -223,19 +223,24 @@ function newCamera(player)
 		return
 	end
 
+	local cameraPlayers = {}
+
 	local numOfCams = #cameras + 1
 	for i = 1, #cameras do
+		cameraPlayers[i] = cameras[i].playerAttached
 		cameras[i] = nil
 	end
+
+	table.insert(cameraPlayers, player)
 
 	for i = 1, numOfCams do
 		if numOfCams <= 3 then
 			local camera = Camera.new(
-				{ x = 0, y = 0 },
+				cameraPlayers[i].pos,
 				{ width = window.width / numOfCams, height = window.height },
 				love.graphics.newCanvas(window.width / numOfCams, window.height),
 				{ x = (i - 1) * (window.width / numOfCams), y = 0 },
-				player
+				cameraPlayers[i]
 			)
 			table.insert(cameras, camera)
 		else -- no caso de 4 câmeras
@@ -246,11 +251,11 @@ function newCamera(player)
 				{ x = window.width / 2, y = window.height / 2 },
 			}
 			local camera = Camera.new(
-				{ x = 0, y = 0 },
+				cameraPlayers[i].pos,
 				{ width = window.width / 2, height = window.height / 2 },
 				love.graphics.newCanvas(window.width / 2, window.height / 2),
 				canvasPositions[i],
-				player
+				cameraPlayers[i]
 			)
 			table.insert(cameras, camera)
 		end

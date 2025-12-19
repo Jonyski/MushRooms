@@ -52,7 +52,7 @@ function love.keypressed(key, scancode, isrepeat)
 	end
 
 	if key == "3" then
-		local dialogue = npcTestDialogue()
+		local dialogue = globDialogue()
 		DialogueManager:start(dialogue, "robert", players[1])
 	end
 

@@ -439,7 +439,7 @@ end
 -- Funções Globais
 ----------------------------------------
 
----@return boolean?
+---@return boolean
 -- inicializa o próximo jogador, caso os 4 jogadores
 -- já tenham sido inicializados, retorna `false`
 function newPlayer()
@@ -449,6 +449,8 @@ function newPlayer()
 	end
 	CONSTRUCTORS[PLAYER][#players + 1]()
 	newCamera(players[#players])
+
+	return true
 end
 
 return Player

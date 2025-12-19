@@ -13,7 +13,7 @@ require("table")
 ---@field intro table<string> Sequência introdutória
 ---@field loop table<string> Sequência padrão (loop)
 ---@field event table<table<string>> Sequências de evento (condicionais)
----@field owner Npc Dono do diálogo (NPC)
+---@field owner Npc | string Dono do diálogo
 ---@field talkingWith Player Jogador que está falando
 ---@field activeSequence table<string> Sequência ativa atual
 ---@field active boolean Se o diálogo está ativo
@@ -111,6 +111,7 @@ function Dialogue:draw(camera)
   end
 
   local text = self.activeSequence.text[self.activeSequence.idx]
+
   if self.owner and self.owner.pos then
     local viewPos = camera:viewPos(vec(self.owner.pos.x, self.owner.pos.y - 80))
     local width = 300 -- largura da caixa de diálogo
@@ -140,7 +141,7 @@ DialogueManager.current = nil
 DialogueManager.context = {}
 
 ---@param dialogue Dialogue
----@param owner Npc
+---@param owner Npc | string
 ---@param player Player
 -- inicia um diálogo entre um NPC e um jogador
 function DialogueManager:start(dialogue, owner, player)

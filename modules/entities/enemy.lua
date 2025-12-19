@@ -4,7 +4,6 @@
 require("modules.utils.types")
 require("modules.utils.states")
 require("modules.engine.collision")
-require("modules.utils.easing")
 require("table")
 
 ----------------------------------------
@@ -26,10 +25,6 @@ require("table")
 ---@field spriteSheets table<string, table>
 ---@field animations table<string, Animation>
 ---@field target any
----@field moveTargetPos Vec
----@field moveOriginPos Vec
----@field moveTimer number
----@field moveDuration number
 ---@field attackObj Attack
 ---@field addAnimations function
 ---@field setProjectileAtk function
@@ -67,10 +62,6 @@ function Enemy.new(name, hp, spawnPos, speed, move, attack, hitbox, room)
 	enemy.spriteSheets = {} -- no tipo imagem do love
 	enemy.animations = {} -- as chaves são estados e os valores são Animações
 	enemy.target = nil -- alvo atual do inimigo
-	enemy.moveTargetPos = vec(0, 0) -- posição alvo para movimentação randômica
-	enemy.moveOriginPos = vec(0, 0) -- posição inicial para movimentação com easing
-	enemy.moveTimer = 0 -- timer para movimentação com easing
-	enemy.moveDuration = 0 -- duração da movimentação com easing
 	enemy.attackObj = nil -- objeto Attack associado ao inimigo (caso possua)
 
 	return enemy
@@ -119,22 +110,14 @@ end
 function Enemy:update(dt)
 	self:reduceCooldowns(dt)
 	self:defineTarget()
-	self:move(dt)
-	self:executeMovementDirections()
-
+	if self.move then
+		self:move(dt)
+	end
 	if self.attackObj then
 		self.attackObj:update(dt)
 	end
-
 	self:attack(dt)
 	self.animations[self.state]:update(dt)
-end
-
----@param pos Vec
--- atualiza a posição do inimigo e sua hitbox
-function Enemy:setPos(pos)
-	self.pos = pos
-	self.hb.pos = pos
 end
 
 ----------------------------------------
@@ -192,117 +175,6 @@ end
 ----------------------------------------
 -- Funções de Movimento
 ----------------------------------------
-
----@param pos Vec
----@param dt number
--- se move na direção de um ponto específico
-function Enemy:moveTowards(pos, dt)
-	if self.easingFunc and self.moveOriginPos and self.moveDuration and self.moveTimer then
-		self.moveTimer = self.moveTimer + dt
-		local t = math.min(self.moveTimer / self.moveDuration, 1)
-		local progress = self.easingFunc(t)
-		local targetPos = addVec(self.moveOriginPos, scaleVec(subVec(pos, self.moveOriginPos), progress))
-		local movementVec = subVec(targetPos, self.pos)
-
-		self.movementDirections["moveTowards"] = movementVec
-
-		return
-	end
-
-	-- movimento normal (sem easing)
-	local direction = normalize(subVec(pos, self.pos))
-	self.movementDirections["moveTowards"] = scaleVec(direction, self.speed * dt)
-end
-
----@param dt number
--- se move na direção contrária do alvo (`Enemy.target`)
-function Enemy:avoidTarget(dt)
-	if self.target == nil or self:isCooldownActive("avoidTarget") then
-		return
-	end
-
-	local distTarget = dist(self.pos, self.target.pos)
-
-	if nullVec(self.moveTargetPos) and distTarget < 300 then
-		local baseDir = normalize(subVec(self.target.pos, self.pos))
-		baseDir = scaleVec(baseDir, -1)
-		local travelDistance = math.random(150, 180)
-
-		self.moveTargetPos = addVec(self.pos, scaleVec(baseDir, travelDistance))
-		self.moveOriginPos = self.pos
-		self.moveTimer = 0
-		self.moveDuration = travelDistance / self.speed
-	end
-
-	local arrived = false
-	if self.easingFunc then
-		if self.moveTimer >= self.moveDuration then
-			arrived = true
-		end
-	elseif nullVec(self.moveTargetPos) or dist(self.pos, self.moveTargetPos) <= 4 then
-		arrived = true
-	end
-
-	if not arrived then
-		self:moveTowards(self.moveTargetPos, dt)
-	else
-		self.movementDirections["moveTowards"] = vec(0, 0)
-		self.moveTargetPos = vec(0, 0)
-		self:setCooldown("avoidTarget", 1.0 + math.random() / 2)
-	end
-end
-
----@param dt number
--- se move constantemente na direção do alvo (`Enemy.target`)
-function Enemy:moveFollowTarget(dt)
-	if self.target == nil then
-		return
-	end
-
-	local distance = dist(self.pos, self.target.pos)
-
-	if distance > 100 then
-		self:moveTowards(self.target.pos, dt)
-	end
-end
-
----@param dt number
--- se move em "pulos" na direção do alvo (`Enemy.target`)
-function Enemy:moveTargetDirection(dt)
-	if self.target == nil or self:isCooldownActive("moveTargetDirection") then
-		return
-	end
-
-	if nullVec(self.moveTargetPos) then
-		local baseDir = normalize(subVec(self.target.pos, self.pos))
-		local randAngle = math.rad(45) * (math.random() - 0.5) * 2
-
-		local newDir = rotateVec(baseDir, randAngle)
-		local travelDistance = math.random(110, 200)
-
-		self.moveTargetPos = addVec(self.pos, scaleVec(newDir, travelDistance))
-		self.moveOriginPos = self.pos
-		self.moveTimer = 0
-		self.moveDuration = travelDistance / self.speed
-	end
-
-	local arrived = false
-	if self.easingFunc then
-		if self.moveTimer >= self.moveDuration then
-			arrived = true
-		end
-	elseif dist(self.pos, self.moveTargetPos) <= 4 then
-		arrived = true
-	end
-
-	if not arrived then
-		self:moveTowards(self.moveTargetPos, dt)
-	else
-		self.movementDirections["moveTowards"] = vec(0, 0)
-		self.moveTargetPos = vec(0, 0)
-		self:setCooldown("moveTargetDirection", 0.3 + math.random())
-	end
-end
 
 -- soma todos os vetores de direção de movimento e atualiza a posição do inimigo
 function Enemy:executeMovementDirections()

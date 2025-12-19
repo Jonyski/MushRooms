@@ -1,9 +1,15 @@
+----------------------------------------
+-- Importações de Módulos
+----------------------------------------
+require("modules.constructors.movements")
+require("modules.utils.easing")
+
 ---@param spawnPos Vec
 ---@param room Room
 ---@return Enemy
 -- cria um inimigo do tipo Gato Nuclear
 function newNuclearCat(spawnPos, room)
-	local movementFunc = Enemy.avoidTarget
+	local movementFunc = avoidTarget(300, range(150, 180), Easing.outQuad)
 	local attackFunc = Enemy.shootAttack
 	local hitbox = hitbox(Rectangle.new(40, 70), spawnPos)
 	local enemy = Enemy.new(NUCLEAR_CAT.name, 30, spawnPos, 180, movementFunc, attackFunc, hitbox, room)
@@ -20,7 +26,7 @@ end
 ---@return Enemy
 -- cria um inimigo do tipo Pato Aranha
 function newSpiderDuck(spawnPos, room)
-	local movementFunc = Enemy.moveTargetDirection
+	local movementFunc = dashTowardsTarget(Easing.outQuad)
 	local attackFunc = Enemy.simpleAttack
 	local hitbox = hitbox(Circle.new(25), spawnPos)
 	local enemy = Enemy.new(SPIDER_DUCK.name, 20, spawnPos, 180, movementFunc, attackFunc, hitbox, room)

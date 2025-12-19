@@ -13,7 +13,7 @@ require("table")
 ---@field intro table<string> Sequência introdutória
 ---@field loop table<string> Sequência padrão (loop)
 ---@field event table<table<string>> Sequências de evento (condicionais)
----@field owner Npc | string Dono do diálogo
+---@field owner Npc Dono do diálogo
 ---@field talkingWith Player Jogador que está falando
 ---@field activeSequence table<string> Sequência ativa atual
 ---@field active boolean Se o diálogo está ativo
@@ -141,7 +141,7 @@ DialogueManager.current = nil
 DialogueManager.context = {}
 
 ---@param dialogue Dialogue
----@param owner Npc | string
+---@param owner Npc
 ---@param player Player
 -- inicia um diálogo entre um NPC e um jogador
 function DialogueManager:start(dialogue, owner, player)

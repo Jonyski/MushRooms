@@ -51,11 +51,6 @@ function love.keypressed(key, scancode, isrepeat)
 		spawnItem(newSlingShot(), players[1].pos, players[1].room, false, getAnchor(players[1], FLOOR), vec(0, 0))
 	end
 
-	if key == "3" then
-		local dialogue = globDialogue()
-		DialogueManager:start(dialogue, "robert", players[1])
-	end
-
 	if not isrepeat then
 		for _, p in pairs(players) do
 			p:checkAction1(key)

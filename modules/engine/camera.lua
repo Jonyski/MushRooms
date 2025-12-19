@@ -196,11 +196,35 @@ function Camera:draw()
 	love.graphics.pop()
 	love.graphics.setCanvas()
 	love.graphics.draw(self.canvas, self.canvasPos.x, self.canvasPos.y)
+
+	-- barras pretas em espaço de tela (fora do canvas/zoom)
+	if self.playerAttached and self.playerAttached.inDialogue then
+		renderBlackBars(self)
+	end
 end
 
 ----------------------------------------
 -- Funções Globais
 ----------------------------------------
+
+---@param camera Camera
+--
+function renderBlackBars(camera)
+  local barHeight = 50
+
+  -- desenha barras relativas à região do canvas da câmera
+  local x = camera.canvasPos.x
+  local y = camera.canvasPos.y
+  local w = camera.viewport.width
+  local h = camera.viewport.height
+
+  love.graphics.setColor(0, 0, 0, 1)
+  -- barra superior
+  love.graphics.rectangle("fill", x, y, w, barHeight)
+  -- barra inferior
+  love.graphics.rectangle("fill", x, y + h - barHeight, w, barHeight)
+  love.graphics.setColor(1, 1, 1, 1)
+end
 
 ---@param player Player
 ---@return Camera | nil

@@ -13,15 +13,14 @@ require("modules.utils.types")
 ---@class Weapon
 ---@field name string
 ---@field ammo number
----@field cooldown number
 ---@field atk Attack
 ---@field canShoot boolean
----@field timer number
 ---@field target any
 ---@field rotation rad
 ---@field state string
 ---@field spriteSheets table<string, table>
 ---@field animations table<string, Animation>
+---@field addAnimations fun(self: Weapon, idleSettings: AnimSettings, weaponAtkSettings: AnimSettings): nil
 
 Weapon = {}
 Weapon.__index = Weapon
@@ -29,21 +28,18 @@ Weapon.type = WEAPON
 
 ---@param name string
 ---@param ammo number
----@param cooldown number
 ---@param attack Attack
 ---@return Weapon
 -- cria uma instância de `Weapon`
-function Weapon.new(name, ammo, cooldown, attack)
+function Weapon.new(name, ammo, attack)
 	local weapon = setmetatable({}, Weapon)
 
 	-- atributos que variam
 	weapon.name = name -- nome do tipo de arma
 	weapon.ammo = ammo -- número de munições
-	weapon.cooldown = cooldown -- tempo de espera entre ataques consecutivos
 	weapon.atk = attack -- instância de Attack associada à arma
 	-- atributos fixos na instanciação
 	weapon.canShoot = false
-	weapon.timer = 0 -- timer do cooldown
 	weapon.target = nil -- inimigo para o qual a arma está mirando
 	weapon.rotation = 0 -- rotação da arma em radianos
 	weapon.state = IDLE -- estado atual da arma
@@ -62,6 +58,26 @@ function Weapon:updateOrientation(dirVec)
 	end
 end
 
+---@param dt number
+-- atualiza o estado, o cooldown e o ataque da arma
+function Weapon:update(dt)
+	self.atk:update(dt)
+
+	if self.atk.canAttack then
+		self.state = IDLE
+	end
+end
+
+-- tenta realizar um ataque, caso bem sucedido, atualiza o estado/animação da arma
+function Weapon:attack()
+	if self.atk:tryAttack(self.owner, self.owner.pos, self.rotation) then
+		self.state = ATTACKING
+		if self.animations[ATTACKING] then
+			self.animations[ATTACKING]:reset()
+		end
+	end
+end
+
 ---@param idleSettings AnimSettings
 ---@param weaponAtkSettings AnimSettings
 -- inicializa as animações de `Weapon` e as associa com seus respectivos estados
@@ -72,23 +88,6 @@ function Weapon:addAnimations(idleSettings, weaponAtkSettings)
 	-- animação da arma ao atacar
 	path = pngPathFormat({ "assets", "animations", "weapons", self.name, ATTACKING })
 	addAnimation(self, path, ATTACKING, weaponAtkSettings)
-end
-
----@param dt number
--- atualiza o estado, o cooldown e o ataque da arma
-function Weapon:update(dt)
-	-- atualizando o cooldown
-	if self.canShoot == false then
-		self.timer = self.timer - dt
-	end
-	if self.timer < 0 then
-		self.timer = self.cooldown
-		self.canShoot = true
-		self.state = IDLE
-		self.animations[ATTACKING]:reset()
-	end
-	-- atualizando todos os ataques/eventos desferidos
-	self.atk:update(dt)
 end
 
 ----------------------------------------

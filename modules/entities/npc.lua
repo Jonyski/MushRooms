@@ -19,7 +19,7 @@ LOYAL = "loyal" -- vai para a base do jogador, caso ela exista
 ---@field hb Hitbox
 ---@field room Room
 ---@field pos Vec
----@field inventory any 
+---@field inventory any
 ---@field state string
 ---@field spriteSheets table<string, table>
 ---@field animation table<string, Animation>
@@ -33,9 +33,9 @@ Npc.type = NPC
 
 ---@param description NpcDescription
 ---@param spawnPos Vec
----@param hitbox Hitbox 
----@param room Room 
----@return Npc 
+---@param hitbox Hitbox
+---@param room Room
+---@return Npc
 function Npc.new(description, spawnPos, hitbox, room)
 	local npc = setmetatable({}, Npc)
 
@@ -69,6 +69,7 @@ end
 ---@param job string
 ---@param personality string
 ---@param lifestyle string
+-- cria a descrição de um NPC, ou seja, dados gerais sobre ele, incluindo nome, ocupação e personalidade
 function newNpcDescription(name, job, personality, lifestyle)
 	return {
 		name = name,

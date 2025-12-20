@@ -4,7 +4,7 @@
 require("modules.utils.utils")
 
 ----------------------------------------
--- Classe AtkSetting e construtores
+-- Classe AtkSetting e Construtor
 ----------------------------------------
 
 ---@class AtkSetting
@@ -12,6 +12,7 @@ require("modules.utils.utils")
 ---@field dmg number
 ---@field dur number
 ---@field hb Hitbox
+---@field cooldown number
 ---@field speed number
 ---@field acc number
 ---@field bounces number
@@ -21,39 +22,23 @@ require("modules.utils.utils")
 ---@param damage number
 ---@param duration number
 ---@param hitbox Hitbox
+---@param speed? number
+---@param acceleration? number
+---@param bounces? number
+---@param pierces? number
 ---@return AtkSetting
--- construtor de configuração base para ataques melee
-function newBaseAtkSetting(ally, damage, duration, hitbox)
+-- construtor complementar ao anterior, usado para ataques de projétil
+function newAtkSetting(ally, damage, duration, hitbox, cooldown, speed, acceleration, bounces, pierces)
 	return {
 		ally = ally,
 		dmg = damage,
 		dur = duration,
 		hb = hitbox,
-		-- por padrão, ataques não terão velocidade, aceleração, quiques e atravessam infinitos alvos (Melee)
-		speed = 0,
-		acc = 0,
-		bounces = 0,
-		pierces = math.huge,
-	}
-end
-
----@param baseSettings AtkSetting
----@param speed number
----@param acceleration number
----@param bounces number
----@param pierces number
----@return AtkSetting
--- construtor complementar ao anterior, usado para ataques de projétil
-function newProjectileAtkSetting(baseSettings, speed, acceleration, bounces, pierces)
-	return {
-		ally = baseSettings.ally,
-		dmg = baseSettings.dmg,
-		dur = baseSettings.dur,
-		hb = baseSettings.hb,
-		speed = speed,
-		acc = acceleration,
-		bounces = bounces,
-		pierces = pierces,
+		cooldown = cooldown,
+		speed = speed or 0,
+		acc = acceleration or 0,
+		bounces = bounces or 0,
+		pierces = pierces or math.huge,
 	}
 end
 
@@ -63,6 +48,8 @@ end
 
 ---@class Attack: AtkSetting
 ---@field name string
+---@field timer number
+---@field canAttack boolean
 ---@field animSettings table
 ---@field updateEvent function
 ---@field onHit function
@@ -84,6 +71,9 @@ function Attack.new(name, atkSettings, animSettings, updateFunc, onHit, trajecto
 	attack.hb = atkSettings.hb          -- hitbox do ataque
 	attack.bounces = atkSettings.bounces -- quantas vezes o ataque pode ricochetear (caso seja projétil)
 	attack.pierces = atkSettings.pierces -- quantas vezes o ataque pode atravessar um alvo
+	attack.cooldown = atkSettings.cooldown -- tempo que deve passar entre ataques
+	attack.timer = 0                    -- timer do cooldown, ao chegar em 0 permite gerar ataques
+	attack.canAttack = true             -- se pode gerar um AttackEvent ou não
 	attack.animSettings = animSettings  -- configurações da animação de cada evento
 	attack.updateEvent = updateFunc     -- função executada para cada AttackEvent, atualizando seu estado atual
 	attack.onHit = onHit                -- função executada toda vez que um ataque acertar um alvo
@@ -104,12 +94,36 @@ function Attack:attack(attacker, origin, direction)
 	table.insert(self.events, atkEvent)
 end
 
+---@param attacker any
+---@param origin Vec
+---@param direction rad
+---@return boolean
+-- se possível, ataca
+function Attack:tryAttack(attacker, origin, direction)
+	if self.canAttack then
+		self:attack(attacker, origin, direction)
+		self.timer = self.cooldown
+		self.canAttack = false
+		return true
+	end
+	return false
+end
+
 ---@param dt number
 -- atualiza os eventos de ataque e gerencia a lista `Attack.events`
 function Attack:update(dt)
+	-- atualiza o timer de cooldown
+	if not self.canAttack then
+		self.timer = self.timer - dt
+		if self.timer <= 0 then
+			self.canAttack = true
+		end
+	end
+
+	-- atualiza os eventos ativos deste ataque
 	for i = #self.events, 1, -1 do
 		local e = self.events[i]
-		self.updateEvent(dt, e)
+		self.updateEvent(e, dt)
 
 		if e.timer <= 0 or e.piercesLeft <= 0 then
 			e.active = false
@@ -128,6 +142,7 @@ end
 ---@field attacker any
 ---@field origin Vec
 ---@field direction rad
+---@field pos Vec
 ---@field vel Vec
 ---@field acc Vec
 ---@field bouncesLeft number
@@ -189,14 +204,13 @@ function AttackEvent:baseUpdate(dt)
 
 	-- aplica função de trajetória se existir
 	if self.trajectoryFunc then
-		self.vel = self.trajectoryFunc(self, dt)
+		self.trajectoryFunc(self, dt)
+	else
+		-- movimento padrão
+		local acc = scaleVec(self.acc, dt)
+		self.vel = addVec(self.vel, acc)
+		setPos(self, addVec(self.pos, self.vel))
 	end
-
-	-- movimenta padrão
-	local acc = scaleVec(self.acc, dt)
-	self.vel = addVec(self.vel, acc)
-	self.pos = addVec(self.pos, self.vel)
-	self.hb.pos = self.pos
 	self.timer = self.timer - dt
 end
 
@@ -234,84 +248,4 @@ function AttackEvent:draw(camera)
 		animation.frameDim.width / 2,
 		animation.frameDim.height / 2
 	)
-end
-
-----------------------------------------
---- Funções de Trajetória
------------------------------------------
-
----@param self AtkEvent
----@param dt number
----@return Vec
--- trajetória quadrática de ataque
-function QuadraticTrajectory(self, dt)
-	if not self.target then
-		return self.vel
-	end
-
-	local dx = self.target.pos.x - self.pos.x
-	local dy = self.target.pos.y - self.pos.y
-
-	local newDir = self.vel
-	local threshold = 80
-
-	if math.abs(dx) > math.abs(dy) + threshold then
-		newDir.x = dx
-		newDir.y = 0
-	elseif math.abs(dy) > math.abs(dx) + threshold then
-		newDir.y = dy
-		newDir.x = 0
-	end
-
-	newDir = normalize(newDir)
-	return scaleVec(newDir, self.speed)
-end
-
----@param self AtkEvent
----@param dt number
----@return Vec
--- trajetória de ataque teleguiado ao alvo
-function HomingTrajectory(self, dt)
-	if not self.target then
-		return self.vel
-	end
-
-	local velDir = normalize(self.vel)
-	local toTargetDir = normalize(subVec(self.target.pos, self.pos))
-
-	local angleDiff = math.atan2(toTargetDir.y, toTargetDir.x) - math.atan2(velDir.y, velDir.x)
-
-	angleDiff = (angleDiff + math.pi) % (2 * math.pi) - math.pi
-
-	local turnSpeed = math.rad(120)
-	local angle = angleDiff * turnSpeed * dt
-	local newDir = rotateVec(velDir, angle)
-
-	return scaleVec(newDir, self.speed)
-end
-
----@param self AtkEvent
----@param dt number
----@return Vec
--- trajetória de ataque teleguiado ao alvo
-function ZigZagTrajectory(self, dt)
-	local ampDeg = math.rad(60)
-	local angle = sign(math.sin(self.age * 10)) * ampDeg
-
-	local newAngle = self.direction + angle
-	local newDir = polarToVec(newAngle, 1)
-
-	return scaleVec(newDir, self.speed)
-end
-
----@param self AtkEvent
----@param dt number
----@return Vec
--- trajetória de ataque teleguiado ao alvo
-function SineTrajectory(self, dt)
-	local ampDeg = math.rad(60)
-	local newAngle = self.direction + math.sin(self.age * 5) * ampDeg -- amplitude e frequência
-	local newDir = polarToVec(newAngle, 1)
-
-	return scaleVec(newDir, self.speed)
 end

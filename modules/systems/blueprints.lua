@@ -35,6 +35,7 @@ end
 ---@class SpawnPoint
 ---@field pos Vec
 ---@field spawns SpawnData[]
+---@field insert fun(self: SpawnPoint, spawnData: SpawnData): SpawnPoint
 
 SpawnPoint = {}
 SpawnPoint.__index = SpawnPoint
@@ -71,6 +72,7 @@ end
 ---@field roomName string
 ---@field color Color
 ---@field spawnpoints SpawnPoint[]
+---@field insert fun(self: Blueprint, spawnpoint: SpawnPoint): Blueprint
 
 Blueprint = {}
 Blueprint.__index = Blueprint
@@ -187,3 +189,4 @@ end
 function randEventRoomBP()
 	return newEventRoom1()
 end
+

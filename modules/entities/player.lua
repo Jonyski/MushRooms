@@ -43,6 +43,8 @@ players = {}
 ---@field hb Hitbox
 ---@field invulnerableTimer number
 ---@field blinkTimer number
+---@field addAnimations function
+---@field addParticles function
 
 Player = {}
 Player.__index = Player
@@ -59,26 +61,27 @@ function Player.new(name, spawn_pos, controls, colors, room)
 	local player = setmetatable({}, Player)
 
 	-- atributos que variam
-	player.id = #players + 1 -- número do jogador
-	player.name = name -- nome do jogador
-	player.hp = 100 -- pontos de vida
-	player.pos = spawn_pos -- posição do jogador (inicializa para a posição do spawn)
-	player.controls = controls -- os comandos para controlar o boneco, no formato {up = "", left = "", down = "", right = "", action = ""}
-	player.colors = colors -- paleta de cores do jogador
-	player.room = room -- sala na qual o jogador está atualmente
+	player.id = #players + 1                    -- número do jogador
+	player.name = name                          -- nome do jogador
+	player.hp = 100                             -- pontos de vida
+	player.pos = spawn_pos                      -- posição do jogador (inicializa para a posição do spawn)
+	player.controls =
+	controls                                    -- os comandos para controlar o boneco, no formato {up = "", left = "", down = "", right = "", action = ""}
+	player.colors = colors                      -- paleta de cores do jogador
+	player.room = room                          -- sala na qual o jogador está atualmente
 	-- atributos fixos na instanciação
-	player.speed = 360 -- velocidade em pixels por segundo
-	player.size = { height = 32, width = 32 } -- em pixels
-	player.movementVec = { x = 0, y = 0 } -- vetor de direção e magnitude do movimento do jogador
-	player.state = IDLE -- define o estado atual do jogador, estreitamente relacionado às animações
-	player.spriteSheets = {} -- no tipo imagem do love
-	player.animations = {} -- as chaves são estados e os valores são Animações
-	player.particles = {} -- efeitos de partícula emitidos pelo player
-	player.weapons = {} -- lista das armas que o jogador possui
-	player.weapon = nil -- arma equipada
+	player.speed = 360                          -- velocidade em pixels por segundo
+	player.size = { height = 32, width = 32 }   -- em pixels
+	player.movementVec = { x = 0, y = 0 }       -- vetor de direção e magnitude do movimento do jogador
+	player.state = IDLE                         -- define o estado atual do jogador, estreitamente relacionado às animações
+	player.spriteSheets = {}                    -- no tipo imagem do love
+	player.animations = {}                      -- as chaves são estados e os valores são Animações
+	player.particles = {}                       -- efeitos de partícula emitidos pelo player
+	player.weapons = {}                         -- lista das armas que o jogador possui
+	player.weapon = nil                         -- arma equipada
 	player.hb = hitbox(Circle.new(20), player.pos) -- hitbox do player
-	player.invulnerableTimer = 0 -- timer de invulnerabilidade após levar dano
-	player.blinkTimer = 0 -- timer para piscar o sprite do player quando invulnerável
+	player.invulnerableTimer = 0                -- timer de invulnerabilidade após levar dano
+	player.blinkTimer = 0                       -- timer para piscar o sprite do player quando invulnerável
 
 	collisionManager.players[player] = player.hb
 	return player
@@ -142,13 +145,6 @@ function Player:update(dt)
 	self:updateParticles(dt)
 end
 
----@param pos Vec
--- redefine a posição do `Player` e de sua hitbox
-function Player:setPos(pos)
-	self.pos = pos
-	self.hb.pos = pos
-end
-
 ---@param dt number
 -- movimenta o `Player` de acordo com o input do jogador
 function Player:move(dt)
@@ -185,7 +181,7 @@ function Player:move(dt)
 	end
 	-----------------------------------------
 
-	self:setPos(addVec(self.pos, self.movementVec))
+	setPos(self, addVec(self.pos, self.movementVec))
 
 	self:updateParticlesPos()
 	if self.weapon then

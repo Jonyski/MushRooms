@@ -50,6 +50,7 @@ EVENT_ROOM = "event room"
 ---@field npcs Npc[]
 ---@field playersInRoom Set
 ---@field populate function
+---@field visit function
 
 Room = {}
 Room.__index = Room
@@ -67,19 +68,19 @@ function Room.new(pos, dimensions, roomLimits, blueprint, sprites)
 	local room = setmetatable({}, Room)
 
 	-- atributos que variam
-	room.pos = pos -- posição da sala na array de salas
-	room.dimensions = dimensions -- largura e altura da sala
-	room.hitbox = roomLimits -- pontos superior esquerdo (p1) e inferior direito (p2) da sala
+	room.pos = pos                                    -- posição da sala na array de salas
+	room.dimensions = dimensions                      -- largura e altura da sala
+	room.hitbox = roomLimits                          -- pontos superior esquerdo (p1) e inferior direito (p2) da sala
 	room.center = midpoint(roomLimits.p1, roomLimits.p2) -- ponto central da sala
-	room.color = blueprint.color -- cor da sala
-	room.sprites = sprites -- os sprites da sala em camadas
+	room.color = blueprint.color                      -- cor da sala
+	room.sprites = sprites                            -- os sprites da sala em camadas
 	-- atributos fixos na instanciação
-	room.explored = false -- se algum jogador já entrou na sala ou não
-	room.destructibles = {} -- lista de objetos destrutíveis da sala
-	room.items = {} -- lista de itens dropados na sala
-	room.enemies = {} -- lista de inimigos na sala
-	room.npcs = {} -- lista de NPCs na sala
-	room.playersInRoom = Set.new() -- lista de jogadores na sala
+	room.explored = false                             -- se algum jogador já entrou na sala ou não
+	room.destructibles = {}                           -- lista de objetos destrutíveis da sala
+	room.items = {}                                   -- lista de itens dropados na sala
+	room.enemies = {}                                 -- lista de inimigos na sala
+	room.npcs = {}                                    -- lista de NPCs na sala
+	room.playersInRoom = Set.new()                    -- lista de jogadores na sala
 
 	return room
 end

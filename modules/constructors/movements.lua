@@ -19,7 +19,7 @@ require("modules.systems.movement")
 ---@param distanceThreshold number
 ---@return MovementFunc
 -- se move constantemente na direção do alvo
-function followTarget(distanceThreshold)
+function followTargetMovement(distanceThreshold)
 	local threshold = distanceThreshold or 100
 
 	return function(entity, dt)
@@ -37,7 +37,7 @@ end
 ---@param easingFunc easingFunc
 ---@return MovementFunc
 -- movimento em "Pulos" na direção de um alvo com easing
-function dashTowardsTarget(easingFunc)
+function dashToTargetMovement(easingFunc)
 	local moveTargetPos = nil
 	local moveOriginPos = nil
 	local timer = 0
@@ -85,7 +85,7 @@ end
 ---@param easingFunc easingFunc
 ---@return MovementFunc
 -- cria uma lógica de movimento que mantém distância do alvo
-function avoidTarget(safeDistance, travelDistanceRange, easingFunc)
+function avoidTargetMovement(safeDistance, travelDistanceRange, easingFunc)
 	local moveTargetPos = nil
 	local moveOriginPos = nil
 	local moveTimer = 0
@@ -141,29 +141,32 @@ function avoidTarget(safeDistance, travelDistanceRange, easingFunc)
 	end
 end
 
+---@param period? number
 ---@return MovementFunc
 -- trajetória em zig zag
-function zigZagMovement()
+function zigZagMovement(period, ampDeg)
+	local period = period or 0.75
+	local ampDeg = ampDeg or math.rad(45)
 	local time = 0
 
 	return function(entity, dt)
-		local ampDeg = math.rad(60)
-		local angle = sign(math.sin(time * 10)) * ampDeg
-		local newAngle = entity.direction + angle
-		local newDir = polarToVec(newAngle, 1)
+		local sign = sign(math.fmod(time - period / 2, period) - period / 2)
+		local newDirection = entity.direction + ampDeg * sign
+		local dirVec = polarToVec(newDirection, 1)
 		time = time + dt
 
-		setPos(entity, addVec(entity.pos, scaleVec(newDir, entity.speed)))
+		setPos(entity, addVec(entity.pos, scaleVec(dirVec, entity.speed)))
 	end
 end
 
+---@param amplitude? rad
 ---@return MovementFunc
 -- trajetória em formato de senoide
-function sineMovement()
+function sineMovement(ampDeg)
+	local ampDeg = ampDeg or math.rad(60)
 	local time = 0
 
 	return function(entity, dt)
-		local ampDeg = math.rad(60)
 		local newAngle = entity.direction + math.sin(time * 5) * ampDeg
 		local newDir = polarToVec(newAngle, 1)
 		time = time + dt
@@ -172,9 +175,12 @@ function sineMovement()
 	end
 end
 
+---@param turnSpeed? rad
 ---@return MovementFunc
 -- trajetória que segue um alvo
-function HomingTrajectory()
+function homingMovement(turnSpeed)
+	local turnSpeed = turnSpeed or math.rad(120)
+
 	return function(entity, dt)
 		if not entity.target then
 			return entity.vel
@@ -187,7 +193,6 @@ function HomingTrajectory()
 
 		angleDiff = (angleDiff + math.pi) % (2 * math.pi) - math.pi
 
-		local turnSpeed = math.rad(120)
 		local angle = angleDiff * turnSpeed * dt
 		local newDir = rotateVec(velDir, angle)
 
@@ -195,9 +200,11 @@ function HomingTrajectory()
 	end
 end
 
+---@param threshold? number
 ---@return MovementFunc
 -- trajetória quadrática de ataque
-function QuadraticTrajectory()
+function quadraticMovement(threshold)
+	local threshold = threshold or 80
 	return function(entity, dt)
 		if not entity.target then
 			return entity.vel
@@ -207,7 +214,6 @@ function QuadraticTrajectory()
 		local dy = entity.target.pos.y - entity.pos.y
 
 		local newDir = entity.vel
-		local threshold = 80
 
 		if math.abs(dx) > math.abs(dy) + threshold then
 			newDir.x = dx

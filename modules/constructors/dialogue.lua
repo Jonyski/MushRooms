@@ -2,7 +2,7 @@
 -- Importações de Módulos
 ----------------------------------------
 
-require("modules.systems.dialogue.dialogue")
+require("modules.systems.dialogue")
 require("modules.conditions")
 
 ----------------------------------------

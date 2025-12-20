@@ -12,8 +12,8 @@ require("modules.entities.weapon")
 require("modules.entities.destructible")
 require("modules.entities.item")
 require("modules.engine.collision")
-require("modules.systems.dialogue.dialogue")
-require("modules.systems.dialogue.dialogue_constructors")
+require("modules.systems.dialogue")
+require("modules.constructors.dialogue")
 
 ----------------------------------------
 -- Variáveis Globais

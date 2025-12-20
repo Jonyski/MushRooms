@@ -2,7 +2,7 @@
 -- Importações de Módulos
 ----------------------------------------
 require("modules.entities.npc")
-require("modules.systems.dialogue.dialogue_constructors")
+require("modules.constructors.dialogue")
 
 ---@param spawnPos Vec
 ---@param room Room

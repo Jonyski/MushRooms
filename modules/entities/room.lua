@@ -40,6 +40,7 @@ EVENT_ROOM = "event room"
 ---@class Room
 ---@field pos Vec
 ---@field dimensions Size
+---@field hitbox RoomLimits
 ---@field center Vec
 ---@field color Color
 ---@field sprites table

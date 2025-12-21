@@ -59,6 +59,7 @@ function Enemy.new(name, hp, spawnPos, speed, move, attack, hitbox, room)
 	enemy.animations = {} -- as chaves são estados e os valores são Animações
 	enemy.target = nil -- alvo atual do inimigo
 
+	table.insert(room.enemies, enemy)
 	return enemy
 end
 

@@ -17,6 +17,7 @@ BLUEPRINT = "blueprint"
 SPAWNPOINT = "spawnpoint"
 SPAWN_DATA = "spawn data"
 COLLISION_MANAGER = "collision manager"
+DIALOGUE = "dialogue"
 
 ----------------------------------------
 -- Registro das entidades do jogo

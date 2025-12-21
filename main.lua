@@ -12,6 +12,8 @@ require("modules.entities.weapon")
 require("modules.entities.destructible")
 require("modules.entities.item")
 require("modules.engine.collision")
+require("modules.systems.dialogue")
+require("modules.constructors.dialogue")
 
 ----------------------------------------
 -- Variáveis Globais
@@ -27,6 +29,7 @@ function love.keypressed(key, scancode, isrepeat)
 	if key == "escape" then
 		love.event.quit()
 	end
+
 	-- n adiciona um player ao jogo
 	if key == "n" then
 		newPlayer()
@@ -79,6 +82,7 @@ end
 -- Inicialização
 ----------------------------------------
 function love.load()
+	tempFont = love.graphics.newFont('assets/fonts/PressStart2P-Regular.ttf', 10)
 	math.randomseed(os.time())
 	window.width = 800
 	window.height = 800
@@ -100,6 +104,7 @@ end
 -- Atualização
 ----------------------------------------
 function love.update(dt)
+	DialogueManager:update(dt)
 	---------- Jogadores ----------
 	for _, p in pairs(players) do
 		p:update(dt)

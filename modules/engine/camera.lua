@@ -15,6 +15,7 @@ cameras = {}
 
 ---@class Camera
 ---@field playerAttached Player
+---@field target Player | Npc | Enemy Alvo que a câmera segue
 ---@field viewport Size
 ---@field canvas table
 ---@field canvasPos Vec
@@ -46,6 +47,7 @@ function Camera.new(pos, viewport, canvas, canvasPos, player)
 	local camera = setmetatable({}, Camera)
 
 	camera.playerAttached = player -- jogador associado à câmera
+	camera.target = player -- alvo que a câmera segue (inicialmente o player)
 	camera.viewport = viewport -- tamanho da câmera (o espaço que ela enxerga)
 	camera.canvas = canvas -- canvas associado à câmera
 	camera.canvasPos = canvasPos -- posição do canvas na tela
@@ -88,22 +90,22 @@ function Camera:updatePosition(dt)
 		self.targetPos.x = pos.x / #players - viewportZoomed.width / 2
 		self.targetPos.y = pos.y / #players - viewportZoomed.height / 2
 	else
-		-- a câmera segue os jogadores individualmente
-		local i = tableFind(cameras, self)
-		local player = players[i]
-		local room = player.room
+		-- a câmera segue o target (que pode ser o player ou outra entidade)
+		if self.target and self.target.pos and self.target.room then
+			local room = self.target.room
 
-		-- limita a posição da câmera ao hitbox da sala
-		self.targetPos.x = clamp(
-			player.pos.x,
-			room.hitbox.p1.x + viewportZoomed.width / 2,
-			room.hitbox.p2.x - viewportZoomed.width / 2
-		)
-		self.targetPos.y = clamp(
-			player.pos.y,
-			room.hitbox.p1.y + viewportZoomed.height / 2,
-			room.hitbox.p2.y - viewportZoomed.height / 2
-		)
+			-- limita a posição da câmera ao hitbox da sala
+			self.targetPos.x = clamp(
+				self.target.pos.x,
+				room.hitbox.p1.x + viewportZoomed.width / 2,
+				room.hitbox.p2.x - viewportZoomed.width / 2
+			)
+			self.targetPos.y = clamp(
+				self.target.pos.y,
+				room.hitbox.p1.y + viewportZoomed.height / 2,
+				room.hitbox.p2.y - viewportZoomed.height / 2
+			)
+		end
 	end
 
 	self:updateShake(dt)
@@ -154,6 +156,12 @@ function Camera:calculateZoom()
 	return clamp(rightZoom, self.viewport.width / roomDim.width, 2)
 end
 
+---@param target Player | Npc | Enemy
+-- muda o alvo que a câmera deve seguir
+function Camera:changeTarget(target)
+	self.target = target
+end
+
 ---@param entityPos Vec
 ---@return Vec
 -- retorna a posição da entidade dada pelo parâmetro `entityPos`
@@ -188,33 +196,75 @@ function Camera:draw()
 	love.graphics.pop()
 	love.graphics.setCanvas()
 	love.graphics.draw(self.canvas, self.canvasPos.x, self.canvasPos.y)
+
+	-- barras pretas em espaço de tela (fora do canvas/zoom)
+	if self.playerAttached and self.playerAttached.inDialogue then
+		renderBlackBars(self)
+	end
 end
 
 ----------------------------------------
 -- Funções Globais
 ----------------------------------------
 
+---@param camera Camera
+--
+function renderBlackBars(camera)
+  local barHeight = 50
+
+  -- desenha barras relativas à região do canvas da câmera
+  local x = camera.canvasPos.x
+  local y = camera.canvasPos.y
+  local w = camera.viewport.width
+  local h = camera.viewport.height
+
+  love.graphics.setColor(0, 0, 0, 1)
+  -- barra superior
+  love.graphics.rectangle("fill", x, y, w, barHeight)
+  -- barra inferior
+  love.graphics.rectangle("fill", x, y + h - barHeight, w, barHeight)
+  love.graphics.setColor(1, 1, 1, 1)
+end
+
+---@param player Player
+---@return Camera | nil
+--- retorna a câmera associada ao `player` passado como argumento
+function getCameraByPlayer(player)
+	for _, cam in pairs(cameras) do
+		if cam.playerAttached == player then
+			return cam
+		end
+	end
+	return nil
+end
+
 ---@param player Player
 -- cria uma câmera atrelada ao `player` passado como argumento
 function newCamera(player)
+	print("Criando câmera para o jogador " .. player.name)
 	-- limite de cameras alcançado
 	if #cameras >= 4 then
 		return
 	end
 
+	local cameraPlayers = {}
+
 	local numOfCams = #cameras + 1
 	for i = 1, #cameras do
+		cameraPlayers[i] = cameras[i].playerAttached
 		cameras[i] = nil
 	end
+
+	table.insert(cameraPlayers, player)
 
 	for i = 1, numOfCams do
 		if numOfCams <= 3 then
 			local camera = Camera.new(
-				{ x = 0, y = 0 },
+				cameraPlayers[i].pos,
 				{ width = window.width / numOfCams, height = window.height },
 				love.graphics.newCanvas(window.width / numOfCams, window.height),
 				{ x = (i - 1) * (window.width / numOfCams), y = 0 },
-				player
+				cameraPlayers[i]
 			)
 			table.insert(cameras, camera)
 		else -- no caso de 4 câmeras
@@ -225,11 +275,11 @@ function newCamera(player)
 				{ x = window.width / 2, y = window.height / 2 },
 			}
 			local camera = Camera.new(
-				{ x = 0, y = 0 },
+				cameraPlayers[i].pos,
 				{ width = window.width / 2, height = window.height / 2 },
 				love.graphics.newCanvas(window.width / 2, window.height / 2),
 				canvasPositions[i],
-				player
+				cameraPlayers[i]
 			)
 			table.insert(cameras, camera)
 		end

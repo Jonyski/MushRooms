@@ -2,6 +2,7 @@
 -- Importações de Módulos
 ----------------------------------------
 require("modules.entities.npc")
+require("modules.constructors.dialogue")
 
 ---@param spawnPos Vec
 ---@param room Room
@@ -13,5 +14,6 @@ function initGlob(spawnPos, room)
 	npc = Npc.new(description, spawnPos, hitbox, room)
 	local idleAnimSettings = newAnimSetting(1, { width = 32, height = 32 }, 0.15, true, 1)
 	npc:addAnimations(idleAnimSettings)
+	npc.dialogue = globDialogue()
 	return npc
 end

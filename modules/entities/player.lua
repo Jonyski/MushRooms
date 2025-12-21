@@ -45,6 +45,7 @@ players = {}
 ---@field blinkTimer number
 ---@field addAnimations function
 ---@field addParticles function
+---@field inDialogue boolean
 
 Player = {}
 Player.__index = Player
@@ -82,6 +83,7 @@ function Player.new(name, spawn_pos, controls, colors, room)
 	player.hb = hitbox(Circle.new(20), player.pos) -- hitbox do player
 	player.invulnerableTimer = 0                -- timer de invulnerabilidade após levar dano
 	player.blinkTimer = 0                       -- timer para piscar o sprite do player quando invulnerável
+	player.inDialogue = false                   -- se o player está em diálogo
 
 	collisionManager.players[player] = player.hb
 	return player
@@ -150,7 +152,7 @@ end
 function Player:move(dt)
 	self.movementVec = vec(0, 0)
 
-	if self.state == DEFENDING then
+	if self.state == DEFENDING or self.inDialogue then
 		return
 	end
 	if love.keyboard.isDown(self.controls.up) then
@@ -282,12 +284,19 @@ end
 
 ---@param key string
 -- verifica se o `Player` está pressionando a tecla de ação 1,
--- caso positivo, chama a função de ataque dele
+-- caso esteja em diálogo, avança o diálogo; caso contrário, chama a função de ataque dele
 function Player:checkAction1(key)
-	if key == self.controls.act1 then
-		if self.weapon then
-			self.weapon:attack()
-		end
+	if key ~= self.controls.act1 then
+		return
+	end
+
+	if self.inDialogue then
+		DialogueManager:getDialogueByPlayer(self):advance()
+		return
+	end
+
+	if self.weapon then
+		self.weapon:attack()
 	end
 end
 
@@ -419,7 +428,7 @@ end
 -- Funções Globais
 ----------------------------------------
 
----@return boolean?
+---@return boolean
 -- inicializa o próximo jogador, caso os 4 jogadores
 -- já tenham sido inicializados, retorna `false`
 function newPlayer()
@@ -429,6 +438,8 @@ function newPlayer()
 	end
 	CONSTRUCTORS[PLAYER][#players + 1]()
 	newCamera(players[#players])
+
+	return true
 end
 
 return Player

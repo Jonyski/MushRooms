@@ -1,10 +1,10 @@
 ----------------------------------------
 -- Importações de Módulos
 ----------------------------------------
-require("modules.entities.entity")
-require("modules.utils.types")
-require("modules.utils.states")
 require("modules.engine.collision")
+require("modules.entities.entity")
+require("modules.utils.states")
+require("modules.utils.types")
 require("table")
 
 ----------------------------------------

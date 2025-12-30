@@ -1,14 +1,14 @@
 ----------------------------------------
 -- Importações de Módulos
 ----------------------------------------
-require("modules.entities.entity")
-require("modules.engine.animation")
-require("modules.utils.utils")
-require("modules.systems.loots")
-require("modules.utils.types")
-require("modules.utils.states")
-require("modules.engine.collision")
 require("modules.constructors.weapon")
+require("modules.engine.animation")
+require("modules.engine.collision")
+require("modules.entities.entity")
+require("modules.systems.loots")
+require("modules.utils.states")
+require("modules.utils.types")
+require("modules.utils.utils")
 require("table")
 
 ----------------------------------------

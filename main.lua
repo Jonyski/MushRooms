@@ -1,19 +1,19 @@
 ----------------------------------------
 -- Importações de Módulos
 ----------------------------------------
-require("table")
-require("modules.entities.room")
-require("modules.engine.renderization")
-require("modules.entities.player")
-require("modules.engine.camera")
-require("modules.engine.animation")
-require("modules.entities.enemy")
-require("modules.entities.weapon")
-require("modules.entities.destructible")
-require("modules.entities.item")
-require("modules.engine.collision")
-require("modules.systems.dialogue")
 require("modules.constructors.dialogue")
+require("modules.engine.animation")
+require("modules.engine.camera")
+require("modules.engine.collision")
+require("modules.engine.renderization")
+require("modules.entities.destructible")
+require("modules.entities.enemy")
+require("modules.entities.item")
+require("modules.entities.player")
+require("modules.entities.room")
+require("modules.entities.weapon")
+require("modules.systems.dialogue")
+require("table")
 
 ----------------------------------------
 -- Variáveis Globais
@@ -82,7 +82,7 @@ end
 -- Inicialização
 ----------------------------------------
 function love.load()
-	tempFont = love.graphics.newFont('assets/fonts/PressStart2P-Regular.ttf', 10)
+	tempFont = love.graphics.newFont("assets/fonts/PressStart2P-Regular.ttf", 10)
 	math.randomseed(os.time())
 	window.width = 800
 	window.height = 800

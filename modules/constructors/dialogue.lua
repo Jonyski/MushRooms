@@ -1,16 +1,15 @@
 ----------------------------------------
 -- Importações de Módulos
 ----------------------------------------
-
-require("modules.systems.dialogue")
 require("modules.conditions")
+require("modules.systems.dialogue")
 
 ----------------------------------------
 -- Funções auxiliares
 ----------------------------------------
 
 function parseDialogueBlocks(path)
-  assert(love.filesystem.getInfo(path), "Diálogo inexistente ou caminho incorreto: "..path)
+  assert(love.filesystem.getInfo(path), "Diálogo inexistente ou caminho incorreto: " .. path)
 
   local blocks = {}
   local current = {}
@@ -49,7 +48,7 @@ function buildDialogueData(blocks)
   local data = {
     intro = nil,
     loop = nil,
-    event = {}
+    event = {},
   }
 
   if blocks[1] then
@@ -63,7 +62,7 @@ function buildDialogueData(blocks)
   for i = 3, #blocks do
     local block = blocks[i]
     local key = block[1]
-    
+
     local condition = getCondition(key)
     local text = { unpack(blocks[i], 2) }
 
@@ -82,10 +81,10 @@ end
 function globDialogue()
   local blocks = parseDialogueBlocks("assets/dialogues/glob.txt")
   local data = buildDialogueData(blocks)
-  
+
   return Dialogue.new({
     intro = data.intro,
     loop = data.loop,
-    event = data.event
+    event = data.event,
   })
 end

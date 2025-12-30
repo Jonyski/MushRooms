@@ -1,10 +1,10 @@
 ----------------------------------------
 -- Importações de Módulos
 ----------------------------------------
+require("modules.engine.animation")
 require("modules.entities.entity")
 require("modules.systems.attacks")
 require("modules.utils.shapes")
-require("modules.engine.animation")
 require("modules.utils.types")
 
 ----------------------------------------

@@ -1,6 +1,9 @@
-require("modules.utils.anchors")
+----------------------------------------
+-- Importações de Módulos
+----------------------------------------
 require("modules.engine.camera")
 require("modules.systems.dialogue")
+require("modules.utils.anchors")
 
 ----------------------------------------
 -- Funções Globais
@@ -111,7 +114,9 @@ function renderEntities(camera)
 	for _, dialogue in pairs(DialogueManager.dialogues) do
 		if dialogue.active then
 			table.insert(drawList, {
-				y = (dialogue.owner and dialogue.owner.pos) and dialogue.owner.pos.y + getAnchor(dialogue.owner, FLOOR) + 1 or 0,
+				y = (dialogue.owner and dialogue.owner.pos)
+					and dialogue.owner.pos.y + getAnchor(dialogue.owner, FLOOR) + 1
+					or 0,
 				draw = function()
 					dialogue:draw(camera)
 				end,

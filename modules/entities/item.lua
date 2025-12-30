@@ -1,13 +1,13 @@
 ----------------------------------------
 -- Importações
 ----------------------------------------
+require("modules.engine.collision")
 require("modules.entities.entity")
+require("modules.entities.player")
+require("modules.systems.shaders")
+require("modules.utils.types")
 require("modules.utils.utils")
 require("modules.utils.vec")
-require("modules.systems.shaders")
-require("modules.entities.player")
-require("modules.utils.types")
-require("modules.engine.collision")
 require("table")
 
 ----------------------------------------

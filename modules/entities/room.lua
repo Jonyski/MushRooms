@@ -1,11 +1,11 @@
 ----------------------------------------
 -- Importações de Módulos
 ----------------------------------------
-require("table")
-require("modules.utils.utils")
 require("modules.systems.blueprints")
-require("modules.utils.types")
 require("modules.utils.constructors")
+require("modules.utils.types")
+require("modules.utils.utils")
+require("table")
 
 ----------------------------------------
 -- Variáveis e enums

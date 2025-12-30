@@ -1,8 +1,8 @@
 ----------------------------------------
 -- Importações de Módulos
 ----------------------------------------
-require("modules.utils.types")
 require("modules.flags")
+require("modules.utils.types")
 require("table")
 
 ----------------------------------------
@@ -58,7 +58,11 @@ function Dialogue:start()
     for i = #self.event, 1, -1 do
       local entry = self.event[i]
 
-      if entry.condition and entry.condition(self.talkingWith, self.owner, flagsTable) and entry.triggered ~= true then
+      if
+          entry.condition
+          and entry.condition(self.talkingWith, self.owner, flagsTable)
+          and entry.triggered ~= true
+      then
         self.activeSequence = entry
       end
     end
@@ -73,8 +77,8 @@ function Dialogue:start()
 end
 
 function Dialogue:advance()
-  if not self.active or not self.activeSequence then 
-    return   
+  if not self.active or not self.activeSequence then
+    return
   end
 
   if self.activeSequence.idx < #self.activeSequence.text then
@@ -106,7 +110,7 @@ function Dialogue:update(dt)
 end
 
 function Dialogue:draw(camera)
-  if not self.active or not self.activeSequence then 
+  if not self.active or not self.activeSequence then
     return
   end
 
@@ -117,18 +121,10 @@ function Dialogue:draw(camera)
     local width = 300 -- largura da caixa de diálogo
 
     love.graphics.setFont(tempFont)
-    love.graphics.printf(
-      text,
-      viewPos.x - width / 2,
-      viewPos.y,
-      width,
-      "center"
-    )
-    
-  else 
+    love.graphics.printf(text, viewPos.x - width / 2, viewPos.y, width, "center")
+  else
     love.graphics.print(text, 50, love.graphics.getHeight() - 120)
   end
-
 end
 
 ----------------------------------------
@@ -186,5 +182,5 @@ function DialogueManager:getDialogueByPlayer(player)
     end
   end
   return nil
-  
 end
+

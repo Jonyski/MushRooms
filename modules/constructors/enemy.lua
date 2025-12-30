@@ -1,8 +1,8 @@
 ----------------------------------------
 -- Importações de Módulos
 ----------------------------------------
-require("modules.constructors.movements")
 require("modules.constructors.attacks")
+require("modules.constructors.movements")
 require("modules.utils.easing")
 
 ---@param spawnPos Vec

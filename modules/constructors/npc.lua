@@ -1,8 +1,8 @@
 ----------------------------------------
 -- Importações de Módulos
 ----------------------------------------
-require("modules.entities.npc")
 require("modules.constructors.dialogue")
+require("modules.entities.npc")
 
 ---@param spawnPos Vec
 ---@param room Room
@@ -17,3 +17,4 @@ function initGlob(spawnPos, room)
 	npc.dialogue = globDialogue()
 	return npc
 end
+

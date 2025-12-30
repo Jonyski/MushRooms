@@ -1,8 +1,8 @@
 ----------------------------------------
 -- Importações de Módulos
 ----------------------------------------
-require("modules.utils.types")
 require("modules.constructors.room")
+require("modules.utils.types")
 
 ----------------------------------------
 -- Classe SpawnData

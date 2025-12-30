@@ -159,7 +159,7 @@ function zigZagMovement(period, ampDeg)
 	end
 end
 
----@param amplitude? rad
+---@param ampDeg? rad
 ---@return MovementFunc
 -- trajetória em formato de senoide
 function sineMovement(ampDeg)

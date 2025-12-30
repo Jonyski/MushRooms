@@ -2,10 +2,10 @@
 -- Importações de Módulos
 ----------------------------------------
 require("modules.utils.types")
-require("modules.entities.constructors.enemy")
-require("modules.entities.constructors.player")
-require("modules.entities.constructors.destructible")
-require("modules.entities.constructors.npc")
+require("modules.constructors.enemy")
+require("modules.constructors.player")
+require("modules.constructors.destructible")
+require("modules.constructors.npc")
 
 ----------------------------------------
 -- Mapa de construtores

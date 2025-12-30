@@ -2,7 +2,7 @@
 -- Importações de Módulos
 ----------------------------------------
 require("modules.utils.types")
-require("modules.entities.constructors.room")
+require("modules.constructors.room")
 
 ----------------------------------------
 -- Classe SpawnData
@@ -189,4 +189,3 @@ end
 function randEventRoomBP()
 	return newEventRoom1()
 end
-

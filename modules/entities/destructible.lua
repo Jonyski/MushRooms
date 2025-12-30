@@ -7,7 +7,7 @@ require("modules.systems.loots")
 require("modules.utils.types")
 require("modules.utils.states")
 require("modules.engine.collision")
-require("modules.entities.constructors.weapon")
+require("modules.constructors.weapon")
 require("table")
 
 ----------------------------------------
@@ -48,7 +48,7 @@ function Destructible.new(name, pos, room, loot, hitbox)
 	obj.spriteSheets = {}
 	obj.animations = {}
 	obj.loot = loot or LOOT_TABLE[name] or Loot.new() -- pode ser sobrescrito na criação
-	obj.hb = hitbox -- hitbox do destrutível
+	obj.hb = hitbox                                -- hitbox do destrutível
 
 	table.insert(room.destructibles, obj)
 	return obj

@@ -1,6 +1,7 @@
 ----------------------------------------
 -- Importações de Módulos
 ----------------------------------------
+require("modules.entities.entity")
 require("modules.systems.attacks")
 require("modules.utils.shapes")
 require("modules.engine.animation")
@@ -10,8 +11,7 @@ require("modules.utils.types")
 -- Classe Weapon
 ----------------------------------------
 
----@class Weapon
----@field name string
+---@class Weapon: Entity
 ---@field ammo number
 ---@field atk Attack
 ---@field canShoot boolean
@@ -22,7 +22,7 @@ require("modules.utils.types")
 ---@field animations table<string, Animation>
 ---@field addAnimations fun(self: Weapon, idleSettings: AnimSettings, weaponAtkSettings: AnimSettings): nil
 
-Weapon = {}
+Weapon = setmetatable({}, { __index = Entity })
 Weapon.__index = Weapon
 Weapon.type = WEAPON
 
@@ -32,17 +32,19 @@ Weapon.type = WEAPON
 ---@return Weapon
 -- cria uma instância de `Weapon`
 function Weapon.new(name, ammo, attack)
-	local weapon = setmetatable({}, Weapon)
+	---@type Weapon
+	local weapon = setmetatable({}, Weapon) ---@diagnostic disable-line
+
+	weapon:init(name)
 
 	-- atributos que variam
-	weapon.name = name -- nome do tipo de arma
 	weapon.ammo = ammo -- número de munições
 	weapon.atk = attack -- instância de Attack associada à arma
 	-- atributos fixos na instanciação
 	weapon.canShoot = false
-	weapon.target = nil -- inimigo para o qual a arma está mirando
-	weapon.rotation = 0 -- rotação da arma em radianos
-	weapon.state = IDLE -- estado atual da arma
+	weapon.target = nil   -- inimigo para o qual a arma está mirando
+	weapon.rotation = 0   -- rotação da arma em radianos
+	weapon.state = IDLE   -- estado atual da arma
 	weapon.spriteSheets = {} -- no tipo imagem do love
 	weapon.animations = {} -- as chaves são estados e os valores são Animações
 	return weapon

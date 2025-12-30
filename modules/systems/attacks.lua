@@ -43,7 +43,7 @@ function newAtkSetting(ally, damage, duration, hitbox, cooldown, speed, accelera
 end
 
 ----------------------------------------
--- Classe AttackState
+-- Classe Attack
 ----------------------------------------
 
 ---@class Attack: AtkSetting

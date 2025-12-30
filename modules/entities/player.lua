@@ -1,6 +1,7 @@
 ----------------------------------------
 -- Importações de Módulos
 ----------------------------------------
+require("modules.entities.entity")
 require("modules.utils.utils")
 require("modules.engine.animation")
 require("modules.utils.vec")
@@ -23,14 +24,11 @@ players = {}
 -- Classe Player
 ----------------------------------------
 
----@class Player
+---@class Player : Entity
 ---@field id number
----@field name string
 ---@field hp number
----@field pos Vec
 ---@field controls table<string, string>
 ---@field colors Color[]
----@field room Room
 ---@field speed number
 ---@field size Size
 ---@field movementVec Vec
@@ -40,50 +38,49 @@ players = {}
 ---@field particles table<string, ParticleSystem>
 ---@field weapons table[]
 ---@field weapon table
----@field hb Hitbox
 ---@field invulnerableTimer number
 ---@field blinkTimer number
 ---@field addAnimations function
 ---@field addParticles function
 ---@field inDialogue boolean
 
-Player = {}
+Player = setmetatable({}, { __index = Entity })
 Player.__index = Player
 Player.type = PLAYER
 
 ---@param name string
----@param spawn_pos Vec
+---@param spawnPos Vec
 ---@param controls table<string, string>
 ---@param colors Color[]
 ---@param room Room
 ---@return Player
 -- cria uma instância de `Player` e o adiciona à lista global de `players`
-function Player.new(name, spawn_pos, controls, colors, room)
-	local player = setmetatable({}, Player)
+function Player.new(name, spawnPos, controls, colors, room)
+	---@type Player
+	local player = setmetatable({}, Player) ---@diagnostic disable-line
+
+	local hitbox = hitbox(Circle.new(20), spawnPos)
+	player:init(name, spawnPos, hitbox, room)
 
 	-- atributos que variam
-	player.id = #players + 1                    -- número do jogador
-	player.name = name                          -- nome do jogador
-	player.hp = 100                             -- pontos de vida
-	player.pos = spawn_pos                      -- posição do jogador (inicializa para a posição do spawn)
+	player.id = #players + 1               -- número do jogador
+	player.hp = 100                        -- pontos de vida
 	player.controls =
-	controls                                    -- os comandos para controlar o boneco, no formato {up = "", left = "", down = "", right = "", action = ""}
-	player.colors = colors                      -- paleta de cores do jogador
-	player.room = room                          -- sala na qual o jogador está atualmente
+	controls                               -- os comandos para controlar o boneco, no formato {up = "", left = "", down = "", right = "", action = ""}
+	player.colors = colors                 -- paleta de cores do jogador
 	-- atributos fixos na instanciação
-	player.speed = 360                          -- velocidade em pixels por segundo
-	player.size = { height = 32, width = 32 }   -- em pixels
-	player.movementVec = { x = 0, y = 0 }       -- vetor de direção e magnitude do movimento do jogador
-	player.state = IDLE                         -- define o estado atual do jogador, estreitamente relacionado às animações
-	player.spriteSheets = {}                    -- no tipo imagem do love
-	player.animations = {}                      -- as chaves são estados e os valores são Animações
-	player.particles = {}                       -- efeitos de partícula emitidos pelo player
-	player.weapons = {}                         -- lista das armas que o jogador possui
-	player.weapon = nil                         -- arma equipada
-	player.hb = hitbox(Circle.new(20), player.pos) -- hitbox do player
-	player.invulnerableTimer = 0                -- timer de invulnerabilidade após levar dano
-	player.blinkTimer = 0                       -- timer para piscar o sprite do player quando invulnerável
-	player.inDialogue = false                   -- se o player está em diálogo
+	player.speed = 360                     -- velocidade em pixels por segundo
+	player.size = { height = 32, width = 32 } -- em pixels
+	player.movementVec = { x = 0, y = 0 }  -- vetor de direção e magnitude do movimento do jogador
+	player.state = IDLE                    -- define o estado atual do jogador, estreitamente relacionado às animações
+	player.spriteSheets = {}               -- no tipo imagem do love
+	player.animations = {}                 -- as chaves são estados e os valores são Animações
+	player.particles = {}                  -- efeitos de partícula emitidos pelo player
+	player.weapons = {}                    -- lista das armas que o jogador possui
+	player.weapon = nil                    -- arma equipada
+	player.invulnerableTimer = 0           -- timer de invulnerabilidade após levar dano
+	player.blinkTimer = 0                  -- timer para piscar o sprite do player quando invulnerável
+	player.inDialogue = false              -- se o player está em diálogo
 
 	collisionManager.players[player] = player.hb
 	return player

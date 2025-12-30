@@ -1,6 +1,7 @@
 ----------------------------------------
 -- Importações de Módulos
 ----------------------------------------
+require("modules.entities.entity")
 require("modules.engine.animation")
 require("modules.utils.utils")
 require("modules.systems.loots")
@@ -14,19 +15,15 @@ require("table")
 -- Classe Destructible
 ----------------------------------------
 
----@class Destructible
----@field name string
----@field pos Vec
----@field room Room
+---@class Destructible : Entity
 ---@field state string
 ---@field health number
 ---@field spriteSheets table<string, table>
 ---@field animations table<string, Animation>
 ---@field loot Loot
----@field hb Hitbox
 ---@field addAnimations fun(self: Destructible, intactSettings: AnimSettings, breakingSettings: AnimSettings, brokenSettings: AnimSettings)
 
-Destructible = {}
+Destructible = setmetatable({}, { __index = Entity })
 Destructible.__index = Destructible
 Destructible.type = DESTRUCTIBLE
 
@@ -38,17 +35,14 @@ Destructible.type = DESTRUCTIBLE
 ---@return Destructible
 -- cria um objeto destrutível contendo um certo `loot`
 function Destructible.new(name, pos, room, loot, hitbox)
-	local obj = setmetatable({}, Destructible)
-
-	obj.name = name -- nome do objeto
-	obj.pos = pos -- posição do destrutível no mundo
-	obj.room = room -- sala a qual pertence
+	---@type Destructible
+	local obj = setmetatable({}, Destructible) ---@diagnostic disable-line
+	obj:init(name, pos, hitbox, room)
 	obj.state = INTACT
 	obj.health = 100 -- vida para ser destruído
 	obj.spriteSheets = {}
 	obj.animations = {}
 	obj.loot = loot or LOOT_TABLE[name] or Loot.new() -- pode ser sobrescrito na criação
-	obj.hb = hitbox                                -- hitbox do destrutível
 
 	table.insert(room.destructibles, obj)
 	return obj

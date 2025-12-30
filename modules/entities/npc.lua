@@ -1,4 +1,9 @@
 ----------------------------------------
+-- Importações de Módulos
+----------------------------------------
+require("modules.entities.entity")
+
+----------------------------------------
 -- Enums
 ----------------------------------------
 
@@ -11,23 +16,19 @@ LOYAL = "loyal"         -- vai para a base do jogador, caso ela exista
 -- Classe Non-Playable Character
 ----------------------------------------
 
----@class Npc
----@field name string
+---@class Npc : Entity
 ---@field job string profissao
 ---@field personality any
 ---@field lifestyle string comportamento após interação com o jogador
----@field hb Hitbox
----@field room Room
----@field pos Vec
 ---@field inventory any
 ---@field state string
 ---@field spriteSheets table<string, table>
----@field animation table<string, Animation>
+---@field animations table<string, Animation>
 ---@field addAnimations function
 ---@field dialogue Dialogue
 ---@field inDialogue boolean
 
-Npc = {}
+Npc = setmetatable({}, { __index = Entity })
 Npc.__index = Npc
 Npc.type = NPC
 
@@ -37,16 +38,15 @@ Npc.type = NPC
 ---@param room Room
 ---@return Npc
 function Npc.new(description, spawnPos, hitbox, room)
-	local npc = setmetatable({}, Npc)
+	---@type Npc
+	local npc = setmetatable({}, Npc) ---@diagnostic disable-line
+
+	npc:init(description.name, spawnPos, hitbox, room)
 
 	-- atributos que variam
-	npc.name = description.name            -- nome do npc
 	npc.job = description.job              -- define a profissão do npc
 	npc.personality = description.personality -- define a personalidade do npc
 	npc.lifestyle = description.lifestyle  -- define o inventário do npc
-	npc.hb = hitbox                        -- hitbox do npc
-	npc.pos = spawnPos                     -- posição do npc
-	npc.room = room                        -- sala do npc
 	-- atributos fixos na instanciação
 	npc.inventory = {}                     -- define o inventário do npc
 	npc.state = IDLE                       -- define o estado atual do npc, estreitamente relacionado às animações

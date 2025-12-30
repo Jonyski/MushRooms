@@ -1,6 +1,7 @@
 ----------------------------------------
 -- Importações de Módulos
 ----------------------------------------
+require("modules.entities.entity")
 require("modules.utils.types")
 require("modules.utils.states")
 require("modules.engine.collision")
@@ -10,15 +11,11 @@ require("table")
 -- Classe Enemy
 ----------------------------------------
 
----@class Enemy
----@field name string
+---@class Enemy : Entity
 ---@field hp number
----@field pos Vec
 ---@field speed number
 ---@field move function
 ---@field attack Attack
----@field hb Hitbox
----@field room Room
 ---@field state string
 ---@field spriteSheets table<string, table>
 ---@field animations table<string, Animation>
@@ -27,7 +24,7 @@ require("table")
 ---@field addAnimations function
 ---@field setProjectileAtk function
 
-Enemy = {}
+Enemy = setmetatable({}, { __index = Entity })
 Enemy.__index = Enemy
 Enemy.type = ENEMY
 
@@ -36,28 +33,26 @@ Enemy.type = ENEMY
 ---@param spawnPos Vec
 ---@param speed number
 ---@param move function
----@param attack Attack | function
+---@param attack Attack
 ---@param hitbox Hitbox
 ---@param room Room
 ---@return Enemy
 -- cria uma instância de `Enemy`
 function Enemy.new(name, hp, spawnPos, speed, move, attack, hitbox, room)
-	local enemy = setmetatable({}, Enemy)
+	---@type Enemy
+	local enemy = setmetatable({}, Enemy) ---@diagnostic disable-line
+	enemy:init(name, spawnPos, hitbox, room)
 
 	-- atributos que variam
-	enemy.name = name -- nome do tipo de inimigo
-	enemy.hp = hp -- pontos de vida do inimigo
-	enemy.pos = spawnPos -- posição do inimigo
-	enemy.speed = speed -- velocidade de movimento do inimigo
-	enemy.move = move -- função de movimento do inimigo
-	enemy.atk = attack -- objeto Attack associado ao inimigo (caso possua)
-	enemy.hb = hitbox -- hitbox do inimigo
-	enemy.room = room -- sala do inimigo
+	enemy.hp = hp        -- pontos de vida do inimigo
+	enemy.speed = speed  -- velocidade de movimento do inimigo
+	enemy.move = move    -- função de movimento do inimigo
+	enemy.atk = attack   -- objeto Attack associado ao inimigo (caso possua)
 	-- atributos fixos na instanciação
-	enemy.state = IDLE -- define o estado atual do inimigo, estreitamente relacionado às animações
+	enemy.state = IDLE   -- define o estado atual do inimigo, estreitamente relacionado às animações
 	enemy.spriteSheets = {} -- no tipo imagem do love
 	enemy.animations = {} -- as chaves são estados e os valores são Animações
-	enemy.target = nil -- alvo atual do inimigo
+	enemy.target = nil   -- alvo atual do inimigo
 
 	table.insert(room.enemies, enemy)
 	return enemy

@@ -1,6 +1,7 @@
 ----------------------------------------
 -- Importações
 ----------------------------------------
+require("modules.entities.entity")
 require("modules.utils.utils")
 require("modules.utils.vec")
 require("modules.systems.shaders")
@@ -13,10 +14,8 @@ require("table")
 -- Classe Item
 ----------------------------------------
 
----@class Item
+---@class Item: Entity
 ---@field object any
----@field pos Vec
----@field room Room
 ---@field vel Vec
 ---@field collected boolean
 ---@field autoPick boolean
@@ -24,13 +23,12 @@ require("table")
 ---@field floorY number
 ---@field idleTimer number
 ---@field shine boolean
----@field hb Hitbox
 ---@field canPick boolean
 ---@field image table
 ---@field applyImpulse function
 ---@field setCollected function
 
-Item = {}
+Item = setmetatable({}, { __index = Entity })
 Item.__index = Item
 Item.type = ITEM
 
@@ -42,21 +40,24 @@ Item.type = ITEM
 ---@return Item
 -- cria uma instância de `Item`
 function Item.new(object, pos, room, autoPick, floorY)
-	local item = setmetatable({}, Item)
+	---@type Item
+	local item = setmetatable({}, Item) ---@diagnostic disable-line
 
-	item.object = object -- objeto associado ao item (arma, recurso, etc)
-	item.pos = pos -- posição do item no mundo
-	item.room = room -- sala onde o item está
-	item.vel = vec(0, 0) -- velocidade para física simples
-	item.collected = false -- flag de coleta
-	item.autoPick = autoPick -- se o item é coletado automaticamente ou manualmente
-	item.gravity = 600 -- força da gravidade
-	item.floorY = item.pos.y + (floorY or 0) -- posição onde irá parar de cair
-	item.idleTimer = 0 -- timer para oscilar enquanto parado
-	item.shine = false -- se está brilhando
 	local hbRadius = autoPick and 30 or 60
-	item.hb = hitbox(Circle.new(hbRadius), pos) -- hitbox do item
-	item.canPick = false -- se o item pode ser coletado (true após terminar de cair)
+	local hitbox = hitbox(Circle.new(hbRadius), pos)
+	item:init(object.name, pos, hitbox, room)
+
+	item.object = object                  -- objeto associado ao item (arma, recurso, etc)
+	item.pos = pos                        -- posição do item no mundo
+	item.room = room                      -- sala onde o item está
+	item.vel = vec(0, 0)                  -- velocidade para física simples
+	item.collected = false                -- flag de coleta
+	item.autoPick = autoPick              -- se o item é coletado automaticamente ou manualmente
+	item.gravity = 600                    -- força da gravidade
+	item.floorY = item.pos.y + (floorY or 0) -- posição onde irá parar de cair
+	item.idleTimer = 0                    -- timer para oscilar enquanto parado
+	item.shine = false                    -- se está brilhando
+	item.canPick = false                  -- se o item pode ser coletado (true após terminar de cair)
 
 	local sprite_path = pngPathFormat({ "assets", "sprites", "items", object.name })
 	item.image = love.graphics.newImage(sprite_path)

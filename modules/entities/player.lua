@@ -30,7 +30,6 @@ players = {}
 ---@field controls table<string, string>
 ---@field colors Color[]
 ---@field speed number
----@field size Size
 ---@field movementVec Vec
 ---@field state string
 ---@field spriteSheets table<string, table>
@@ -60,27 +59,26 @@ function Player.new(name, spawnPos, controls, colors, room)
 	local player = setmetatable({}, Player) ---@diagnostic disable-line
 
 	local hitbox = hitbox(Circle.new(20), spawnPos)
-	player:init(name, spawnPos, hitbox, room)
+	local mass = 1
+	player:init(name, spawnPos, hitbox, room, mass, 8)
 
 	-- atributos que variam
-	player.id = #players + 1               -- número do jogador
-	player.hp = 100                        -- pontos de vida
-	player.controls =
-	controls                               -- os comandos para controlar o boneco, no formato {up = "", left = "", down = "", right = "", action = ""}
-	player.colors = colors                 -- paleta de cores do jogador
+	player.id = #players + 1 -- número do jogador
+	player.hp = 100 -- pontos de vida
+	player.controls = controls -- os comandos para controlar o boneco, no formato {up = "", left = "", down = "", right = "", action = ""}
+	player.colors = colors -- paleta de cores do jogador
 	-- atributos fixos na instanciação
-	player.speed = 360                     -- velocidade em pixels por segundo
-	player.size = { height = 32, width = 32 } -- em pixels
-	player.movementVec = { x = 0, y = 0 }  -- vetor de direção e magnitude do movimento do jogador
-	player.state = IDLE                    -- define o estado atual do jogador, estreitamente relacionado às animações
-	player.spriteSheets = {}               -- no tipo imagem do love
-	player.animations = {}                 -- as chaves são estados e os valores são Animações
-	player.particles = {}                  -- efeitos de partícula emitidos pelo player
-	player.weapons = {}                    -- lista das armas que o jogador possui
-	player.weapon = nil                    -- arma equipada
-	player.invulnerableTimer = 0           -- timer de invulnerabilidade após levar dano
-	player.blinkTimer = 0                  -- timer para piscar o sprite do player quando invulnerável
-	player.inDialogue = false              -- se o player está em diálogo
+	player.speed = 6000
+	player.movementVec = { x = 0, y = 0 } -- vetor de direção e magnitude do movimento do jogador
+	player.state = IDLE -- define o estado atual do jogador, estreitamente relacionado às animações
+	player.spriteSheets = {} -- no tipo imagem do love
+	player.animations = {} -- as chaves são estados e os valores são Animações
+	player.particles = {} -- efeitos de partícula emitidos pelo player
+	player.weapons = {} -- lista das armas que o jogador possui
+	player.weapon = nil -- arma equipada
+	player.invulnerableTimer = 0 -- timer de invulnerabilidade após levar dano
+	player.blinkTimer = 0 -- timer para piscar o sprite do player quando invulnerável
+	player.inDialogue = false -- se o player está em diálogo
 
 	collisionManager.players[player] = player.hb
 	return player
@@ -147,44 +145,43 @@ end
 ---@param dt number
 -- movimenta o `Player` de acordo com o input do jogador
 function Player:move(dt)
-	self.movementVec = vec(0, 0)
-
+	local movementDir = vec(0, 0)
 	if self.state == DEFENDING or self.inDialogue then
 		return
 	end
 	if love.keyboard.isDown(self.controls.up) then
-		self.movementVec.y = -1
+		movementDir.y = -1
 	end
 	if love.keyboard.isDown(self.controls.down) then
-		self.movementVec.y = 1
+		movementDir.y = 1
 	end
 	if love.keyboard.isDown(self.controls.left) then
-		self.movementVec.x = -1
+		movementDir.x = -1
 	end
 	if love.keyboard.isDown(self.controls.right) then
-		self.movementVec.x = 1
+		movementDir.x = 1
 	end
 
-	if self.movementVec.x == 0 and self.movementVec.y == 0 then
+	if nullVec(movementDir) then
+		applyPhysics(self, dt)
 		return
 	end
 
-	-- Normalizando para impedir movimentos na diagonal de serem mais rápidos
-	self.movementVec = normalize(self.movementVec)
-	-- Levando o dt e a velocidade do cogumelo em consideração
-	self.movementVec = scaleVec(self.movementVec, dt * self.speed)
+	-- a normalização impede o movimento de ser mais rápido na diagonal
+	local walkForce = scaleVec(normalize(movementDir), self.speed)
 
 	------------ HACK PARA DEBUG ------------
 	if love.keyboard.isDown("lctrl") then
-		self.movementVec = scaleVec(self.movementVec, 5)
+		walkForce = scaleVec(walkForce, 5)
 	end
 	-----------------------------------------
 
-	setPos(self, addVec(self.pos, self.movementVec))
+	applyForce(self, walkForce)
+	applyPhysics(self, dt)
 
 	self:updateParticlesPos()
 	if self.weapon then
-		self.weapon:updateOrientation({ x = self.movementVec.x, y = self.movementVec.y })
+		self.weapon:updateOrientation({ x = self.vel.x, y = self.vel.y })
 	end
 	self:updateRoom()
 end
@@ -225,7 +222,8 @@ end
 -- atualiza o estado do `Player`
 function Player:updateState()
 	local prevState = self.state
-	local isMoving = not nullVec(self.movementVec)
+	print("MOVE VEC: " .. self.vel.x .. ", " .. self.vel.y)
+	local isMoving = not nullVec(self.vel)
 	if love.keyboard.isDown(self.controls.act2) then
 		-- só defende se está completamente parado; se não, muda de arma
 		if not isMoving then
@@ -235,14 +233,15 @@ function Player:updateState()
 			self.state = DEFENDING
 		end
 	else
-		if self.movementVec.y < 0 then
+		local isVerticalMovement = math.abs(self.vel.y) > math.abs(self.vel.x)
+		if self.vel.y < 0 and isVerticalMovement then
 			self.state = WALKING_UP
-		elseif self.movementVec.x > 0 then
-			self.state = WALKING_RIGHT
-		elseif self.movementVec.x < 0 then
-			self.state = WALKING_LEFT
-		elseif self.movementVec.y > 0 then
+		elseif self.vel.y > 0 and isVerticalMovement then
 			self.state = WALKING_DOWN
+		elseif self.vel.x > 0 then
+			self.state = WALKING_RIGHT
+		elseif self.vel.x < 0 then
+			self.state = WALKING_LEFT
 		else
 			self.state = IDLE
 		end
@@ -250,7 +249,7 @@ function Player:updateState()
 
 	-- atualizando a situação do sistema de partículas de caminhada
 	if isMoving then
-		self.particles[self.state]:setDirection(math.atan2(self.movementVec.y, self.movementVec.x) + math.pi)
+		self.particles[self.state]:setDirection(math.atan2(self.vel.y, self.vel.x) + math.pi)
 		self.particles[self.state]:start()
 	else
 		self.particles[WALKING_UP]:stop()

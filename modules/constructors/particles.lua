@@ -1,7 +1,3 @@
-----------------------------------------
--- Funções Globais
-----------------------------------------
-
 ---@alias ParticleSystem table sistemas de partícula são estruturas definidas pelo próprio Love2D
 
 ---@param c1 Color

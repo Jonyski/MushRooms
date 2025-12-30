@@ -1,10 +1,10 @@
 ----------------------------------------
 -- Importações de Módulos
 ----------------------------------------
+require("modules.constructors.particles")
 require("modules.engine.animation")
 require("modules.engine.collision")
 require("modules.entities.entity")
-require("modules.systems.particles")
 require("modules.utils.colors")
 require("modules.utils.constructors")
 require("modules.utils.shapes")

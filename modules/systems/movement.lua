@@ -20,10 +20,10 @@ function applyPhysics(entity, dt)
 	local nextPos = addVec(entity.pos, scaleVec(entity.vel, dt))
 	setPos(entity, nextPos)
 
-	if math.abs(entity.vel.x) < 10 then
+	if math.abs(entity.vel.x) < 1 then
 		entity.vel.x = 0
 	end
-	if math.abs(entity.vel.y) < 10 then
+	if math.abs(entity.vel.y) < 1 then
 		entity.vel.y = 0
 	end
 	entity.acc = vec(0, 0)
@@ -47,4 +47,17 @@ function moveTowards(entity, targetPos, dt)
 	local direction = normalize(subVec(targetPos, entity.pos))
 	local movement = scaleVec(direction, entity.speed * dt)
 	setPos(entity, addVec(entity.pos, movement))
+end
+
+---@param entity any
+---@param targetVel Vec
+---@param intensity number
+-- aplica uma força para aproximar a velocidade atual do objeto
+-- à velocidade desejada (`targetVel`). `intensity` controla a
+-- magnitude dessa força - o defaut é `100`
+function applySteering(entity, targetVel, intensity)
+	-- responsiveness: quão rápido ele tenta atingir a velocidade alvo (ex: 15 a 25)
+	local steer = subVec(targetVel, entity.vel)
+	local force = scaleVec(steer, (intensity or 100) * entity.mass)
+	applyForce(entity, force)
 end

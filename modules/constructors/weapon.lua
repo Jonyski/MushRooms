@@ -27,7 +27,7 @@ end
 ---@return Weapon
 -- cria uma arma do tipo Estilingue
 function newSlingShot()
-	local attack = newPebbleShotAttack(true, 0.4, 30)
+	local attack = newPebbleShotAttack(true, 1.5, 0.4, 2000)
 	local slingshot = Weapon.new(SLING_SHOT.name, math.huge, attack)
 	local idleAnimSettings = newAnimSetting(2, { width = 64, height = 64 }, 0.5, true, 1)
 	local weaponAtkAnimSettings = newAnimSetting(10, { width = 64, height = 64 }, 0.05, false, 1)

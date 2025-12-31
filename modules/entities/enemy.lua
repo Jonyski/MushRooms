@@ -13,7 +13,6 @@ require("table")
 
 ---@class Enemy : Entity
 ---@field hp number
----@field speed number
 ---@field move function
 ---@field attack Attack
 ---@field state string
@@ -31,28 +30,27 @@ Enemy.type = ENEMY
 ---@param name string
 ---@param hp number
 ---@param spawnPos Vec
----@param speed number
+---@param physics PhysicsSettings
 ---@param move function
 ---@param attack Attack
 ---@param hitbox Hitbox
 ---@param room Room
 ---@return Enemy
 -- cria uma instância de `Enemy`
-function Enemy.new(name, hp, spawnPos, speed, move, attack, hitbox, room)
+function Enemy.new(name, hp, spawnPos, physics, move, attack, hitbox, room)
 	---@type Enemy
 	local enemy = setmetatable({}, Enemy) ---@diagnostic disable-line
-	enemy:init(name, spawnPos, hitbox, room)
+	enemy:init(name, spawnPos, hitbox, room, physics)
 
 	-- atributos que variam
-	enemy.hp = hp        -- pontos de vida do inimigo
-	enemy.speed = speed  -- velocidade de movimento do inimigo
-	enemy.move = move    -- função de movimento do inimigo
-	enemy.atk = attack   -- objeto Attack associado ao inimigo (caso possua)
+	enemy.hp = hp -- pontos de vida do inimigo
+	enemy.move = move -- função de movimento do inimigo
+	enemy.atk = attack -- objeto Attack associado ao inimigo (caso possua)
 	-- atributos fixos na instanciação
-	enemy.state = IDLE   -- define o estado atual do inimigo, estreitamente relacionado às animações
+	enemy.state = IDLE -- define o estado atual do inimigo, estreitamente relacionado às animações
 	enemy.spriteSheets = {} -- no tipo imagem do love
 	enemy.animations = {} -- as chaves são estados e os valores são Animações
-	enemy.target = nil   -- alvo atual do inimigo
+	enemy.target = nil -- alvo atual do inimigo
 
 	table.insert(room.enemies, enemy)
 	return enemy
@@ -117,6 +115,7 @@ function Enemy:update(dt)
 	end
 	self:attack()
 	self.animations[self.state]:update(dt)
+	applyPhysics(self, dt)
 end
 
 ----------------------------------------

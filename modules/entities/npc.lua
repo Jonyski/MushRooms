@@ -8,9 +8,9 @@ require("modules.entities.entity")
 ----------------------------------------
 
 -- comportamento dos NPCs após interagirem com o jogador
-NOMAD = "nomad"         -- desaparece
+NOMAD = "nomad" -- desaparece
 SEDENTARY = "sedentary" -- fica na sala onde spawnou indefinidamente
-LOYAL = "loyal"         -- vai para a base do jogador, caso ela exista
+LOYAL = "loyal" -- vai para a base do jogador, caso ela exista
 
 ----------------------------------------
 -- Classe Non-Playable Character
@@ -44,16 +44,16 @@ function Npc.new(description, spawnPos, hitbox, room)
 	npc:init(description.name, spawnPos, hitbox, room)
 
 	-- atributos que variam
-	npc.job = description.job              -- define a profissão do npc
+	npc.job = description.job -- define a profissão do npc
 	npc.personality = description.personality -- define a personalidade do npc
-	npc.lifestyle = description.lifestyle  -- define o inventário do npc
+	npc.lifestyle = description.lifestyle -- define o inventário do npc
 	-- atributos fixos na instanciação
-	npc.inventory = {}                     -- define o inventário do npc
-	npc.state = IDLE                       -- define o estado atual do npc, estreitamente relacionado às animações
-	npc.spriteSheets = {}                  -- no tipo imagem do love
-	npc.animations = {}                    -- as chaves são estados e os valores são Animações
-	npc.dialogue = nil                     -- diálogo do npc
-	npc.inDialogue = false                 -- se o npc está em diálogo
+	npc.inventory = {} -- define o inventário do npc
+	npc.state = IDLE -- define o estado atual do npc, estreitamente relacionado às animações
+	npc.spriteSheets = {} -- no tipo imagem do love
+	npc.animations = {} -- as chaves são estados e os valores são Animações
+	npc.dialogue = nil -- diálogo do npc
+	npc.inDialogue = false -- se o npc está em diálogo
 
 	table.insert(room.npcs, npc)
 	return npc

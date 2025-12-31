@@ -60,7 +60,7 @@ function Player.new(name, spawnPos, controls, colors, room)
 
 	local hitbox = hitbox(Circle.new(20), spawnPos)
 	local mass = 1
-	player:init(name, spawnPos, hitbox, room, mass, 8)
+	player:init(name, spawnPos, hitbox, room, physicsSettings(1, 9000, 12))
 
 	-- atributos que variam
 	player.id = #players + 1 -- número do jogador
@@ -68,7 +68,6 @@ function Player.new(name, spawnPos, controls, colors, room)
 	player.controls = controls -- os comandos para controlar o boneco, no formato {up = "", left = "", down = "", right = "", action = ""}
 	player.colors = colors -- paleta de cores do jogador
 	-- atributos fixos na instanciação
-	player.speed = 6000
 	player.movementVec = { x = 0, y = 0 } -- vetor de direção e magnitude do movimento do jogador
 	player.state = IDLE -- define o estado atual do jogador, estreitamente relacionado às animações
 	player.spriteSheets = {} -- no tipo imagem do love
@@ -300,7 +299,7 @@ end
 -- verifica se o `Player` está pressionando a tecla de ação 2
 -- caso positivo, executa a ação correta dependendo do contexto
 function Player:checkAction2(key)
-	if key == self.controls.act2 and self.movementVec.x ~= 0 then
+	if key == self.controls.act2 and self.vel.x ~= 0 then
 		local len = #self.weapons
 		if len <= 1 then
 			return
@@ -308,7 +307,7 @@ function Player:checkAction2(key)
 		local indexWeapon = tableIndexOf(self.weapons, self.weapon)
 		local nextIndex = indexWeapon
 		-- caminha ciclicamente entre as armas
-		if self.movementVec.x > 0 then
+		if self.vel.x > 0 then
 			nextIndex = (indexWeapon % len) + 1
 		else
 			nextIndex = ((indexWeapon - 2 + len) % len) + 1

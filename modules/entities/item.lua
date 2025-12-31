@@ -16,7 +16,6 @@ require("table")
 
 ---@class Item: Entity
 ---@field object any
----@field vel Vec
 ---@field collected boolean
 ---@field autoPick boolean
 ---@field gravity number
@@ -47,17 +46,16 @@ function Item.new(object, pos, room, autoPick, floorY)
 	local hitbox = hitbox(Circle.new(hbRadius), pos)
 	item:init(object.name, pos, hitbox, room)
 
-	item.object = object                  -- objeto associado ao item (arma, recurso, etc)
-	item.pos = pos                        -- posição do item no mundo
-	item.room = room                      -- sala onde o item está
-	item.vel = vec(0, 0)                  -- velocidade para física simples
-	item.collected = false                -- flag de coleta
-	item.autoPick = autoPick              -- se o item é coletado automaticamente ou manualmente
-	item.gravity = 600                    -- força da gravidade
+	item.object = object -- objeto associado ao item (arma, recurso, etc)
+	item.pos = pos -- posição do item no mundo
+	item.room = room -- sala onde o item está
+	item.collected = false -- flag de coleta
+	item.autoPick = autoPick -- se o item é coletado automaticamente ou manualmente
+	item.gravity = 600 -- força da gravidade
 	item.floorY = item.pos.y + (floorY or 0) -- posição onde irá parar de cair
-	item.idleTimer = 0                    -- timer para oscilar enquanto parado
-	item.shine = false                    -- se está brilhando
-	item.canPick = false                  -- se o item pode ser coletado (true após terminar de cair)
+	item.idleTimer = 0 -- timer para oscilar enquanto parado
+	item.shine = false -- se está brilhando
+	item.canPick = false -- se o item pode ser coletado (true após terminar de cair)
 
 	local sprite_path = pngPathFormat({ "assets", "sprites", "items", object.name })
 	item.image = love.graphics.newImage(sprite_path)

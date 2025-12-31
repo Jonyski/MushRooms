@@ -1,4 +1,36 @@
 ----------------------------------------
+-- Classe PhysicsSettings
+----------------------------------------
+
+---@class PhysicsSettings
+---@field mass number
+---@field speed number
+---@field friction number
+---@field initialVel Vec
+---@field initialAcc Vec
+---@field speedRange range
+
+---@param mass? number
+---@param speed? number
+---@param friction? number
+---@param speedRange? range
+---@param initialVel? Vec
+---@param initialAcc? Vec
+---@return PhysicsSettings
+-- cria uma configuração de propriedades físicas para o
+-- movimento e interação dinâmica entre entidades
+function physicsSettings(mass, speed, friction, speedRange, initialVel, initialAcc)
+	return {
+		mass = mass or 1,
+		speed = speed or 0,
+		friction = friction or 1,
+		speedRange = speedRange or range(0, math.huge),
+		initialVel = initialVel or vec(0, 0),
+		initialAcc = initialAcc or vec(0, 0),
+	}
+end
+
+----------------------------------------
 -- Classe Entity
 ----------------------------------------
 
@@ -8,9 +40,11 @@
 ---@field hb? Hitbox
 ---@field room? Room
 ---@field mass number
+---@field speed number
 ---@field friction number
 ---@field vel Vec
 ---@field acc Vec
+---@field speedRange range
 Entity = {}
 Entity.__index = Entity
 
@@ -18,17 +52,20 @@ Entity.__index = Entity
 ---@param pos? Vec
 ---@param hitbox? Hitbox
 ---@param room? Room
----@param mass? number
----@param friction? number
+---@param entityPhysics? PhysicsSettings
 -- inicializa uma entidade com propriedades básicas.
-function Entity:init(name, pos, hitbox, room, mass, friction)
-    self.name = name or ""
-    self.pos = pos
-    self.hb = hitbox
-    self.room = room
+function Entity:init(name, pos, hitbox, room, entityPhysics)
+	self.name = name or ""
+	self.pos = pos
+	self.hb = hitbox
+	self.room = room
 
-    self.mass = mass or 1
-    self.friction = friction or 5
-    self.vel = vec(0, 0)
-    self.acc = vec(0, 0)
+	local physics = entityPhysics and entityPhysics or physicsSettings()
+
+	self.mass = physics.mass
+	self.speed = physics.speed
+	self.friction = physics.friction
+	self.vel = physics.initialVel
+	self.acc = physics.initialAcc
+	self.speedRange = physics.speedRange
 end

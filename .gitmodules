@@ -1,0 +1,3 @@
+[submodule "libs/luis"]
+	path = libs/luis
+	url = git@github.com:SiENcE/luis.git

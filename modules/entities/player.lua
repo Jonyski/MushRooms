@@ -221,7 +221,6 @@ end
 -- atualiza o estado do `Player`
 function Player:updateState()
 	local prevState = self.state
-	print("MOVE VEC: " .. self.vel.x .. ", " .. self.vel.y)
 	local isMoving = not nullVec(self.vel)
 	if love.keyboard.isDown(self.controls.act2) then
 		-- só defende se está completamente parado; se não, muda de arma

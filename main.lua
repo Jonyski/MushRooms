@@ -13,13 +13,15 @@ require("modules.entities.player")
 require("modules.entities.room")
 require("modules.entities.weapon")
 require("modules.systems.dialogue")
+require("modules.UI.menu")
+require("modules.UI.ui")
 require("table")
 
 ----------------------------------------
 -- Variáveis Globais
 ----------------------------------------
 window = {}
-sec_timer = {}
+gameCtx = MENU_CTX
 
 ----------------------------------------
 -- Callbacks
@@ -27,8 +29,11 @@ sec_timer = {}
 function love.keypressed(key, scancode, isrepeat)
 	-- esc fecha o jogo
 	if key == "escape" then
-		love.event.quit()
+		quitGame()
 	end
+
+	-- repassa para o handler do LUIS
+	luis.keypressed(key, scancode, isrepeat)
 
 	-- n adiciona um player ao jogo
 	if key == "n" then
@@ -60,9 +65,18 @@ function love.keypressed(key, scancode, isrepeat)
 end
 
 function love.keyreleased(key)
+	luis.keyreleased(key, scancode)
 	if key == "z" then
 		cameras[1].targetZoom = cameras[1].startingZoom
 	end
+end
+
+function love.mousepressed(x, y, button, istouch, presses)
+	luis.mousepressed(x, y, button, istouch, presses)
+end
+
+function love.mousereleased(x, y, button, istouch, presses)
+	luis.mousereleased(x, y, button, istouch, presses)
 end
 
 function love.resize(w, h)
@@ -76,25 +90,33 @@ function love.resize(w, h)
 	for _, p in pairs(players) do
 		newCamera(p)
 	end
+	luis.updateScale()
 end
 
 ----------------------------------------
 -- Inicialização
 ----------------------------------------
 function love.load()
-	tempFont = love.graphics.newFont("assets/fonts/PressStart2P-Regular.ttf", 10)
+	-- muda o filtro padrão para eliminar o efeito de blur
+	love.graphics.setDefaultFilter("nearest", "nearest")
+
+	-- carregando a biblioteca de UI
+	setupLUIS()
+
+	-- definindo a seed de aleatoriedade
 	math.randomseed(os.time())
-	window.width = 800
-	window.height = 800
-	window.cx = 400 -- centro no eixo x
-	window.cy = 400 -- centro no eixo y
-	sec_timer = { prev = 0, curr = 0 }
-	createInitialRooms()
-	collisionManager = CollisionManager.init() -- gerenciador global de colisões
-	newPlayer()
-	-- debug
-	players[1]:collectWeapon(newSlingShot())
-	players[1]:equipWeapon(SLING_SHOT.name)
+
+	-- definindo a fonte padrão do jogo
+	tempFont = love.graphics.newFont("assets/fonts/PressStart2P-Regular.ttf", 10)
+
+	-- definindo as dimensões iniciais do jogo
+	window.width = 1280
+	window.height = 720
+	window.cx = window.width / 2 -- centro no eixo x
+	window.cy = window.height / 2 -- centro no eixo y
+
+	-- criando e carregando o menu do jogo
+	initMenu()
 
 	-- métodos de estado do love
 	love.window.setMode(window.width, window.height, { resizable = true })
@@ -104,6 +126,11 @@ end
 -- Atualização
 ----------------------------------------
 function love.update(dt)
+	-- pulando o update de gameplay enquanto está no menu
+	if gameCtx == MENU_CTX then
+		goto uiupdate
+	end
+
 	DialogueManager:update(dt)
 	---------- Jogadores ----------
 	for _, p in pairs(players) do
@@ -120,6 +147,10 @@ function love.update(dt)
 	----------- Colisões ----------
 	collisionManager:updateHitboxLists()
 	collisionManager:handleCollisions()
+
+	-------------- UI -------------
+	::uiupdate::
+	luis.update(dt)
 end
 
 ----------------------------------------
@@ -129,4 +160,5 @@ function love.draw()
 	for _, c in pairs(cameras) do
 		c:draw()
 	end
+	luis.draw()
 end

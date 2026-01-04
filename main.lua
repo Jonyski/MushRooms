@@ -17,15 +17,24 @@ require("modules.UI.menu")
 require("modules.UI.ui")
 require("table")
 
+local appleCake = require("libs.applecake")(true)
+appleCake = require("libs.applecake")()
+appleCake.setBuffer(true)
+appleCake.beginSession()
+
 ----------------------------------------
 -- Variáveis Globais
 ----------------------------------------
+
 window = { scale = 1, offset = vec(0, 0) }
 gameCtx = MENU_CTX
+local updateProfile
+local drawProfile
 
 ----------------------------------------
 -- Callbacks
 ----------------------------------------
+
 function love.keypressed(key, scancode, isrepeat)
 	-- esc fecha o jogo
 	if key == "escape" then
@@ -100,6 +109,7 @@ end
 ----------------------------------------
 -- Inicialização
 ----------------------------------------
+
 function love.load()
 	-- muda o filtro padrão para eliminar o efeito de blur
 	love.graphics.setDefaultFilter("nearest", "nearest")
@@ -131,7 +141,11 @@ end
 ----------------------------------------
 -- Atualização
 ----------------------------------------
+
 function love.update(dt)
+	-- iniciando o profiling da função de update
+	updateProfile = appleCake.profileFunc(nil, updateProfile)
+
 	-- pulando o update de gameplay enquanto está no menu
 	if gameCtx == MENU_CTX then
 		goto uiupdate
@@ -157,14 +171,33 @@ function love.update(dt)
 	-------------- UI -------------
 	::uiupdate::
 	luis.update(dt)
+
+	-- encerrando o profiling
+	updateProfile:stop()
 end
 
 ----------------------------------------
 -- Renderização
 ----------------------------------------
+
 function love.draw()
+	-- iniciando o profiling da função de update
+	drawProfile = appleCake.profileFunc(nil, drawProfile)
+
 	for _, c in pairs(cameras) do
 		c:draw()
 	end
 	luis.draw()
+
+	-- encerrando o profiling
+	drawProfile:stop()
+	appleCake.flush()
+end
+
+----------------------------------------
+-- Encerramento
+----------------------------------------
+
+function love.quit()
+	appleCake.endSession()
 end

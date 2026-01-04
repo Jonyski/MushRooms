@@ -1,3 +1,6 @@
 [submodule "libs/luis"]
 	path = libs/luis
 	url = git@github.com:SiENcE/luis.git
+[submodule "libs/applecake"]
+	path = libs/applecake
+	url = git@github.com:EngineerSmith/AppleCake.git

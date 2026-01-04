@@ -61,3 +61,10 @@ function applySteering(entity, targetVel, intensity)
 	local force = scaleVec(steer, (intensity or 100) * entity.mass)
 	applyForce(entity, force)
 end
+
+---@param entity any
+-- nulifica a velocidade e aceleração
+function stopMovement(entity)
+	entity.vel = vec(0, 0)
+	entity.acc = vec(0, 0)
+end

@@ -2,6 +2,7 @@
 -- Importações de Módulos
 ----------------------------------------
 require("modules.entities.player")
+require("modules.utils.easing")
 require("modules.utils.utils")
 
 ----------------------------------------
@@ -31,7 +32,9 @@ cameras = {}
 ---@field zoom number
 ---@field targetZoom number
 ---@field zoomSpeed number
+---@field cinematicTimer number
 ---@field viewPos function
+---@field changeTarget function
 
 Camera = {}
 Camera.__index = Camera
@@ -47,24 +50,26 @@ function Camera.new(pos, viewport, canvas, canvasPos, player)
 	local camera = setmetatable({}, Camera)
 
 	camera.playerAttached = player -- jogador associado à câmera
-	camera.target = player      -- alvo que a câmera segue (inicialmente o player)
-	camera.viewport = viewport  -- tamanho da câmera (o espaço que ela enxerga)
-	camera.canvas = canvas      -- canvas associado à câmera
+	camera.target = player -- alvo que a câmera segue (inicialmente o player)
+	camera.viewport = viewport -- tamanho da câmera (o espaço que ela enxerga)
+	camera.canvas = canvas -- canvas associado à câmera
 	camera.canvasPos = canvasPos -- posição do canvas na tela
 	camera.cx = (pos.x + viewport.width) / 2
 	camera.cy = (pos.y + viewport.height) / 2
 	camera.targetPos = { x = pos.x, y = pos.y } -- onde a câmera deve ir
 	-- atributos fixos na instanciação
-	camera.transitionSpeed = 6               -- controla a suavidade da transição
-	camera.shakeOffset = { x = 0, y = 0 }    -- deslocamento atual do shake
-	camera.shakeIntensity = 0                -- intensidade do shake
-	camera.shakeDuration = 0                 -- duração total do shake
-	camera.shakeTimer = 0                    -- tempo restante do shake
+	camera.transitionSpeed = 6 -- controla a suavidade da transição
+	camera.shakeOffset = { x = 0, y = 0 } -- deslocamento atual do shake
+	camera.shakeIntensity = 0 -- intensidade do shake
+	camera.shakeDuration = 0 -- duração total do shake
+	camera.shakeTimer = 0 -- tempo restante do shake
 	-- atributos de zoom
 	camera.startingZoom = camera:calculateZoom()
-	camera.zoom = camera.startingZoom    -- zoom atual
+	camera.zoom = camera.startingZoom -- zoom atual
 	camera.targetZoom = camera.startingZoom -- zoom desejado
-	camera.zoomSpeed = 3                 -- velocidade da transição
+	camera.zoomSpeed = 3 -- velocidade da transição
+	-- atributos de cinemática
+	camera.cinematicTimer = 0
 
 	return camera
 end
@@ -94,21 +99,24 @@ function Camera:updatePosition(dt)
 		if self.target and self.target.pos and self.target.room then
 			local room = self.target.room
 
-			-- limita a posição da câmera ao hitbox da sala
-			self.targetPos.x = clamp(
-				self.target.pos.x,
-				room.hitbox.p1.x + viewportZoomed.width / 2,
-				room.hitbox.p2.x - viewportZoomed.width / 2
-			)
-			self.targetPos.y = clamp(
-				self.target.pos.y,
-				room.hitbox.p1.y + viewportZoomed.height / 2,
-				room.hitbox.p2.y - viewportZoomed.height / 2
-			)
+			if room then
+				-- limita a posição da câmera ao hitbox da sala
+				self.targetPos.x = clamp(
+					self.target.pos.x,
+					room.hitbox.p1.x + viewportZoomed.width / 2,
+					room.hitbox.p2.x - viewportZoomed.width / 2
+				)
+				self.targetPos.y = clamp(
+					self.target.pos.y,
+					room.hitbox.p1.y + viewportZoomed.height / 2,
+					room.hitbox.p2.y - viewportZoomed.height / 2
+				)
+			end
 		end
 	end
 
 	self:updateShake(dt)
+	self:updateCinematic(dt)
 
 	self.cx = lerp(self.cx, self.targetPos.x, dt * self.transitionSpeed) + self.shakeOffset.x
 	self.cy = lerp(self.cy, self.targetPos.y, dt * self.transitionSpeed) + self.shakeOffset.y
@@ -140,6 +148,17 @@ function Camera:updateShake(dt)
 			self.shakeOffset.x = 0
 			self.shakeOffset.y = 0
 		end
+	end
+end
+
+---@param dt number
+-- atualiza o timer de uma cena - que por proxy define o tamanho
+-- das barras horizontais na câmera
+function Camera:updateCinematic(dt)
+	if self.playerAttached and self.playerAttached.inDialogue then
+		self.cinematicTimer = self.cinematicTimer + dt
+	else
+		self.cinematicTimer = 0
 	end
 end
 
@@ -191,16 +210,17 @@ function Camera:draw()
 
 	-- renderiza mundo
 	renderRooms(self)
+	-- renderiza entidades com Y-sorting
 	renderEntities(self)
+	-- renderiza caixas de diálogo por cima de tudo
+	renderDialogues(self)
 
 	love.graphics.pop()
 	love.graphics.setCanvas()
 	love.graphics.draw(self.canvas, self.canvasPos.x, self.canvasPos.y)
 
 	-- barras pretas em espaço de tela (fora do canvas/zoom)
-	if self.playerAttached and self.playerAttached.inDialogue then
-		renderBlackBars(self)
-	end
+	renderBlackBars(self)
 end
 
 ----------------------------------------
@@ -208,9 +228,10 @@ end
 ----------------------------------------
 
 ---@param camera Camera
---
+-- renderiza barras pretas em no topo e na base do canvas
 function renderBlackBars(camera)
-	local barHeight = 50
+	local maxBarHeight = #players < 4 and 70 or 35
+	local barHeight = Easing.outQuad(clamp(camera.cinematicTimer, 0, 1)) * maxBarHeight
 
 	-- desenha barras relativas à região do canvas da câmera
 	local x = camera.canvasPos.x
@@ -269,9 +290,9 @@ function newCamera(player)
 			table.insert(cameras, camera)
 		else -- no caso de 4 câmeras
 			local canvasPositions = {
-				{ x = 0,                y = 0 },
+				{ x = 0, y = 0 },
 				{ x = window.width / 2, y = 0 },
-				{ x = 0,                y = window.height / 2 },
+				{ x = 0, y = window.height / 2 },
 				{ x = window.width / 2, y = window.height / 2 },
 			}
 			local camera = Camera.new(

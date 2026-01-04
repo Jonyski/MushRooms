@@ -2,6 +2,7 @@
 -- Importações de Módulos
 ----------------------------------------
 require("modules.entities.entity")
+require("modules.systems.shaders")
 
 ----------------------------------------
 -- Enums
@@ -27,6 +28,7 @@ LOYAL = "loyal" -- vai para a base do jogador, caso ela exista
 ---@field addAnimations function
 ---@field dialogue Dialogue
 ---@field inDialogue boolean
+---@field reachable boolean
 
 Npc = setmetatable({}, { __index = Entity })
 Npc.__index = Npc
@@ -54,6 +56,7 @@ function Npc.new(description, spawnPos, hitbox, room)
 	npc.animations = {} -- as chaves são estados e os valores são Animações
 	npc.dialogue = nil -- diálogo do npc
 	npc.inDialogue = false -- se o npc está em diálogo
+	npc.reachable = false -- indica se algum player está perto o suficiente para falar com o NPC
 
 	table.insert(room.npcs, npc)
 	return npc
@@ -105,5 +108,9 @@ function Npc:draw(camera)
 		x = animation.frameDim.width / 2,
 		y = animation.frameDim.height / 2,
 	}
-	love.graphics.draw(self.spriteSheets[self.state], quad, viewPos.x, viewPos.y, 0, 3, 3, offset.x, offset.y)
+	if self.reachable and not self.inDialogue then
+		drawFrameWithOutline(self.spriteSheets[self.state], quad, viewPos.x, viewPos.y, 3, offset, 0.5, { 1, 1, 1, 1 })
+	else
+		love.graphics.draw(self.spriteSheets[self.state], quad, viewPos.x, viewPos.y, 0, 3, 3, offset.x, offset.y)
+	end
 end

@@ -42,6 +42,7 @@ players = {}
 ---@field addAnimations function
 ---@field addParticles function
 ---@field inDialogue boolean
+---@field interactiveObj? Entity
 
 Player = setmetatable({}, { __index = Entity })
 Player.__index = Player
@@ -65,7 +66,7 @@ function Player.new(name, spawnPos, controls, colors, room)
 	-- atributos que variam
 	player.id = #players + 1 -- número do jogador
 	player.hp = 100 -- pontos de vida
-	player.controls = controls -- os comandos para controlar o boneco, no formato {up = "", left = "", down = "", right = "", action = ""}
+	player.controls = controls -- os comandos para controlar o boneco, no formato {up = "", left = "", down = "", ...}
 	player.colors = colors -- paleta de cores do jogador
 	-- atributos fixos na instanciação
 	player.movementVec = { x = 0, y = 0 } -- vetor de direção e magnitude do movimento do jogador
@@ -78,6 +79,7 @@ function Player.new(name, spawnPos, controls, colors, room)
 	player.invulnerableTimer = 0 -- timer de invulnerabilidade após levar dano
 	player.blinkTimer = 0 -- timer para piscar o sprite do player quando invulnerável
 	player.inDialogue = false -- se o player está em diálogo
+	player.interactiveObj = nil -- objeto próximo ao player com o qual ele pode interagir (ex: NPC)
 
 	collisionManager.players[player] = player.hb
 	return player
@@ -122,7 +124,7 @@ function Player:addParticles()
 end
 
 ---@param dt number
--- atualiza o estado do `Player` de suas animações e efeitos de partícula
+-- move o `Player`, atualiza seu estado e o de suas animações e efeitos de partícula
 function Player:update(dt)
 	self:move(dt)
 	self.animations[self.state]:update(dt)
@@ -298,7 +300,15 @@ end
 -- verifica se o `Player` está pressionando a tecla de ação 2
 -- caso positivo, executa a ação correta dependendo do contexto
 function Player:checkAction2(key)
-	if key == self.controls.act2 and self.vel.x ~= 0 then
+	if key ~= self.controls.act2 then
+		return
+	end
+	if self.interactiveObj then
+		if self.interactiveObj.type == NPC then
+			DialogueManager:start(self.interactiveObj.dialogue, self.interactiveObj, self)
+			stopMovement(self)
+		end
+	elseif self.vel.x ~= 0 then
 		local len = #self.weapons
 		if len <= 1 then
 			return

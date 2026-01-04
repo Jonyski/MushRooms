@@ -111,19 +111,6 @@ function renderEntities(camera)
 		end
 	end
 
-	for _, dialogue in pairs(DialogueManager.dialogues) do
-		if dialogue.active then
-			table.insert(drawList, {
-				y = (dialogue.owner and dialogue.owner.pos)
-					and dialogue.owner.pos.y + getAnchor(dialogue.owner, FLOOR) + 1
-					or 0,
-				draw = function()
-					dialogue:draw(camera)
-				end,
-			})
-		end
-	end
-
 	-- Ordena por posição Y
 	table.sort(drawList, function(a, b)
 		return a.y < b.y
@@ -132,5 +119,13 @@ function renderEntities(camera)
 	-- Desenha na ordem correta
 	for _, obj in ipairs(drawList) do
 		obj.draw()
+	end
+end
+
+function renderDialogues(camera)
+	for _, dialogue in pairs(DialogueManager.dialogues) do
+		if dialogue.active then
+			dialogue:draw(camera)
+		end
 	end
 end

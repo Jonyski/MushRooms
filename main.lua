@@ -64,7 +64,7 @@ function love.keypressed(key, scancode, isrepeat)
 	end
 end
 
-function love.keyreleased(key)
+function love.keyreleased(key, scancode)
 	luis.keyreleased(key, scancode)
 	if key == "z" then
 		cameras[1].targetZoom = cameras[1].startingZoom
@@ -107,7 +107,9 @@ function love.load()
 	math.randomseed(os.time())
 
 	-- definindo a fonte padrão do jogo
-	tempFont = love.graphics.newFont("assets/fonts/PressStart2P-Regular.ttf", 10)
+	-- não sei qual fonte é melhor
+	tempFont = love.graphics.newFont("assets/fonts/Tiny5-Regular.ttf", 16)
+	-- tempFont = love.graphics.newFont("assets/fonts/PressStart2P-Regular.ttf", 12)
 
 	-- definindo as dimensões iniciais do jogo
 	window.width = 1280
@@ -119,7 +121,7 @@ function love.load()
 	initMenu()
 
 	-- métodos de estado do love
-	love.window.setMode(window.width, window.height, { resizable = true })
+	love.window.setMode(window.width, window.height, { resizable = true, vsync = true, msaa = 0 })
 end
 
 ----------------------------------------

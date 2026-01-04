@@ -395,13 +395,19 @@ function CollisionManager:handleCollisions()
 	end
 
 	------- PLAYER / NPC --------
-	for npc, npchb in pairs(self.npcs) do
-		for player, playerhb in pairs(self.players) do
+	for player, playerhb in pairs(self.players) do
+		local hitSomeNPC = false
+		for npc, npchb in pairs(self.npcs) do
 			local hit = checkCollision(npchb, playerhb)
 			if hit then
 				-- ao colidir -> inicia diálogo
-				DialogueManager:start(npc.dialogue, npc, player)
+				player.interactiveObj = npc
+				hitSomeNPC = true
 			end
+			npc.reachable = hit
+		end
+		if not hitSomeNPC and player.interactiveObj and player.interactiveObj.type == NPC then
+			player.interactiveObj = nil
 		end
 	end
 end

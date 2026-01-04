@@ -7,8 +7,8 @@ require("game")
 -- Funções Globais
 ----------------------------------------
 
+-- inicializa a interface do menu principal do jogo
 function initMenu()
-	luis.showGrid = false
 	luis.newLayer("main menu")
 	luis.enableLayer("main menu")
 

@@ -1,3 +1,15 @@
+----------------------------------------
+-- Variáveis globais
+----------------------------------------
+
+-- usaremos como constante base para definir a escala do mundo
+INITIAL_WINDOW_WIDTH = 1280
+INITIAL_WINDOW_HEIGHT = 720
+
+----------------------------------------
+-- Funções globais
+----------------------------------------
+
 -- importa e define as configurações iniciais do LUIS
 function setupLUIS()
 	local reqPath = love.filesystem.getRequirePath()
@@ -5,8 +17,8 @@ function setupLUIS()
 	local initLuis = require("luis.init")
 	luis = initLuis("libs/luis/widgets")
 	luis.flux = require("luis.3rdparty.flux")
-	luis.baseWidth = 1280
-	luis.baseHeight = 720
+	luis.baseWidth = INITIAL_WINDOW_WIDTH
+	luis.baseHeight = INITIAL_WINDOW_HEIGHT
 	luis.setGridSize(16)
 end
 

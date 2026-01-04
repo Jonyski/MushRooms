@@ -20,7 +20,7 @@ require("table")
 ----------------------------------------
 -- Variáveis Globais
 ----------------------------------------
-window = {}
+window = { scale = 1, offset = vec(0, 0) }
 gameCtx = MENU_CTX
 
 ----------------------------------------
@@ -80,16 +80,20 @@ function love.mousereleased(x, y, button, istouch, presses)
 end
 
 function love.resize(w, h)
-	window.width = w
-	window.height = h
-	window.cx = w / 2
-	window.cy = h / 2
+	local sx = w / window.width
+	local sy = h / window.height
+	window.scale = math.max(sx, sy)
+	local offsetX = (w - window.width * window.scale) / 2
+	local offsetY = (h - window.height * window.scale) / 2
+	window.offset = vec(offsetX, offsetY)
+
 	for i, _ in pairs(cameras) do
 		cameras[i] = nil
 	end
 	for _, p in pairs(players) do
 		newCamera(p)
 	end
+
 	luis.updateScale()
 end
 

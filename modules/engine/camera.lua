@@ -65,7 +65,7 @@ function Camera.new(pos, viewport, canvas, canvasPos, player)
 	camera.shakeTimer = 0 -- tempo restante do shake
 	-- atributos de zoom
 	camera.startingZoom = camera:calculateZoom()
-	camera.zoom = camera.startingZoom -- zoom atual
+	camera.zoom = 1 -- zoom atual
 	camera.targetZoom = camera.startingZoom -- zoom desejado
 	camera.zoomSpeed = 3 -- velocidade da transição
 	-- atributos de cinemática
@@ -216,8 +216,17 @@ function Camera:draw()
 	renderDialogues(self)
 
 	love.graphics.pop()
+
 	love.graphics.setCanvas()
+
+	love.graphics.push()
+	love.graphics.translate(window.offset.x, window.offset.y)
+	love.graphics.scale(window.scale)
+
+	-- renderizando os canvas na janela
 	love.graphics.draw(self.canvas, self.canvasPos.x, self.canvasPos.y)
+
+	love.graphics.pop()
 
 	-- barras pretas em espaço de tela (fora do canvas/zoom)
 	renderBlackBars(self)
@@ -234,10 +243,10 @@ function renderBlackBars(camera)
 	local barHeight = Easing.outQuad(clamp(camera.cinematicTimer, 0, 1)) * maxBarHeight
 
 	-- desenha barras relativas à região do canvas da câmera
-	local x = camera.canvasPos.x
-	local y = camera.canvasPos.y
-	local w = camera.viewport.width
-	local h = camera.viewport.height
+	local x = camera.canvasPos.x + window.offset.x
+	local y = camera.canvasPos.y + window.offset.y
+	local w = camera.viewport.width * window.scale
+	local h = camera.viewport.height * window.scale
 
 	love.graphics.setColor(0, 0, 0, 1)
 	-- barra superior

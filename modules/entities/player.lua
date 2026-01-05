@@ -133,10 +133,7 @@ function Player:update(dt)
 		end
 		w:update(dt)
 	end
-	if self.invulnerableTimer > 0 then
-		self.invulnerableTimer = self.invulnerableTimer - dt
-		self.blinkTimer = (self.blinkTimer + dt * 10) % 1
-	end
+	self:updateInvulnerability(dt)
 	self:updateState()
 	self:updateParticles(dt)
 end
@@ -409,7 +406,7 @@ function Player:draw(camera)
 	}
 	love.graphics.draw(self.particles[WALKING_UP], particles_offset.x, particles_offset.y)
 
-	if self.invulnerableTimer > 0 and self.blinkTimer <= 0.5 then
+	if self:isInvulnerable() then
 		return
 	end
 	-- desenhando o player em si

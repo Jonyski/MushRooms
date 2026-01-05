@@ -117,6 +117,7 @@ function Enemy:update(dt)
 	if self.atk then
 		self.atk:update(dt)
 	end
+	self:updateInvulnerability(dt)
 	self:attack()
 	self.animations[self.state]:update(dt)
 	applyPhysics(self, dt)
@@ -154,6 +155,10 @@ end
 ---@param camera Camera
 -- função de renderização de `Enemy`
 function Enemy:draw(camera)
+	if self:isInvulnerable() then
+		return
+	end
+
 	local viewPos = camera:viewPos(self.pos)
 	local animation = self.animations[self.state]
 	local quad = animation.frames[animation.currFrame]

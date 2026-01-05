@@ -122,10 +122,60 @@ function renderEntities(camera)
 	end
 end
 
+---@param camera Camera
+-- renderiza os diálogos ativos na perspectiva da `camera`
 function renderDialogues(camera)
 	for _, dialogue in pairs(DialogueManager.dialogues) do
 		if dialogue.active then
 			dialogue:draw(camera)
 		end
 	end
+end
+
+---@param camera Camera
+---
+function renderHitboxes(camera)
+	if not debugMode then
+		return
+	end
+
+	love.graphics.setColor(1, 0, 0, 0.5)
+	for _, data in pairs(collisionManager.registry) do
+		local hb = data.hb
+
+		if hb.shape.shape == CIRCLE then
+			renderCircleHitbox(camera, hb)
+		elseif hb.shape.shape == RECTANGLE then
+			renderRectangleHitbox(camera, hb)
+		elseif hb.shape.shape == LINE then
+			renderLineHitbox(camera, hb)
+		end
+	end
+	love.graphics.setColor(1, 1, 1, 1)
+end
+
+---@param camera Camera
+---@param hitbox CircleHitbox
+--- renderiza a hitbox circular na perspectiva da `camera`
+function renderCircleHitbox(camera, hitbox)
+	local viewPos = camera:viewPos(hitbox.pos)
+	love.graphics.circle("fill", viewPos.x, viewPos.y, hitbox.shape.radius)
+end
+
+---@param camera Camera
+---@param hitbox RectHitbox
+--- renderiza a hitbox retangular na perspectiva da `camera`
+function renderRectangleHitbox(camera, hitbox)
+	local viewPos = camera:viewPos(hitbox.pos)
+	love.graphics.rectangle("fill", viewPos.x - hitbox.shape.width / 2, viewPos.y - hitbox.shape.height / 2, hitbox.shape.width, hitbox.shape.height)
+end
+
+---@param camera Camera
+---@param hitbox LineHitbox
+--- renderiza a hitbox em formato de linha na perspectiva da `camera` (precisa de revisão)
+function renderLineHitbox(camera, hitbox)
+	local viewPos = camera:viewPos(hitbox.pos)
+	local endPos = addVec(hitbox.pos, polarToVec(hitbox.shape.angle, hitbox.shape.length))
+	local viewEndPos = camera:viewPos(endPos)
+	love.graphics.line(viewPos.x, viewPos.y, viewEndPos.x, viewEndPos.y)
 end

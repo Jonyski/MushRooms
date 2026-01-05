@@ -26,7 +26,7 @@ require("modules.systems.movement")
 ---@return Attack
 -- um tiro de pedrinha
 function newPebbleShotAttack(ally, duration, cooldown, speed, trajectoryFunc)
-	local hb = hitbox(Circle.new(15), vec(0, 0))
+	local hb = hitbox(Circle.new(15), vec(0, 0), ally and ATTACK_PLAYER or ATTACK_ENEMY)
 	local settings = newAtkSetting(ally, 15, duration, hb, cooldown, 1, speed, 0.1, -speed / 2, 0, 2)
 	local anim = newAnimSetting(5, { width = 16, height = 16 }, 0.1, true, 1)
 	local updateFunc = AttackEvent.baseUpdate

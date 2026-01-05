@@ -168,6 +168,13 @@ function tableIndexOf(table, value)
 	return nil
 end
 
+---@param a table
+---@param b table
+-- retorna uma chave única para o par de tabelas `a` e `b`
+function pairKey(a, b)
+	return tostring(a) .. "|" .. tostring(b)
+end
+
 ----------------------------------------
 -- Funções matemáticas
 ----------------------------------------

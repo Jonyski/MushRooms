@@ -89,7 +89,11 @@ function Enemy:die()
 	self.state = DYING
 	local anim = self.animations[DYING]
 	anim.onFinish = function()
-		collisionManager.enemies[self] = nil
+		collisionManager:unregister(self)
+		for _, atk in pairs(self.atk.events) do
+			collisionManager:unregister(atk)
+		end
+
 		table.remove(self.room.enemies, tableIndexOf(self.room.enemies, self))
 	end
 end

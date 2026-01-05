@@ -116,6 +116,8 @@ function Room:visit(player)
 
 	self.playersInRoom:add(player.id, player)
 	activeRooms:add(makeKey(self.pos.x, self.pos.y), self)
+
+	collisionManager.roomsDirty = true
 end
 
 -- define a sala como estando explorada, gerando as 4 salas
@@ -133,7 +135,7 @@ function Room:setExplored()
 			if not rooms[pos.y][pos.x] then
 				newRoom(pos, Room.stdDim)
 			end
-		end
+		end	
 	end
 end
 
@@ -153,6 +155,8 @@ end
 function Room:verifyIsEmpty()
 	if self.playersInRoom:size() == 0 then
 		activeRooms:remove(makeKey(self.pos.x, self.pos.y))
+
+		collisionManager.roomsDirty = true
 	end
 end
 
@@ -175,7 +179,7 @@ end
 ---@param pos Vec
 -- instancia uma entidade e a insere na lista correspondente da sala
 function Room:spawn(entity, pos)
-	print("Tipo: " .. entity.type .. " Nome: " .. entity.name)
+	-- print("Tipo: " .. entity.type .. " Nome: " .. entity.name)
 	local constructor = CONSTRUCTORS[entity.type][entity.name]
 	local real_pos = addVec(pos, self.center)
 	if entity.type == ENEMY then

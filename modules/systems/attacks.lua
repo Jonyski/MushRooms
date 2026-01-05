@@ -144,6 +144,7 @@ function Attack:update(dt)
 
 		if e.timer <= 0 or e.piercesLeft <= 0 then
 			e.active = false
+			collisionManager:unregister(e)
 			table.remove(self.events, i)
 		else
 			e.animation:update(dt)
@@ -216,11 +217,7 @@ function AttackEvent.new(attackState, attacker, origin, direction)
 	atkEvent.targetsDamaged = {} -- lista de alvos feridos pelo ataque
 
 	-- adicionando à respectiva lista de hitboxes
-	if attacker.type == PLAYER then
-		collisionManager.playerAttacks[atkEvent] = atkEvent.hb
-	elseif attacker.type == ENEMY then
-		collisionManager.enemyAttacks[atkEvent] = atkEvent.hb
-	end
+	collisionManager:register(atkEvent)
 
 	return atkEvent
 end

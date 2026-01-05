@@ -11,7 +11,7 @@ function newKatana()
 		print("Katana acertou um " .. target.type .. " por " .. atkEvent.dmg .. " de dano!")
 		target.hp = target.hp - atkEvent.dmg
 	end
-	local hb = hitbox(Circle.new(100), vec(0, 0))
+	local hb = hitbox(Circle.new(100), vec(0, 0), ATTACK_PLAYER)
 	local atkSettings = newAtkSetting(true, 15, 0.5, hb, 0.3)
 	local atkAnimSettings = newAnimSetting(12, { width = 64, height = 64 }, 0.03, false, 1)
 	local attack = Attack.new("Katana Slice", atkSettings, atkAnimSettings, updateFunc, onHitFunc)

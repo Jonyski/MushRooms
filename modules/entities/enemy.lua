@@ -33,14 +33,14 @@ Enemy.type = ENEMY
 ---@param physics PhysicsSettings
 ---@param move function
 ---@param attack Attack
----@param hitbox Hitbox
+---@param hitboxes Hitboxes
 ---@param room Room
 ---@return Enemy
 -- cria uma instância de `Enemy`
-function Enemy.new(name, hp, spawnPos, physics, move, attack, hitbox, room)
+function Enemy.new(name, hp, spawnPos, physics, move, attack, hitboxes, room)
 	---@type Enemy
 	local enemy = setmetatable({}, Enemy) ---@diagnostic disable-line
-	enemy:init(name, spawnPos, hitbox, room, physics)
+	enemy:init(name, spawnPos, hitboxes, room, physics)
 
 	-- atributos que variam
 	enemy.hp = hp -- pontos de vida do inimigo

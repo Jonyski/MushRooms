@@ -182,13 +182,7 @@ function Room:spawn(entity, pos)
 	-- print("Tipo: " .. entity.type .. " Nome: " .. entity.name)
 	local constructor = CONSTRUCTORS[entity.type][entity.name]
 	local real_pos = addVec(pos, self.center)
-	if entity.type == ENEMY then
-		table.insert(self.enemies, constructor(real_pos, self))
-	elseif entity.type == DESTRUCTIBLE then
-		table.insert(self.destructibles, constructor(real_pos, self))
-	elseif entity.type == NPC then
-		table.insert(self.npcs, constructor(real_pos, self))
-	end
+	constructor(real_pos, self) -- instancia a entidade na sala
 end
 
 ----------------------------------------

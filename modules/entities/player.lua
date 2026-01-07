@@ -59,9 +59,9 @@ function Player.new(name, spawnPos, controls, colors, room)
 	---@type Player
 	local player = setmetatable({}, Player) ---@diagnostic disable-line
 
-	local hitbox = hitbox(Circle.new(20), spawnPos, PLAYER)
-	local mass = 1
-	player:init(name, spawnPos, hitbox, room, physicsSettings(1, 9000, 12))
+	local hb = hitbox(Circle.new(20))
+	local hbs = hitboxes({ hb })
+	player:init(name, spawnPos, hbs, room, physicsSettings(1, 9000, 12))
 
 	-- atributos que variam
 	player.id = #players + 1 -- número do jogador

@@ -30,19 +30,21 @@ function applyPhysics(entity, dt)
 	entity.acc = vec(0, 0)
 end
 
+---@param entity Entity
 ---@param pos Vec
--- atualiza a posição da entidade `entity` e sua hitbox (caso ela exista)
+-- atualiza a posição da entidade e resolve colisões sólidas
 function setPos(entity, pos)
 	local nextPos = vec(pos.x, pos.y)
 
-	if entity.hb then
-		nextPos = collisionManager:resolveSolidCollisions(entity, nextPos)
+	if entity.hb and entity.hb.default then
+		nextPos = collisionManager:resolveSolidCollisions(
+			entity,
+			entity.pos,
+			nextPos
+		)
 	end
 
 	entity.pos = nextPos
-	if entity.hb then
-		entity.hb.pos = nextPos
-	end
 end
 
 ---@param entity any

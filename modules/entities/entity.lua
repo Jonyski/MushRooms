@@ -37,7 +37,7 @@ end
 ---@class Entity
 ---@field name string
 ---@field pos? Vec
----@field hb? Hitbox
+---@field hb? Hitboxes
 ---@field room? Room
 ---@field mass number
 ---@field speed number
@@ -50,14 +50,14 @@ Entity.__index = Entity
 
 ---@param name string
 ---@param pos? Vec
----@param hitbox? Hitbox
+---@param hitboxes? Hitboxes
 ---@param room? Room
 ---@param entityPhysics? PhysicsSettings
 -- inicializa uma entidade com propriedades básicas.
-function Entity:init(name, pos, hitbox, room, entityPhysics)
+function Entity:init(name, pos, hitboxes, room, entityPhysics)
 	self.name = name or ""
 	self.pos = pos
-	self.hb = hitbox
+	self.hb = hitboxes
 	self.room = room
 
 	local physics = entityPhysics and entityPhysics or physicsSettings()

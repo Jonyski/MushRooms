@@ -11,7 +11,7 @@ require("modules.utils.utils")
 ---@field ally boolean
 ---@field dmg number
 ---@field dur number
----@field hb Hitbox
+---@field hb Hitboxes
 ---@field cooldown number
 ---@field initialMass number
 ---@field initialSpeed number
@@ -23,7 +23,7 @@ require("modules.utils.utils")
 ---@param ally boolean
 ---@param damage number
 ---@param duration number
----@param hitbox Hitbox
+---@param hitboxes Hitboxes
 ---@param mass? number
 ---@param speed? number
 ---@param friction? number
@@ -32,12 +32,12 @@ require("modules.utils.utils")
 ---@param pierces? number
 ---@return AtkSetting
 -- construtor complementar ao anterior, usado para ataques de projétil
-function newAtkSetting(ally, damage, duration, hitbox, cooldown, mass, speed, friction, acceleration, bounces, pierces)
+function newAtkSetting(ally, damage, duration, hitboxes, cooldown, mass, speed, friction, acceleration, bounces, pierces)
 	return {
 		ally = ally,
 		dmg = damage,
 		dur = duration,
-		hb = hitbox,
+		hb = hitboxes,
 		cooldown = cooldown,
 		initialMass = mass or 1,
 		initialSpeed = speed or 0,
@@ -85,7 +85,7 @@ function Attack.new(name, atkSettings, animSettings, updateFunc, onHit, trajecto
 	attack.initialSpeed = atkSettings.initialSpeed -- fator inicial de velocidade do ataque/projétil
 	attack.friction = atkSettings.friction
 	attack.accFactor = atkSettings.accFactor -- fator inicial de aceleração do ataque/projétil
-	attack.hb = atkSettings.hb -- hitbox do ataque
+	attack.hb = atkSettings.hb -- hitboxes do ataque
 	attack.bounces = atkSettings.bounces -- quantas vezes o ataque pode ricochetear (caso seja projétil)
 	attack.pierces = atkSettings.pierces -- quantas vezes o ataque pode atravessar um alvo
 	attack.cooldown = atkSettings.cooldown -- tempo que deve passar entre ataques
@@ -167,6 +167,7 @@ end
 ---@field bouncesLeft number
 ---@field piercesLeft number
 ---@field target any
+---@field subType Type
 ---@field age number
 ---@field active boolean
 ---@field targetsDamaged any[]
@@ -185,7 +186,7 @@ function AttackEvent.new(attackState, attacker, origin, direction)
 	---@type AtkEvent
 	local atkEvent = setmetatable({}, AttackEvent) ---@diagnostic disable-line
 	local dirVec = polarToVec(direction, 1)
-	local hitbox = copyHitbox(attackState.hb, origin)
+	local hitboxes = copyHitboxes(attackState.hb)
 	local initialVel = scaleVec(dirVec, attackState.initialSpeed)
 	local initialAcc = scaleVec(dirVec, attackState.accFactor)
 	local physics = physicsSettings(
@@ -196,7 +197,7 @@ function AttackEvent.new(attackState, attacker, origin, direction)
 		initialVel,
 		initialAcc
 	)
-	atkEvent:init(attackState.name, origin, hitbox, nil, physics)
+	atkEvent:init(attackState.name, origin, hitboxes, nil, physics)
 
 	atkEvent.name = attackState.name -- para descobrirmos o caminho até os assets
 	atkEvent.attacker = attacker -- jogador ou inimigo que desferiu o ataque
@@ -210,6 +211,7 @@ function AttackEvent.new(attackState, attacker, origin, direction)
 	atkEvent.trajectoryFunc = attackState.trajectoryFunc -- função que define a trajetória do ataque/projétil
 	atkEvent.onHit = attackState.onHit -- função executada ao acertar um alvo
 	atkEvent.target = attacker.target -- alvo do ataque
+	atkEvent.subType = attackState.ally and PLAYER_ATTACK or ENEMY_ATTACK -- sub-tipo do ataque (para colisões)
 
 	-- atributos fixos na instanciação
 	atkEvent.age = 0 -- tempo desde a criação do ataque

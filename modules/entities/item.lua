@@ -26,6 +26,8 @@ require("table")
 ---@field canPick boolean
 ---@field image table
 ---@field setCollected function
+---@field state string
+---@field visualOffset Vec
 
 Item = setmetatable({}, { __index = Entity })
 Item.__index = Item
@@ -43,20 +45,24 @@ function Item.new(object, pos, room, autoPick, floorY)
 	local item = setmetatable({}, Item) ---@diagnostic disable-line
 
 	local hbRadius = autoPick and 30 or 60
-	local hitbox = hitbox(Circle.new(hbRadius), pos, ITEM)
+	local hb = hitbox(Circle.new(hbRadius))
+	local hbs = hitboxes({}, {}, { hb })
 	local physics = physicsSettings(0.5, 0, 6)
-	item:init(object.name, pos, hitbox, room, physics)
+	item:init(object.name, pos, hbs, room, physics)
 
 	item.object = object -- objeto associado ao item (arma, recurso, etc)
 	item.pos = pos -- posição do item no mundo
 	item.room = room -- sala onde o item está
-	item.collected = false -- flag de coleta
 	item.autoPick = autoPick -- se o item é coletado automaticamente ou manualmente
-	item.gravity = 1500 -- força da gravidade
 	item.floorY = item.pos.y + (floorY or 0) -- posição onde irá parar de cair
+
+	item.visualOffset = vec(0, 0) -- offset visual para renderização
+	item.gravity = 1500 -- força da gravidade
 	item.idleTimer = 0 -- timer para oscilar enquanto parado
+	item.collected = false -- flag de coleta
 	item.shine = false -- se está brilhando
 	item.canPick = false -- se o item pode ser coletado (true após terminar de cair)
+	item.state = "falling" -- estado inicial do item
 
 	local sprite_path = pngPathFormat({ "assets", "sprites", "items", object.name })
 	item.image = love.graphics.newImage(sprite_path)
@@ -77,38 +83,41 @@ function Item:update(dt)
 	self:move(dt)
 end
 
----@param pos Vec
--- redefine a posição do `Item` e sua `hitbox`
-function Item:setPos(pos)
-	self.pos = pos
-	self.hb.pos = pos
-end
-
 ---@param dt number
 -- movimenta o item, fazendo ele oscilar acima do chão ao colidir com ele
 function Item:move(dt)
-	-- antes de poder ser coletado, o item cai sob gravidade simples
 	if not self.canPick then
-		-- força para acelerar com gravidade constante (independente da massa)
 		applyForce(self, vec(0, self.gravity * self.mass))
 		applyPhysics(self, dt)
-		-- colisão simples com o "chão" virtual em floorY
-		if self.pos.y > self.floorY and self.vel.y > 0 then
-			local clamped = vec(self.pos.x, self.floorY)
-			setPos(self, clamped)
+
+		-- checa se está apoiado em algo
+		if self:isGrounded() then
 			self.vel.y = 0
 			self.acc.y = 0
 			self.canPick = true
+			self.state = "idle"
 		end
 		return
 	end
 
-	-- após cair, oscila levemente acima do chão e mantém física horizontal
-	applyPhysics(self, dt)
-	self.idleTimer = self.idleTimer + dt
-	local y = self.floorY - 5 * (math.sin(self.idleTimer * 5) + 1)
-	setPos(self, vec(self.pos.x, y))
+	self:updateIdle(dt)
 end
+
+function Item:updateIdle(dt)
+	self.idleTimer = self.idleTimer + dt
+
+	-- oscilação suave
+	local amplitude = 5
+	local speed = 5
+
+	self.visualOffset.y = math.sin(self.idleTimer * speed) * amplitude
+end
+
+
+function Item:isGrounded()
+	return self.pos.y > self.floorY and self.vel.y > 0
+end
+
 
 ---@param value boolean
 -- define se o item está brilhando (bordas brancas) ou não
@@ -129,7 +138,9 @@ function Item:draw(camera)
 	end
 
 	local scale = 3
-	local viewPos = camera:viewPos(self.pos)
+	
+	local visualPos = addVec(self.pos, self.visualOffset)
+	local viewPos = camera:viewPos(visualPos)
 	local offset = {
 		x = self.image:getWidth() / 2,
 		y = self.image:getHeight() / 2,

@@ -31,13 +31,13 @@ Destructible.type = DESTRUCTIBLE
 ---@param pos Vec
 ---@param room Room
 ---@param loot Loot
----@param hitbox Hitbox
+---@param hitboxes Hitboxes
 ---@return Destructible
 -- cria um objeto destrutível contendo um certo `loot`
-function Destructible.new(name, pos, room, loot, hitbox)
+function Destructible.new(name, pos, room, loot, hitboxes)
 	---@type Destructible
 	local obj = setmetatable({}, Destructible) ---@diagnostic disable-line
-	obj:init(name, pos, hitbox, room)
+	obj:init(name, pos, hitboxes, room)
 	obj.state = INTACT
 	obj.health = 100 -- vida para ser destruído
 	obj.spriteSheets = {}

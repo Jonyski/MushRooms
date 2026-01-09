@@ -13,6 +13,7 @@ require("modules.entities.player")
 require("modules.entities.room")
 require("modules.entities.weapon")
 require("modules.systems.dialogue")
+require("modules.tooling.roomcontrol")
 require("modules.UI.menu")
 require("modules.UI.ui")
 require("table")
@@ -49,6 +50,9 @@ function love.keypressed(key, scancode, isrepeat)
 	if key == "n" then
 		newPlayer()
 	end
+
+	---------- DEBUG ----------
+
 	-- q faz a câmera 1 tremer (teste)
 	if key == "c" then
 		cameras[1]:shake(20, 1)
@@ -58,6 +62,11 @@ function love.keypressed(key, scancode, isrepeat)
 		cameras[1].targetZoom = 2
 	end
 
+	local roomDebugChanged = _roomDebugHandler(key)
+	if roomDebugChanged then
+		goto numkeyhandled
+	end
+
 	if key == "1" then
 		spawnItem(newKatana(), players[1].pos, players[1].room, false, getAnchor(players[1], FLOOR), vec(0, -500))
 	end
@@ -65,9 +74,13 @@ function love.keypressed(key, scancode, isrepeat)
 		spawnItem(newSlingShot(), players[1].pos, players[1].room, false, getAnchor(players[1], FLOOR), vec(0, -500))
 	end
 
+	::numkeyhandled::
+
 	if key == "0" then
 		debugMode = not debugMode
 	end
+
+	-------- FIM DEBUG --------
 
 	if not isrepeat then
 		for _, p in pairs(players) do

@@ -122,10 +122,120 @@ function renderEntities(camera)
 	end
 end
 
+---@param camera Camera
+-- renderiza os diálogos ativos na perspectiva da `camera`
 function renderDialogues(camera)
 	for _, dialogue in pairs(DialogueManager.dialogues) do
 		if dialogue.active then
 			dialogue:draw(camera)
 		end
 	end
+end
+
+---@param camera Camera
+-- renderiza as hitboxes de todas as entidades na perspectiva da `camera`
+function renderHitboxes(camera)
+	if not debugMode then
+		return
+	end
+
+	
+	---@type table<string, table<Entity, HitboxesData>>
+	local registry = collisionManager.registry
+	
+	for _, reg in pairs(registry) do
+		for entity, data in pairs(reg) do
+			local hitboxes = data.hb
+
+			renderSolids(camera, hitboxes.solids, entity)
+			renderDefaults(camera, hitboxes.default, entity)
+			renderTriggers(camera, hitboxes.triggers, entity)
+		end
+	end
+end
+
+---@param camera Camera
+---@param hitboxes Hitbox[]
+---@param entity Entity
+-- renderiza as hitboxes sólidas na perspectiva da `camera`
+function renderSolids(camera, hitboxes, entity)
+	if #hitboxes == 0 then
+		return
+	end
+
+	love.graphics.setColor(1, 0, 0, 0.5)
+	for _, hb in ipairs(hitboxes) do
+		renderByShape(camera, hb, entity)
+	end
+	love.graphics.setColor(1, 1, 1, 1)
+end
+
+---@param camera Camera
+---@param hitboxes Hitbox[]
+---@param entity Entity
+-- renderiza as hitboxes padrão na perspectiva da `camera`
+function renderDefaults(camera, hitboxes, entity)
+	if #hitboxes == 0 then
+		return
+	end
+
+	love.graphics.setColor(0, 0, 1, 0.5)
+	for _, hb in ipairs(hitboxes) do
+		renderByShape(camera, hb, entity)
+	end
+	love.graphics.setColor(1, 1, 1, 1)
+end
+
+---@param camera Camera
+---@param hitboxes Hitbox[]
+---@param entity Entity
+-- renderiza as hitboxes de gatilho na perspectiva da `camera`
+function renderTriggers(camera, hitboxes, entity)
+	if #hitboxes == 0 then
+		return
+	end
+
+	love.graphics.setColor(0, 1, 0, 0.5)
+	for _, hb in ipairs(hitboxes) do
+		renderByShape(camera, hb, entity)
+	end
+	love.graphics.setColor(1, 1, 1, 1)
+end
+
+function renderByShape(camera, hitbox, entity)
+	local worldHb = buildWorldHitbox(hitbox, entity.pos)
+
+	if worldHb.shape.shape == CIRCLE then
+		renderCircleHitbox(camera, worldHb)
+	elseif worldHb.shape.shape == RECTANGLE then
+		renderRectangleHitbox(camera, worldHb)
+	elseif worldHb.shape.shape == LINE then
+		renderLineHitbox(camera, worldHb)
+	end
+end
+
+---@param camera Camera
+---@param hitbox CircleHitbox
+--- renderiza a hitbox circular na perspectiva da `camera`
+function renderCircleHitbox(camera, hitbox)
+	local viewPos = camera:viewPos(hitbox.offset)
+	love.graphics.circle("fill", viewPos.x, viewPos.y, hitbox.shape.radius)
+end
+
+---@param camera Camera
+---@param hitbox RectHitbox
+--- renderiza a hitbox retangular na perspectiva da `camera`
+function renderRectangleHitbox(camera, hitbox)
+	local viewPos = camera:viewPos(hitbox.offset)
+	love.graphics.rectangle("fill", viewPos.x - hitbox.shape.width / 2, viewPos.y - hitbox.shape.height / 2, hitbox.shape.width, hitbox.shape.height)
+end
+
+---@param camera Camera
+---@param hitbox LineHitbox
+--- renderiza a hitbox em formato de linha na perspectiva da `camera` (precisa de revisão)
+function renderLineHitbox(camera, hitbox)
+	local viewPos = camera:viewPos(hitbox.offset)
+	local endPos = addVec(hitbox.offset, polarToVec(hitbox.shape.angle, hitbox.shape.length))
+	local viewEndPos = camera:viewPos(endPos)
+	love.graphics.line(viewPos.x, viewPos.y, viewEndPos.x, viewEndPos.y)
 end

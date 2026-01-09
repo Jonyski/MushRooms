@@ -59,9 +59,9 @@ function Player.new(name, spawnPos, controls, colors, room)
 	---@type Player
 	local player = setmetatable({}, Player) ---@diagnostic disable-line
 
-	local hitbox = hitbox(Circle.new(20), spawnPos)
-	local mass = 1
-	player:init(name, spawnPos, hitbox, room, physicsSettings(1, 9000, 12))
+	local hb = hitbox(Circle.new(20))
+	local hbs = hitboxes({ hb })
+	player:init(name, spawnPos, hbs, room, physicsSettings(1, 9000, 12))
 
 	-- atributos que variam
 	player.id = #players + 1 -- número do jogador
@@ -76,12 +76,10 @@ function Player.new(name, spawnPos, controls, colors, room)
 	player.particles = {} -- efeitos de partícula emitidos pelo player
 	player.weapons = {} -- lista das armas que o jogador possui
 	player.weapon = nil -- arma equipada
-	player.invulnerableTimer = 0 -- timer de invulnerabilidade após levar dano
-	player.blinkTimer = 0 -- timer para piscar o sprite do player quando invulnerável
 	player.inDialogue = false -- se o player está em diálogo
 	player.interactiveObj = nil -- objeto próximo ao player com o qual ele pode interagir (ex: NPC)
 
-	collisionManager.players[player] = player.hb
+	collisionManager:register(player)
 	return player
 end
 
@@ -135,10 +133,7 @@ function Player:update(dt)
 		end
 		w:update(dt)
 	end
-	if self.invulnerableTimer > 0 then
-		self.invulnerableTimer = self.invulnerableTimer - dt
-		self.blinkTimer = (self.blinkTimer + dt * 10) % 1
-	end
+	self:updateInvulnerability(dt)
 	self:updateState()
 	self:updateParticles(dt)
 end
@@ -211,7 +206,7 @@ function Player:updateRoom()
 	end
 
 	-- se mudou de sala, se retira dela e entra na próxima
-	if prevRoom ~= self.room then
+	if prevRoom and prevRoom ~= self.room then
 		prevRoom.playersInRoom:remove(self.id)
 		prevRoom:verifyIsEmpty()
 
@@ -411,7 +406,7 @@ function Player:draw(camera)
 	}
 	love.graphics.draw(self.particles[WALKING_UP], particles_offset.x, particles_offset.y)
 
-	if self.invulnerableTimer > 0 and self.blinkTimer <= 0.5 then
+	if self:isInvulnerable() then
 		return
 	end
 	-- desenhando o player em si

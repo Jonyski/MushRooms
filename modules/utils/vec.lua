@@ -116,3 +116,10 @@ function rotateVec(v, angle)
 
 	return vec(v.x * cosA - v.y * sinA, v.x * sinA + v.y * cosA)
 end
+
+---@param v Vec
+---@return string
+-- converte um vetor em string para debug
+function vecToString(v)
+	return "(" .. tostring(v.x) .. ", " .. tostring(v.y) .. ")"
+end

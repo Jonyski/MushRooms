@@ -3,37 +3,88 @@
 ----------------------------------------
 require("modules.utils.types")
 require("modules.utils.utils")
+require("modules.utils.vec")
 
 ----------------------------------------
 -- Funções auxiliares para colisão
 ----------------------------------------
 
+--- tipos de hitbox
+DEFAULT = "default"
+SOLID = "solid"
+TRIGGER = "trigger"
+
+---@class Hitboxes
+---@field solids Hitbox[]
+---@field default Hitbox[]
+---@field triggers Hitbox[]
+
 ---@class Hitbox
 ---@field shape Shape
----@field pos Vec
+---@field offset Vec
 
----@alias CircleHitbox {pos: Vec, shape: Circle}
----@alias RectHitbox {pos: Vec, shape: Rectangle}
----@alias LineHitbox {pos: Vec, shape: Line}
+---@alias CircleHitbox {offset: Vec, shape: Circle}
+---@alias RectHitbox {offset: Vec, shape: Rectangle}
+---@alias LineHitbox {offset: Vec, shape: Line}
+---@alias HitboxesData {hb: Hitboxes, owner: Entity}
+---@alias SolidsData {hb: Hitbox[], owner: Entity}
 
 ---@param shape Shape
----@param pos Vec
+---@param posOffset? Vec
 ---@return Hitbox
 -- cria uma `Hitbox`, estrutura com forma e posição
-function hitbox(shape, pos)
-	return { shape = shape, pos = pos }
+function hitbox(shape, posOffset)
+	return { 
+		shape = shape,
+		offset = posOffset or vec(0, 0), 
+	}
+end
+
+---@param default Hitbox[]
+---@param solids? Hitbox[]
+---@param triggers? Hitbox[]
+---@return Hitboxes
+ -- cria uma estrutura `Hitboxes` para agrupar hitboxes por tipo
+function hitboxes(default, solids, triggers)
+	return {
+		default = default or {},
+		solids = solids or {},
+		triggers = triggers or {},
+	}
+end
+
+---@param hbs Hitboxes
+-- retorna uma cópia da tabela de hitboxes `hbs`
+function copyHitboxes(hbs)
+	local newHbs = {
+		default = {},
+		solids = {},
+		triggers = {},
+	}
+
+	for _, hb in ipairs(hbs.default) do
+		table.insert(newHbs.default, copyHitbox(hb))
+	end
+	for _, hb in ipairs(hbs.solids) do
+		table.insert(newHbs.solids, copyHitbox(hb))
+	end
+	for _, hb in ipairs(hbs.triggers) do
+		table.insert(newHbs.triggers, copyHitbox(hb))
+	end
+
+	return newHbs
 end
 
 ---@param hb Hitbox
----@param pos? Vec
+---@param offset? Vec
 ---@return Hitbox
 -- retorna uma cópia de `hb` podendo ou não distinguir sua posição
--- da hitbox original com o uso do parâmetro `pos`
-function copyHitbox(hb, pos)
+-- da hitbox original com o uso do parâmetro `offset`
+function copyHitbox(hb, offset)
 	local shape = copyShape(hb.shape)
 	return {
 		shape = shape,
-		pos = pos or vec(hb.pos.x, hb.pos.y),
+		offset = offset or vec(hb.offset.x, hb.offset.y),
 	}
 end
 
@@ -50,6 +101,21 @@ function copyShape(shape)
 	end
 end
 
+---@param hitbox Hitbox
+---@param entityPos Vec
+---@return Hitbox
+-- constrói uma hitbox no "mundo" a partir de uma hitbox local `hitbox`
+function buildWorldHitbox(hitbox, entityPos)
+	return {
+		shape = hitbox.shape,
+		offset = addVec(entityPos, hitbox.offset),
+	}
+end
+
+function entityKey(entity)
+	return entity.subType or entity.type
+end
+
 ----------------------------------------
 -- Funções auxiliares para colisão
 ----------------------------------------
@@ -58,7 +124,7 @@ end
 ---@param hb2 Hitbox
 ---@return boolean
 -- recebe duas hitboxes, retorna true se elas se tocam
-function checkCollision(hb1, hb2)
+function checkHitboxCollision(hb1, hb2)
 	if hb1.shape.shape == CIRCLE then
 		if hb2.shape.shape == CIRCLE then
 			return checkCircleCircleCollision(hb1, hb2)
@@ -88,13 +154,38 @@ function checkCollision(hb1, hb2)
 	return false
 end
 
+---@param a Hitbox[]
+---@param ownerA Entity
+---@param b Hitbox[]
+---@param ownerB Entity
+-- checa colisão entre as hitboxes `a` e `b`, pertencentes aos donos `ownerA` e `ownerB`
+function checkColision(a, ownerA, b, ownerB)
+	if #a == 0 or #b == 0 then
+		return false
+	end
+
+	for _, hbA in ipairs(a) do
+		local worldHbA = buildWorldHitbox(hbA, ownerA.pos)
+
+		for _, hbB in ipairs(b) do
+			local worldHbB = buildWorldHitbox(hbB, ownerB.pos)
+
+			if checkHitboxCollision(worldHbA, worldHbB) then
+				return true
+			end
+		end
+	end
+
+	return false
+end
+
 ---@param point Vec
----@param line {pos: Vec, shape: Line} Hitbox em formato de linha
+---@param line {offset: Vec, shape: Line} Hitbox em formato de linha
 ---@return boolean
 -- verifica se a linha `line` contém o ponto `point`
 function pointOnLine(point, line)
-	local d1 = dist(point, line.pos)
-	local d2 = dist(point, polarToVec(line.shape.angle, line.shape.length) + line.pos)
+	local d1 = dist(point, line.offset)
+	local d2 = dist(point, polarToVec(line.shape.angle, line.shape.length) + line.offset)
 	local leniency = 0.01
 	if d1 + d2 < line.shape.length + leniency and d1 + d2 > line.shape.length - leniency then
 		return true
@@ -107,11 +198,11 @@ end
 ---@return boolean
 -- checa se dois círculos estão colidindo
 function checkCircleCircleCollision(circle1, circle2)
-	return dist(circle1.pos, circle2.pos) <= circle1.shape.radius + circle2.shape.radius
+	return dist(circle1.offset, circle2.offset) <= circle1.shape.radius + circle2.shape.radius
 end
 
 function checkCircleRectCollision(circle, rect)
-	local dist = vec(math.abs(circle.pos.x - rect.pos.x), math.abs(circle.pos.y - rect.pos.y))
+	local dist = vec(math.abs(circle.offset.x - rect.offset.x), math.abs(circle.offset.y - rect.offset.y))
 	if dist.x > (rect.shape.halfW + circle.shape.radius) or dist.y > (rect.shape.halfH + circle.shape.radius) then
 		return false
 	end
@@ -127,19 +218,19 @@ end
 ---@return boolean
 -- checa se um círculo e uma linha estão colidindo
 function checkCircleLineCollision(circle, line)
-	local p1 = line.pos
+	local p1 = line.offset
 	local p2 = addVec(p1, polarToVec(line.shape.angle, line.shape.length))
-	if dist(p1, circle.pos) < circle.shape.radius or dist(p2, circle.pos) < circle.shape.radius then
+	if dist(p1, circle.offset) < circle.shape.radius or dist(p2, circle.offset) < circle.shape.radius then
 		return true
 	end
-	local dot = dotProd(subVec(circle.pos, p1), subVec(p2, p1))
+	local dot = dotProd(subVec(circle.offset, p1), subVec(p2, p1))
 	local closestX = p1.x + (dot * (p2.x - p1.x))
 	local closestY = p1.y + (dot * (p2.y - p1.y))
 	if not pointOnLine(vec(closestX, closestY), line) then
 		return false
 	end
-	local distX = closestX - circle.pos.x
-	local distY = closestY - circle.pos.y
+	local distX = closestX - circle.offset.x
+	local distY = closestY - circle.offset.y
 	local dist = distX ^ 2 + distY ^ 2
 	if dist <= circle.shape.radius ^ 2 then
 		return true
@@ -153,10 +244,10 @@ end
 -- checa se dois retângulos estão colidindo
 function checkRectRectCollision(rect1, rect2)
 	if
-		rect1.pos.x + rect1.shape.width >= rect2.pos.x
-		and rect1.pos.x <= rect2.pos.x + rect2.shape.width
-		and rect1.pos.y + rect1.shape.height >= rect2.pos.y
-		and rect1.pos.y <= rect2.pos.y + rect2.shape.height
+		rect1.offset.x + rect1.shape.width >= rect2.offset.x
+		and rect1.offset.x <= rect2.offset.x + rect2.shape.width
+		and rect1.offset.y + rect1.shape.height >= rect2.offset.y
+		and rect1.offset.y <= rect2.offset.y + rect2.shape.height
 	then
 		return true
 	end
@@ -168,11 +259,11 @@ end
 ---@return boolean
 -- checa se um retângulo e uma linha estão colidindo
 function checkRectLineCollision(rect, line)
-	local leftSide = hitbox(Line.new(math.pi * 3 / 2, rect.shape.height), rect.pos)
-	local upSide = hitbox(Line.new(0, rect.shape.width), rect.pos)
+	local leftSide = hitbox(Line.new(math.pi * 3 / 2, rect.shape.height), rect.offset)
+	local upSide = hitbox(Line.new(0, rect.shape.width), rect.offset)
 	local rightSide =
-		hitbox(Line.new(math.pi * 3 / 2, rect.shape.height), addVec(rect.pos, scaleVec(vec(1, 0), rect.shape.width)))
-	local downSide = hitbox(Line.new(0, rect.shape.width), addVec(rect.pos, scaleVec(vec(0, 1), rect.shape.height)))
+		hitbox(Line.new(math.pi * 3 / 2, rect.shape.height), addVec(rect.offset, scaleVec(vec(1, 0), rect.shape.width)))
+	local downSide = hitbox(Line.new(0, rect.shape.width), addVec(rect.offset, scaleVec(vec(0, 1), rect.shape.height)))
 	local leftHit = checkLineLineCollision(line, leftSide)
 	local upHit = checkLineLineCollision(line, upSide)
 	local rightHit = checkLineLineCollision(line, rightSide)
@@ -188,9 +279,9 @@ end
 ---@return boolean
 -- checa se duas linhas estão colidindo
 function checkLineLineCollision(line1, line2)
-	local p1 = line1.pos
+	local p1 = line1.offset
 	local p2 = addVec(p1, polarToVec(line1.shape.angle, line1.shape.length))
-	local p3 = line2.pos
+	local p3 = line2.offset
 	local p4 = addVec(p3, polarToVec(line2.shape.angle, line2.shape.length))
 
 	local a = ((p4.x - p3.x) * (p1.y - p3.y) - (p4.y - p3.y) * (p1.x - p3.x))
@@ -207,20 +298,23 @@ end
 -- Classe Collision Manager
 ----------------------------------------
 
+---@class CollisionManager
+---@field registry table<string, table<Entity, HitboxesData>>
+---@field solids table<Entity, SolidsData>
+---@field roomsDirty boolean
+---@field activeRoomsCopy Set<Room>
+
 CollisionManager = {}
 CollisionManager.__index = CollisionManager
 CollisionManager.type = COLLISION_MANAGER
 
 function CollisionManager.init()
 	local cm = setmetatable({}, CollisionManager)
-	-- cada tabela associa uma entidade a uma hitbox
-	cm.items = {}
-	cm.enemies = {}
-	cm.players = {}
-	cm.npcs = {}
-	cm.enemyAttacks = {}
-	cm.playerAttacks = {}
-	cm.destructibles = {}
+
+	cm.registry = cm:startRegistry() -- tabela mestre de hitboxes registradas
+	cm.roomsDirty = false -- flag para indicar se as listas de hitboxes precisam ser atualizadas
+	cm.solids = {} -- hitboxes sólidas
+
 	-- otimização: manter uma cópia das salas ativas
 	-- para minimizar o número de colisões checadas
 	cm.activeRoomsCopy = Set.new()
@@ -229,25 +323,53 @@ function CollisionManager.init()
 	return cm
 end
 
+function CollisionManager:startRegistry()
+	local reg = {}
+
+	reg[PLAYER] = {}
+	reg[ENEMY] = {}
+	reg[DESTRUCTIBLE] = {}
+	reg[ITEM] = {}
+	reg[NPC] = {}
+	reg[PLAYER_ATTACK] = {}
+	reg[ENEMY_ATTACK] = {}
+
+	return reg
+end
+
+-- atualiza o gerenciador de colisões
+function CollisionManager:update(dt)
+	self:updateHitboxListsIfNeeded()
+	self:handleCollisions()
+end
+
 ---@param room Room
 -- adiciona as hitboxes das entidades em `room` à respectiva
 -- lista do `CollisionManager`
 function CollisionManager:fetchHitboxesByRoom(room)
 	-- pegando hitboxes de inimigos
 	for _, enemy in pairs(room.enemies) do
-		self.enemies[enemy] = enemy.hb
+		for _, attack in pairs(enemy.atk.events) do
+			self:register(attack)
+		end
+		self:register(enemy)
 	end
+
 	-- pegando hitboxes de destrutiveis
 	for _, destr in pairs(room.destructibles) do
-		self.destructibles[destr] = destr.hb
+		if destr.state == INTACT then
+			self:register(destr)
+		end
 	end
+
 	-- pegando hitboxes de itens
 	for _, item in pairs(room.items) do
-		self.items[item] = item.hb
+		self:register(item)
 	end
+
 	-- pegando hitboxes de npcs
 	for _, npc in pairs(room.npcs) do
-		self.npcs[npc] = npc.hb
+		self:register(npc)
 	end
 end
 
@@ -257,20 +379,36 @@ end
 function CollisionManager:clearHitboxesByRoom(room)
 	-- removendo hitboxes de inimigos
 	for _, enemy in pairs(room.enemies) do
-		self.enemies[enemy] = nil
+		for _, attack in pairs(enemy.atk.events) do
+			self:unregister(attack)
+		end
+		self:unregister(enemy)
 	end
+
 	-- removendo hitboxes de destrutiveis
 	for _, destr in pairs(room.destructibles) do
-		self.destructibles[destr] = nil
+		self:unregister(destr)
 	end
+
 	-- removendo hitboxes de itens
 	for _, item in pairs(room.items) do
-		self.items[item] = nil
+		self:unregister(item)
 	end
+
 	-- removendo hitboxes de npcs
 	for _, npc in pairs(room.npcs) do
-		self.players[npc] = nil
+		self:unregister(npc)
 	end
+end
+
+-- verifica se as listas de hitboxes precisam ser atualizadas
+function CollisionManager:updateHitboxListsIfNeeded()
+  if not self.roomsDirty then 
+		return 
+	end
+
+  self:updateHitboxLists()
+  self.roomsDirty = false
 end
 
 -- atualiza as listas de hitboxes para conter hitboxes apenas de salas ativas
@@ -278,136 +416,400 @@ function CollisionManager:updateHitboxLists()
 	-- eliminando as hitboxes de uma sala recém desativada
 	for k, room in self.activeRoomsCopy:iter() do
 		local present = activeRooms:has(k)
+
 		if not present then
 			self:clearHitboxesByRoom(room)
 		end
 	end
+
 	-- atualizando nossa cópia das salas ativas
 	self.activeRoomsCopy:copy(activeRooms)
 	-- pegando as hitboxes de todas as salas ativas
 	for _, room in self.activeRoomsCopy:iter() do
 		self:fetchHitboxesByRoom(room)
 	end
-	-- eliminando hitboxes de ataques não mais ativos
-	for atkEvent, _ in pairs(self.playerAttacks) do
-		if not atkEvent.active then
-			self.playerAttacks[atkEvent] = nil
-		end
-	end
-
-	for atkEvent, _ in pairs(self.enemyAttacks) do
-		if not atkEvent.active then
-			self.enemyAttacks[atkEvent] = nil
-		end
-	end
 end
 
--- verifica e trata todas as colisões entre entidades
--- contidas nas listas do `CollisionManager`
+---@param entity Entity
+-- registra a hitbox da entidade `entity` nas listas do `CollisionManager`
+function CollisionManager:register(entity)
+  if not entity.hb then 
+		return 
+	end
+
+	-- print("Registering " .. entity.name .. " to CollisionManager")
+
+	---@type HitboxesData
+  local hitboxesData = {
+    hb = entity.hb,
+    owner = entity,
+  }
+
+	if entity.hb.solids and #entity.hb.solids > 0 then
+		---@type SolidsData
+		local data = {
+			hb = entity.hb.solids,
+			owner = entity,
+		}
+
+		self.solids[entity] = data
+	end
+
+	self.registry[entityKey(entity)] = self.registry[entityKey(entity)] or {}
+	self.registry[entityKey(entity)][entity] = hitboxesData
+end
+
+---@param entity Entity
+-- remove a hitbox da entidade `entity` das listas do `CollisionManager`
+function CollisionManager:unregister(entity)
+  local data = self.registry[entityKey(entity)][entity]
+  if not data then 
+		return
+ end
+
+	-- print("Unregistering " .. entity.name .. " from CollisionManager")
+
+	if data.hb.solids and #data.hb.solids > 0 then
+		self.solids[entity] = nil
+	end
+
+	self.registry[entityKey(entity)][entity] = nil
+
+end
+
 function CollisionManager:handleCollisions()
+	---@type table<string, table<any, HitboxesData>>
+	local registry = self.registry
+
 	----------- PLAYER / ITEM -----------
-	for item, itemhb in pairs(self.items) do
+	for item, itemhb in pairs(registry[ITEM]) do
 		if item.collected then
-			self.items[item] = nil
+			self:unregister(item)
 			goto nextitem
 		end
-		for player, playerhb in pairs(self.players) do
-			local hit = checkCollision(itemhb, playerhb)
+
+		local hitByAnyPlayer = false
+
+		for player, playerhb in pairs(registry[PLAYER]) do
+			local hit = checkColision(
+				playerhb.hb.default,
+				player,
+				itemhb.hb.triggers,
+				item
+			)
+
 			if hit then
-				-- ao colidir -> tenta coletar item
-				player:tryCollectItem(item)
+				hitByAnyPlayer = true
+				self:onPlayerItem(player, item)
 			end
-			item:setShine(hit)
 		end
+
+		item:setShine(hitByAnyPlayer)
 		::nextitem::
 	end
 
-	--------- INIMIGO / ATAQUE ----------
-	for enemy, enemyhb in pairs(self.enemies) do
-		for attack, attackhb in pairs(self.playerAttacks) do
-			local hit = checkCollision(enemyhb, attackhb)
-			if hit then
-				-- ao colidir -> dano no inimigo
-				enemy:takeDamage(attack.dmg)
-			end
-		end
-	end
+		--------- INIMIGO / ATAQUE ----------
+	for enemy, enemyhb in pairs(registry[ENEMY]) do
+		for attack, attackhb in pairs(registry[PLAYER_ATTACK]) do
+			local hit = checkColision(
+				enemyhb.hb.default,
+				enemy,
+				attackhb.hb.default,
+				attack
+			)
 
-	--------- INIMIGO / PLAYER ----------
-	for enemy, enemyhb in pairs(self.enemies) do
-		for player, playerhb in pairs(self.players) do
-			local hit = checkCollision(enemyhb, playerhb)
-			if hit and player.invulnerableTimer <= 0 then
-				-- TODO: Implementar efeitos de colisão do player com inimigos
-				player.invulnerableTimer = 1.0
-				-- ao colidir -> dano no player
-				print("ui")
+			if hit then
+				self:onEnemyHitByPlayerAttack(enemy, attack)
 			end
 		end
 	end
 
 	--------- ATAQUE / PLAYER ----------
-	for player, playerhb in pairs(self.players) do
-		for attack, attackhb in pairs(self.enemyAttacks) do
-			-- pula se o ataque já tiver acertado esse jogador
-			if attack.targetsDamaged[player] then
-				goto nextattackplayer
+	for player, playerhb in pairs(registry[PLAYER]) do
+		for attack, attackhb in pairs(registry[ENEMY_ATTACK]) do
+			local hit = checkColision(
+				playerhb.hb.default,
+				player,
+				attackhb.hb.default,
+				attack
+			)
+
+			if hit then
+				self:onPlayerHitByEnemyAttack(player, attack)
 			end
-
-			if attack.active and checkCollision(playerhb, attackhb) then
-				attack.targetsDamaged[player] = true
-				attack.piercesLeft = attack.piercesLeft - 1
-
-				-- conta que o projétil atingiu, mas só aplica o efeito se o jogador não estiver invulnerável
-				if player.invulnerableTimer > 0 then
-					goto nextplayer
-				end
-
-				player.invulnerableTimer = 1.0
-				attack:onHit(player)
-				-- goto nextplayer
-			end
-			::nextattackplayer::
 		end
-		::nextplayer::
 	end
 
 	------- PLAYER / DESTRUTIVEL --------
-	for destr, destrhb in pairs(self.destructibles) do
-		for player, playerhb in pairs(self.players) do
-			local hit = checkCollision(destrhb, playerhb)
+	for destr, destrhb in pairs(registry[DESTRUCTIBLE]) do
+		for player, playerhb in pairs(registry[PLAYER]) do
+			local hit = checkColision(
+				destrhb.hb.solids,
+				destr,
+				playerhb.hb.default,
+				player
+			)
+
 			if hit then
-				-- ao colidir -> destrói objeto
-				destr:damage(math.huge)
+				self:onPlayerDestructible(player, destr)
 			end
 		end
 	end
 
 	------- ATAQUE / DESTRUTIVEL --------
-	for destr, destrhb in pairs(self.destructibles) do
-		for attack, attackhb in pairs(self.playerAttacks) do
-			local hit = checkCollision(destrhb, attackhb)
+	for destr, destrhb in pairs(registry[DESTRUCTIBLE]) do
+		for attack, attackhb in pairs(registry[PLAYER_ATTACK]) do
+			local hit = checkColision(
+				destrhb.hb.solids,
+				destr,
+				attackhb.hb.default,
+				attack
+			)
+
 			if hit then
-				-- ao colidir -> destrói objeto
-				destr:damage(math.huge)
+				self:onPlayerDestructible(attack, destr)
 			end
 		end
 	end
 
 	------- PLAYER / NPC --------
-	for player, playerhb in pairs(self.players) do
+	for player, playerhb in pairs(registry[PLAYER]) do
 		local hitSomeNPC = false
-		for npc, npchb in pairs(self.npcs) do
-			local hit = checkCollision(npchb, playerhb)
+		for npc, npchb in pairs(registry[NPC]) do
+
+			local hit = checkColision(
+				playerhb.hb.default,
+				player,
+				npchb.hb.triggers,
+				npc
+			)
+
 			if hit then
-				-- ao colidir -> inicia diálogo
-				player.interactiveObj = npc
 				hitSomeNPC = true
+				self:onPlayerNpc(player, npc)
 			end
-			npc.reachable = hit
 		end
+
 		if not hitSomeNPC and player.interactiveObj and player.interactiveObj.type == NPC then
-			player.interactiveObj = nil
+			self:onPlayerNpcExit(player, player.interactiveObj)
 		end
 	end
+
+	---------- ATAQUE / ATAQUE ----------
+	for attackA, attackAhb in pairs(registry[PLAYER_ATTACK]) do
+		for attackB, attackBhb in pairs(registry[ENEMY_ATTACK]) do
+			local hit = checkColision(
+				attackAhb.hb.default,
+				attackA,
+				attackBhb.hb.default,
+				attackB
+			)
+
+			if hit then
+				self:onAttackAttack(attackA, attackB)
+			end
+		end
+	end
+
+end
+
+---@param entity Entity
+---@param startPos Vec
+---@param nextPos Vec
+---@return Vec correctedPos
+-- resolve colisões sólidas para a `entity` ao tentar se mover para `nextPos`
+function CollisionManager:resolveSolidCollisions(entity, startPos, nextPos)
+	local pos = vec(startPos.x, startPos.y)
+
+	-- eixo X
+	if nextPos.x ~= pos.x then
+		local testPosX = vec(nextPos.x, pos.y)
+
+		if self:collidesAnyDefault(entity, testPosX) then
+			pos.x = self:findClosestNonCollidingPosMulti(entity, pos, testPosX, "x")
+			entity.vel.x = 0
+		else
+			pos.x = nextPos.x
+		end
+	end
+
+	-- eixo Y
+	if nextPos.y ~= pos.y then
+		local testPosY = vec(pos.x, nextPos.y)
+
+		if self:collidesAnyDefault(entity, testPosY) then
+			pos.y = self:findClosestNonCollidingPosMulti(entity, pos, testPosY, "y")
+			entity.vel.y = 0
+		else
+			pos.y = nextPos.y
+		end
+	end
+
+	return pos
+end
+
+---@param entity Entity
+---@param testPos Vec
+---@return boolean, Entity|nil
+-- checa se a `testHb` colide com alguma hitbox sólida registrada
+function CollisionManager:collidesAnyDefault(entity, testPos)
+	local defaults = entity.hb.default
+	if not defaults then 
+		return false 
+	end
+
+	for _, hb in ipairs(defaults) do
+		local worldHb = buildWorldHitbox(hb, testPos)
+		if self:collidesWithSolid(entity, worldHb) then
+			return true
+		end
+	end
+
+	return false
+end
+
+---@param entity Entity
+---@param testHb Hitbox
+---@return boolean, Entity|nil
+-- checa se a `testHb` colide com alguma hitbox sólida registrada
+function CollisionManager:collidesWithSolid(entity, testHb)
+	---@type table<Entity, SolidsData>
+	local solids = self.solids
+
+	for other, data in pairs(solids) do
+		if other ~= entity then
+			local otherHb = data.hb
+
+			for _, solidHb in ipairs(otherHb) do
+				local worldSolidHb = buildWorldHitbox(solidHb, other.pos)
+
+				if checkHitboxCollision(testHb, worldSolidHb) then
+					return true, other
+				end
+			end
+		end
+	end
+
+	return false
+end
+
+---@param entity Entity
+---@param startPos Vec
+---@param endPos Vec
+---@param axis "x" | "y"
+-- encontra a posição mais próxima de `endPos` em que `entity`
+-- não colide com hitboxes sólidas, movendo-se ao longo do eixo `axis
+function CollisionManager:findClosestNonCollidingPosMulti(entity, startPos, endPos, axis)
+	local low = 0
+	local high = 1
+	local best = startPos[axis]
+
+	for _ = 1, 8 do
+		local mid = (low + high) / 2
+
+		local testPos = vec(startPos.x, startPos.y)
+		testPos[axis] = startPos[axis] + (endPos[axis] - startPos[axis]) * mid
+
+		if self:collidesAnyDefault(entity, testPos) then
+			high = mid
+		else
+			best = testPos[axis]
+			low = mid
+		end
+	end
+
+	return best
+end
+
+
+----------------------------------------
+-- Regras de Colisão
+----------------------------------------
+
+---@param player Player
+---@param item Item
+-- trata a colisão entre um `player` e um `item`
+function CollisionManager:onPlayerItem(player, item)
+	player:tryCollectItem(item)
+end
+
+---@param enemy Enemy
+---@param attack AtkEvent
+-- trata a colisão entre um `enemy` e um `player`
+function CollisionManager:onEnemyHitByPlayerAttack(enemy, attack)
+	if not attack.active then return end
+	if attack.targetsDamaged[enemy] then return end
+
+	attack.targetsDamaged[enemy] = true
+	attack.piercesLeft = attack.piercesLeft - 1
+
+	if enemy.invulnerableTimer > 0 then return end
+
+	enemy.invulnerableTimer = 0.5
+	enemy:takeDamage(attack.dmg)
+end
+
+---@param enemy Enemy
+---@param player Player
+-- trata a colisão entre um `enemy` e um `player`
+function CollisionManager:onEnemyPlayer(enemy, player)
+	if player.invulnerableTimer > 0 then return end
+
+	print(player.name .. " hit by enemy " .. enemy.name)
+	player.invulnerableTimer = 1.0
+end
+
+---@param player Player
+---@param attack AtkEvent
+-- trata a colisão entre um `player` e um `attack` inimigo
+function CollisionManager:onPlayerHitByEnemyAttack(player, attack)
+	if not attack.active then return end
+	if attack.targetsDamaged[player] then return end
+
+	attack.targetsDamaged[player] = true
+	attack.piercesLeft = attack.piercesLeft - 1
+
+	if player.invulnerableTimer > 0 then return end
+
+	print(player.name .. " hit by enemy " .. attack.attacker.name)
+
+	player.invulnerableTimer = 1.0
+	attack:onHit(player)
+end
+
+---@param player Player
+---@param npc Npc
+-- trata a colisão entre um `player` e um `npc`
+function CollisionManager:onPlayerNpc(player, npc)
+	player.interactiveObj = npc
+	npc.reachable = true
+end
+
+---@param player Player
+---@param npc Npc
+-- trata o fim da colisão entre um `player` e um `npc`
+function CollisionManager:onPlayerNpcExit(player, npc)
+	if player.interactiveObj == npc then
+		player.interactiveObj = nil
+	end
+
+	npc.reachable = false
+end
+
+---@param destructible Destructible
+-- trata a colisão entre um `player` ou um `attack` do player e um `destructible`
+function CollisionManager:onPlayerDestructible(_, destructible)
+	destructible:damage(math.huge)
+end
+
+---@param attackA AtkEvent
+---@param attackB AtkEvent
+-- trata a colisão entre dois ataques
+function CollisionManager:onAttackAttack(attackA, attackB)
+	if not attackA.active or not attackB.active then
+		return
+	end
+
+	attackA.piercesLeft = attackA.piercesLeft - 1
+	attackB.piercesLeft = attackB.piercesLeft - 1
 end

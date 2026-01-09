@@ -5,6 +5,7 @@ require("modules.engine.collision")
 require("modules.entities.entity")
 require("modules.entities.player")
 require("modules.systems.shaders")
+require("modules.systems.movement")
 require("modules.utils.types")
 require("modules.utils.utils")
 require("modules.utils.vec")
@@ -24,8 +25,9 @@ require("table")
 ---@field shine boolean
 ---@field canPick boolean
 ---@field image table
----@field applyImpulse function
 ---@field setCollected function
+---@field state string
+---@field visualOffset Vec
 
 Item = setmetatable({}, { __index = Entity })
 Item.__index = Item
@@ -43,24 +45,30 @@ function Item.new(object, pos, room, autoPick, floorY)
 	local item = setmetatable({}, Item) ---@diagnostic disable-line
 
 	local hbRadius = autoPick and 30 or 60
-	local hitbox = hitbox(Circle.new(hbRadius), pos)
-	item:init(object.name, pos, hitbox, room)
+	local hb = hitbox(Circle.new(hbRadius))
+	local hbs = hitboxes({}, {}, { hb })
+	local physics = physicsSettings(0.5, 0, 6)
+	item:init(object.name, pos, hbs, room, physics)
 
 	item.object = object -- objeto associado ao item (arma, recurso, etc)
 	item.pos = pos -- posição do item no mundo
 	item.room = room -- sala onde o item está
-	item.collected = false -- flag de coleta
 	item.autoPick = autoPick -- se o item é coletado automaticamente ou manualmente
-	item.gravity = 600 -- força da gravidade
 	item.floorY = item.pos.y + (floorY or 0) -- posição onde irá parar de cair
+
+	item.visualOffset = vec(0, 0) -- offset visual para renderização
+	item.gravity = 1500 -- força da gravidade
 	item.idleTimer = 0 -- timer para oscilar enquanto parado
+	item.collected = false -- flag de coleta
 	item.shine = false -- se está brilhando
 	item.canPick = false -- se o item pode ser coletado (true após terminar de cair)
+	item.state = "falling" -- estado inicial do item
 
 	local sprite_path = pngPathFormat({ "assets", "sprites", "items", object.name })
 	item.image = love.graphics.newImage(sprite_path)
 	item.image:setFilter("nearest", "nearest")
 
+	collisionManager:register(item)
 	table.insert(room.items, item)
 	return item
 end
@@ -75,40 +83,41 @@ function Item:update(dt)
 	self:move(dt)
 end
 
----@param pos Vec
--- redefine a posição do `Item` e sua `hitbox`
-function Item:setPos(pos)
-	self.pos = pos
-	self.hb.pos = pos
-end
-
 ---@param dt number
 -- movimenta o item, fazendo ele oscilar acima do chão ao colidir com ele
 function Item:move(dt)
-	local newPos = {}
-	-- aplica velocidade (se houver)
-	if not nullVec(self.vel) then
-		self.vel.y = self.vel.y + self.gravity * dt
-		newPos.y = self.pos.y + self.vel.y * dt
-		newPos.x = self.pos.x + self.vel.x * dt
+	if not self.canPick then
+		applyForce(self, vec(0, self.gravity * self.mass))
+		applyPhysics(self, dt)
 
-		-- colisão simples com o chão
-		if newPos.y > self.floorY and self.vel.y > 0 then
-			newPos.y = self.floorY
+		-- checa se está apoiado em algo
+		if self:isGrounded() then
 			self.vel.y = 0
-			self.vel.x = 0
+			self.acc.y = 0
 			self.canPick = true
+			self.state = "idle"
 		end
-	else
-		-- fica oscilando levemente enquanto no chão
-		newPos.y = self.floorY - 5 * (math.sin(self.idleTimer * 5) + 1)
-		self.idleTimer = self.idleTimer + dt
+		return
 	end
-	if not newPos.x then
-		newPos.x = self.pos.x
-	end
-	self:setPos(newPos)
+
+	self:updateIdle(dt)
 end
+
+function Item:updateIdle(dt)
+	self.idleTimer = self.idleTimer + dt
+
+	-- oscilação suave
+	local amplitude = 5
+	local speed = 5
+
+	self.visualOffset.y = math.sin(self.idleTimer * speed) * amplitude
+end
+
+
+function Item:isGrounded()
+	return self.pos.y > self.floorY and self.vel.y > 0
+end
+
 
 ---@param value boolean
 -- define se o item está brilhando (bordas brancas) ou não
@@ -129,7 +138,9 @@ function Item:draw(camera)
 	end
 
 	local scale = 3
-	local viewPos = camera:viewPos(self.pos)
+	
+	local visualPos = addVec(self.pos, self.visualOffset)
+	local viewPos = camera:viewPos(visualPos)
 	local offset = {
 		x = self.image:getWidth() / 2,
 		y = self.image:getHeight() / 2,
@@ -145,21 +156,11 @@ end
 -- marca o `Item` como tendo sido coletado
 function Item:setCollected()
 	self.collected = true
+	collisionManager:unregister(self)
 	local index = tableIndexOf(self.room.items, self)
 	if index then
 		table.remove(self.room.items, index)
 	end
-end
-
-----------------------------------------
--- Física simples
-----------------------------------------
-
----@param impulseVec Vec
--- aplica um impulso que movimenta o item em uma determinada direção
-function Item:applyImpulse(impulseVec)
-	-- Aplica um impulso instantâneo ao item
-	self.vel = addVec(self.vel, impulseVec)
 end
 
 ----------------------------------------
@@ -181,7 +182,7 @@ function spawnItem(object, pos, room, autoPick, floorY, impuselVec)
 		return item
 	end
 
-	item:applyImpulse(impuselVec)
+	applyImpulse(item, impuselVec)
 	return item
 end
 

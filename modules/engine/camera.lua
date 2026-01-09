@@ -208,10 +208,13 @@ function Camera:draw()
 	love.graphics.scale(self.zoom)
 	love.graphics.translate(-self.viewport.width / 2, -self.viewport.height / 2)
 
+
 	-- renderiza mundo
 	renderRooms(self)
 	-- renderiza entidades com Y-sorting
 	renderEntities(self)
+	-- renderiza as hitboxes ativas (debug)
+	renderHitboxes(self)
 	-- renderiza caixas de diálogo por cima de tudo
 	renderDialogues(self)
 

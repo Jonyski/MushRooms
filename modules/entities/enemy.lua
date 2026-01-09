@@ -33,14 +33,14 @@ Enemy.type = ENEMY
 ---@param physics PhysicsSettings
 ---@param move function
 ---@param attack Attack
----@param hitbox Hitbox
+---@param hitboxes Hitboxes
 ---@param room Room
 ---@return Enemy
 -- cria uma instância de `Enemy`
-function Enemy.new(name, hp, spawnPos, physics, move, attack, hitbox, room)
+function Enemy.new(name, hp, spawnPos, physics, move, attack, hitboxes, room)
 	---@type Enemy
 	local enemy = setmetatable({}, Enemy) ---@diagnostic disable-line
-	enemy:init(name, spawnPos, hitbox, room, physics)
+	enemy:init(name, spawnPos, hitboxes, room, physics)
 
 	-- atributos que variam
 	enemy.hp = hp -- pontos de vida do inimigo
@@ -89,7 +89,11 @@ function Enemy:die()
 	self.state = DYING
 	local anim = self.animations[DYING]
 	anim.onFinish = function()
-		collisionManager.enemies[self] = nil
+		collisionManager:unregister(self)
+		for _, atk in pairs(self.atk.events) do
+			collisionManager:unregister(atk)
+		end
+
 		table.remove(self.room.enemies, tableIndexOf(self.room.enemies, self))
 	end
 end
@@ -113,6 +117,7 @@ function Enemy:update(dt)
 	if self.atk then
 		self.atk:update(dt)
 	end
+	self:updateInvulnerability(dt)
 	self:attack()
 	self.animations[self.state]:update(dt)
 	applyPhysics(self, dt)
@@ -150,6 +155,10 @@ end
 ---@param camera Camera
 -- função de renderização de `Enemy`
 function Enemy:draw(camera)
+	if self:isInvulnerable() then
+		return
+	end
+
 	local viewPos = camera:viewPos(self.pos)
 	local animation = self.animations[self.state]
 	local quad = animation.frames[animation.currFrame]

@@ -18,6 +18,7 @@ function applyPhysics(entity, dt)
 	entity.vel = scaleVec(entity.vel, frictionMod)
 	entity.vel = addVec(entity.vel, scaleVec(entity.acc, dt))
 	local nextPos = addVec(entity.pos, scaleVec(entity.vel, dt))
+
 	setPos(entity, nextPos)
 
 	if math.abs(entity.vel.x) < 1 then
@@ -29,13 +30,21 @@ function applyPhysics(entity, dt)
 	entity.acc = vec(0, 0)
 end
 
+---@param entity Entity
 ---@param pos Vec
--- atualiza a posição da entidade `entity` e sua hitbox (caso ela exista)
+-- atualiza a posição da entidade e resolve colisões sólidas
 function setPos(entity, pos)
-	entity.pos = pos
-	if entity.hb then
-		entity.hb.pos = pos
+	local nextPos = vec(pos.x, pos.y)
+
+	if entity.hb and entity.hb.default then
+		nextPos = collisionManager:resolveSolidCollisions(
+			entity,
+			entity.pos,
+			nextPos
+		)
 	end
+
+	entity.pos = nextPos
 end
 
 ---@param entity any
@@ -51,7 +60,7 @@ end
 
 ---@param entity any
 ---@param targetVel Vec
----@param intensity number
+---@param intensity? number
 -- aplica uma força para aproximar a velocidade atual do objeto
 -- à velocidade desejada (`targetVel`). `intensity` controla a
 -- magnitude dessa força - o defaut é `100`
@@ -67,4 +76,11 @@ end
 function stopMovement(entity)
 	entity.vel = vec(0, 0)
 	entity.acc = vec(0, 0)
+end
+
+---@param entity any
+---@param impulseVec Vec
+-- aplica um impulso instantâneo à entidade, alterando sua velocidade
+function applyImpulse(entity, impulseVec)
+	entity.vel = addVec(entity.vel, impulseVec)
 end

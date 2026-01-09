@@ -26,6 +26,7 @@ appleCake.beginSession()
 -- Variáveis Globais
 ----------------------------------------
 
+debugMode = false
 window = { scale = 1, offset = vec(0, 0) }
 gameCtx = MENU_CTX
 local updateProfile
@@ -58,11 +59,15 @@ function love.keypressed(key, scancode, isrepeat)
 	end
 
 	if key == "1" then
-		spawnItem(newKatana(), players[1].pos, players[1].room, false, getAnchor(players[1], FLOOR), vec(0, 0))
+		spawnItem(newKatana(), players[1].pos, players[1].room, false, getAnchor(players[1], FLOOR), vec(0, -500))
+	end
+;
+	if key == "2" then
+		spawnItem(newSlingShot(), players[1].pos, players[1].room, false, getAnchor(players[1], FLOOR), vec(0, -500))
 	end
 
-	if key == "2" then
-		spawnItem(newSlingShot(), players[1].pos, players[1].room, false, getAnchor(players[1], FLOOR), vec(0, 0))
+	if key == "0" then
+		debugMode = not debugMode
 	end
 
 	if not isrepeat then
@@ -165,8 +170,7 @@ function love.update(dt)
 		r:update(dt)
 	end
 	----------- Colisões ----------
-	collisionManager:updateHitboxLists()
-	collisionManager:handleCollisions()
+	collisionManager:update(dt)
 
 	-------------- UI -------------
 	::uiupdate::

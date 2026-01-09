@@ -31,13 +31,13 @@ Destructible.type = DESTRUCTIBLE
 ---@param pos Vec
 ---@param room Room
 ---@param loot Loot
----@param hitbox Hitbox
+---@param hitboxes Hitboxes
 ---@return Destructible
 -- cria um objeto destrutível contendo um certo `loot`
-function Destructible.new(name, pos, room, loot, hitbox)
+function Destructible.new(name, pos, room, loot, hitboxes)
 	---@type Destructible
 	local obj = setmetatable({}, Destructible) ---@diagnostic disable-line
-	obj:init(name, pos, hitbox, room)
+	obj:init(name, pos, hitboxes, room)
 	obj.state = INTACT
 	obj.health = 100 -- vida para ser destruído
 	obj.spriteSheets = {}
@@ -75,7 +75,7 @@ end
 ---@param amount number
 -- causa dano ao `Destructible`. Caso sua vida chegue a 0, ele quebra
 function Destructible:damage(amount)
-	if self.state == BROKEN or self.state == BREAKING then
+	if self.state ~= INTACT then
 		return
 	end
 
@@ -89,6 +89,7 @@ end
 function Destructible:breakApart()
 	self.state = BREAKING
 	self:spawnLoot()
+	collisionManager:unregister(self)
 	local anim = self.animations[BREAKING]
 	anim.onFinish = function()
 		self.state = BROKEN
@@ -135,7 +136,7 @@ function Destructible:spawnLoot()
 			local amount = math.random(el.amountRange.min, el.amountRange.max)
 			for _ = 1, amount do
 				local itemPos = vec(self.pos.x, self.pos.y)
-				local impulseVec = vec(math.random(-100, 100), -math.random(150, 200))
+				local impulseVec = vec(math.random(-100, 100), -math.random(300, 400))
 				spawnItem(el.object, itemPos, self.room, el.autoPick, math.random(-10, 20), impulseVec)
 			end
 		end

@@ -9,9 +9,11 @@ require("modules.entities.npc")
 ---@return Npc
 --Cria Glob, a minhoca mágica
 function initGlob(spawnPos, room)
-	local hitbox = hitbox(Circle.new(130), spawnPos)
+	local hb = hitbox(Circle.new(20))
+	local triggerHb = hitbox(Circle.new(130))
+	local hbs = hitboxes({ hb }, {}, { triggerHb })
 	description = newNpcDescription(GLOB.name, "Magician", "Misterious", SEDENTARY)
-	npc = Npc.new(description, spawnPos, hitbox, room)
+	npc = Npc.new(description, spawnPos, hbs, room)
 	local idleAnimSettings = newAnimSetting(1, { width = 32, height = 32 }, 0.15, true, 1)
 	npc:addAnimations(idleAnimSettings)
 	npc.dialogue = globDialogue()

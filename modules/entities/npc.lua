@@ -36,15 +36,14 @@ Npc.type = NPC
 
 ---@param description NpcDescription
 ---@param spawnPos Vec
----@param hitbox Hitbox
+---@param hitboxes Hitboxes
 ---@param room Room
 ---@return Npc
-function Npc.new(description, spawnPos, hitbox, room)
+function Npc.new(description, spawnPos, hitboxes, room)
 	---@type Npc
 	local npc = setmetatable({}, Npc) ---@diagnostic disable-line
 
-	npc:init(description.name, spawnPos, hitbox, room)
-
+	npc:init(description.name, spawnPos, hitboxes, room)
 	-- atributos que variam
 	npc.job = description.job -- define a profissão do npc
 	npc.personality = description.personality -- define a personalidade do npc

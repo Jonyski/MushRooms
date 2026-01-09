@@ -37,7 +37,7 @@ end
 ---@class Entity
 ---@field name string
 ---@field pos? Vec
----@field hb? Hitbox
+---@field hb? Hitboxes
 ---@field room? Room
 ---@field mass number
 ---@field speed number
@@ -50,14 +50,14 @@ Entity.__index = Entity
 
 ---@param name string
 ---@param pos? Vec
----@param hitbox? Hitbox
+---@param hitboxes? Hitboxes
 ---@param room? Room
 ---@param entityPhysics? PhysicsSettings
 -- inicializa uma entidade com propriedades básicas.
-function Entity:init(name, pos, hitbox, room, entityPhysics)
+function Entity:init(name, pos, hitboxes, room, entityPhysics)
 	self.name = name or ""
 	self.pos = pos
-	self.hb = hitbox
+	self.hb = hitboxes
 	self.room = room
 
 	local physics = entityPhysics and entityPhysics or physicsSettings()
@@ -68,4 +68,19 @@ function Entity:init(name, pos, hitbox, room, entityPhysics)
 	self.vel = physics.initialVel
 	self.acc = physics.initialAcc
 	self.speedRange = physics.speedRange
+
+	self.invulnerableTimer = 0 -- timer de invulnerabilidade após levar dano
+	self.blinkTimer = 0 -- timer para piscar o sprite do player quando invulnerável
+end
+
+function Entity:updateInvulnerability(dt)
+	if self.invulnerableTimer > 0 then
+		self.invulnerableTimer = self.invulnerableTimer - dt
+		self.blinkTimer = (self.blinkTimer + dt * 10) % 1
+	end
+end
+
+function Entity:isInvulnerable()
+	local blink = 0.5
+	return self.invulnerableTimer > 0 and self.blinkTimer < blink
 end

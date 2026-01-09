@@ -34,9 +34,11 @@ function normalize(v)
 	local vec = vec(v.x, v.y)
 
 	local mod = math.sqrt(v.x ^ 2 + v.y ^ 2)
+	if mod == 0 then
+		return vec
+	end
 	vec.x = vec.x / mod
 	vec.y = vec.y / mod
-
 	return vec
 end
 

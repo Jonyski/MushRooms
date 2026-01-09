@@ -177,7 +177,12 @@ function Player:move(dt)
 
 	self:updateParticlesPos()
 	if self.weapon then
-		self.weapon:updateOrientation({ x = self.vel.x, y = self.vel.y })
+		-- separa a orientação da arma em dois casos para amenizar o bug ao colidir com paredes
+		if not nullVec(self.vel) then
+			self.weapon:updateOrientation({ x = self.vel.x, y = self.vel.y })
+		else
+			self.weapon:updateOrientation(movementDir)
+		end
 	end
 	self:updateRoom()
 end

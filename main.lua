@@ -61,7 +61,6 @@ function love.keypressed(key, scancode, isrepeat)
 	if key == "1" then
 		spawnItem(newKatana(), players[1].pos, players[1].room, false, getAnchor(players[1], FLOOR), vec(0, -500))
 	end
-;
 	if key == "2" then
 		spawnItem(newSlingShot(), players[1].pos, players[1].room, false, getAnchor(players[1], FLOOR), vec(0, -500))
 	end

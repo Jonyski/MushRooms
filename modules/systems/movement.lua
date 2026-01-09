@@ -37,11 +37,7 @@ function setPos(entity, pos)
 	local nextPos = vec(pos.x, pos.y)
 
 	if entity.hb and entity.hb.default then
-		nextPos = collisionManager:resolveSolidCollisions(
-			entity,
-			entity.pos,
-			nextPos
-		)
+		nextPos = collisionManager:resolveSolidCollisions(entity, nextPos)
 	end
 
 	entity.pos = nextPos

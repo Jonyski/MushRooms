@@ -1,20 +1,21 @@
 ----------------------------------------
 -- Importações de Módulos
 ----------------------------------------
-require("modules.systems.blueprints")
 require("modules.entities.room")
+require("modules.systems.blueprints")
 require("modules.utils.utils")
 
 ----------------------------------------
 -- Funções de debug
 ----------------------------------------
 
+function _roomCondition()
+	return love.keyboard.isDown("r")
+end
+
 function _roomDebugHandler(numberKey)
 	local roomChange = false
-	local rPressed = love.keyboard.isDown("r")
-	if not rPressed then
-		return roomChange
-	end
+
 	local debugRoomPos = { x = players[1].room.pos.x + 1, y = players[1].room.pos.y }
 	if numberKey == "1" then
 		_newRoomDebug(debugRoomPos, Room.stdDim, BATTLE_ROOM)

@@ -5,6 +5,7 @@ require("modules.constructors.particles")
 require("modules.engine.animation")
 require("modules.engine.collision")
 require("modules.entities.entity")
+require("modules.systems.inventory")
 require("modules.utils.colors")
 require("modules.utils.constructors")
 require("modules.utils.shapes")
@@ -43,6 +44,7 @@ players = {}
 ---@field addParticles function
 ---@field inDialogue boolean
 ---@field interactiveObj? Entity
+---@field inventory Inventory
 
 Player = setmetatable({}, { __index = Entity })
 Player.__index = Player
@@ -78,6 +80,7 @@ function Player.new(name, spawnPos, controls, colors, room)
 	player.weapon = nil -- arma equipada
 	player.inDialogue = false -- se o player está em diálogo
 	player.interactiveObj = nil -- objeto próximo ao player com o qual ele pode interagir (ex: NPC)
+	player.inventory = Inventory.new(player) -- inventário do jogador
 
 	collisionManager:register(player)
 	return player
@@ -326,6 +329,23 @@ function Player:checkAction2(key)
 	end
 end
 
+---@param key string
+-- verifica se o `Player` está pressionando a combinação de teclas para abrir o inventário
+function Player:checkSpecialActions(key)
+	local c = self.controls
+
+	if key == c.up or key == c.down or
+		 key == c.left or key == c.right then
+
+		if love.keyboard.isDown(c.up) and love.keyboard.isDown(c.down) and
+			 love.keyboard.isDown(c.left) and love.keyboard.isDown(c.right) then
+	
+			print(self.name .. " abriu/fechou o inventário")
+			inventoryOpen = not inventoryOpen
+		end
+	end
+end
+
 ---@param weapon any
 ---@return boolean
 -- adiciona uma arma ao arsenal do `Player` caso ele não a tenha
@@ -379,6 +399,8 @@ function Player:collectItem(item)
 		end
 	elseif item.object.type == ITEM then
 		result = self:collectCoin()
+	elseif item.object.type == RESOURCE then
+		result = item.object:collect(self)
 	end
 	if result then
 		item:setCollected()

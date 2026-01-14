@@ -7,6 +7,7 @@ ENEMY = "enemy"
 NPC = "npc"
 ROOM = "room"
 WEAPON = "weapon"
+RESOURCE = "resource"
 ITEM = "item"
 DESTRUCTIBLE = "destructible"
 COLOR = "color"
@@ -20,6 +21,7 @@ SPAWNPOINT = "spawnpoint"
 SPAWN_DATA = "spawn data"
 COLLISION_MANAGER = "collision manager"
 DIALOGUE = "dialogue"
+INVENTORY = "inventory"
 
 ----------------------------------------
 -- Registro das entidades do jogo
@@ -53,5 +55,14 @@ BARREL = registerEntity(DESTRUCTIBLE, "barrel")
 
 ----------------- ITEM -----------------
 COIN = registerEntity(ITEM, "coin")
+
+------------ RESOURCES --------------
+WOOD = registerEntity(RESOURCE, "wood")
+STONE = registerEntity(RESOURCE, "stone")
+BREAD = registerEntity(RESOURCE, "bread")
+BONE = registerEntity(RESOURCE, "bone")
+FEATHER = registerEntity(RESOURCE, "feather")
+IRON = registerEntity(RESOURCE, "iron")
+GOLD = registerEntity(RESOURCE, "gold")
 
 ----------------- ROOM -----------------

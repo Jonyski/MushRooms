@@ -67,7 +67,7 @@ function getAnchor(obj, anchorType, scale)
 
 	local key = obj.name or obj.object.name
 	key = pathlizeName(string.lower(key))
-	local anchor = ANCHORS[key][anchorType]
+	local anchor = ANCHORS[key] and ANCHORS[key][anchorType] or nil
 
 	if anchor then
 		return anchor * scale

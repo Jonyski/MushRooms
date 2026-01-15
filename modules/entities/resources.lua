@@ -30,7 +30,3 @@ function Resource.new(name, description, weight, stack)
 
   return resource
 end
-
-function Resource:collect(player)
-  return player.inventory:addItem(self)
-end

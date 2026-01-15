@@ -388,6 +388,12 @@ function Player:collectCoin()
 	return true
 end
 
+---@param resource Resource
+---@return boolean
+function Player:collectResource(resource)
+  return self.inventory:addItem(resource)
+end
+
 ---@param item Item
 -- coleta um item e o marca como coletado
 function Player:collectItem(item)
@@ -400,7 +406,7 @@ function Player:collectItem(item)
 	elseif item.object.type == ITEM then
 		result = self:collectCoin()
 	elseif item.object.type == RESOURCE then
-		result = item.object:collect(self)
+		result = self:collectResource(item.object)
 	end
 	if result then
 		item:setCollected()
@@ -422,6 +428,8 @@ function Player:tryCollectItem(item)
 		return
 	end
 end
+
+
 
 ---@param camera Camera
 -- renderiza o `Player` na perspectiva da `camera`

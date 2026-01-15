@@ -68,10 +68,10 @@ function love.keypressed(key, scancode, isrepeat)
 		_roomDebugHandler(key)
 	elseif _spawnDropCondition() then
 		_spawnDropDebugHandler(key)
-	end
-
-	if key == "0" then
-		debugMode = not debugMode
+	else
+		if key == "0" then
+			debugMode = not debugMode
+		end
 	end
 
 	-------- FIM DEBUG --------

@@ -463,6 +463,7 @@ function CollisionManager:startRegistry()
 	reg[PLAYER] = {}
 	reg[ENEMY] = {}
 	reg[DESTRUCTIBLE] = {}
+	reg[INTERACTIVE] = {}
 	reg[ITEM] = {}
 	reg[NPC] = {}
 	reg[PLAYER_ATTACK] = {}
@@ -496,6 +497,10 @@ function CollisionManager:fetchHitboxesByRoom(room)
 		end
 	end
 
+	for _, inter in pairs(room.interactives) do
+		self:register(inter)
+	end
+
 	-- pegando hitboxes de itens
 	for _, item in pairs(room.items) do
 		self:register(item)
@@ -522,6 +527,11 @@ function CollisionManager:clearHitboxesByRoom(room)
 	-- removendo hitboxes de destrutiveis
 	for _, destr in pairs(room.destructibles) do
 		self:unregister(destr)
+	end
+
+	-- removendo hitboxes de interativos
+	for _, inter in pairs(room.interactives) do
+		self:unregister(inter)
 	end
 
 	-- removendo hitboxes de itens
@@ -675,7 +685,24 @@ function CollisionManager:handleCollisions()
 		end
 	end
 
-	------- PLAYER / DESTRUTIVEL --------
+	-------- PLAYER / INTERATIVO --------
+	for player, playerhb in pairs(registry[PLAYER]) do
+		local hitSomeInteractive = false
+		for inter, interhb in pairs(registry[INTERACTIVE]) do
+			local hit = checkColision(interhb.hb.triggers, inter, playerhb.hb.default, player)
+
+			if hit then
+				self:onPlayerInteractive(player, inter)
+				hitSomeInteractive = true
+			end
+		end
+
+		if not hitSomeInteractive and player.interactiveObj and player.interactiveObj.type == INTERACTIVE then
+			CollisionManager:onPlayerInteractiveExit(player, player.interactiveObj)
+		end
+	end
+
+	--------- PLAYER / INIMIGO ----------
 	for player, playerhb in pairs(registry[PLAYER]) do
 		for enemy, enemyhb in pairs(registry[ENEMY]) do
 			local hit = checkColision(playerhb.hb.default, player, enemyhb.hb.default, enemy)
@@ -865,6 +892,20 @@ end
 -- trata a colisão entre um `player` ou um `attack` do player e um `destructible`
 function CollisionManager:onPlayerDestructible(_, destructible)
 	--destructible:damage(math.huge)
+end
+
+---@param player Player
+---@param inter Interactive
+-- trata o início de colisão de um `player` com um objeto `interactive`
+function CollisionManager:onPlayerInteractive(player, inter)
+	player.interactiveObj = inter
+end
+
+---@param player Player
+---@param inter Interactive
+-- trata o fim de colisão entre um `player` e um objeto `interactive`
+function CollisionManager:onPlayerInteractiveExit(player, inter)
+	player.interactiveObj = nil
 end
 
 ---@param attackA AtkEvent

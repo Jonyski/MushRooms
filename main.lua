@@ -14,6 +14,7 @@ require("modules.entities.room")
 require("modules.entities.weapon")
 require("modules.systems.dialogue")
 require("modules.tooling.roomcontrol")
+require("modules.tooling.turtledebug")
 require("modules.UI.menu")
 require("modules.UI.ui")
 require("table")
@@ -63,18 +64,25 @@ function love.keypressed(key, scancode, isrepeat)
 	end
 
 	local roomDebugChanged = _roomDebugHandler(key)
-	if roomDebugChanged then
-		goto numkeyhandled
+	local turtleSpawned
+	if not roomDebugChanged then
+		turtleSpawned = _turtleDebugHandler(key)
 	end
-
-	if key == "1" then
-		spawnItem(newKatana(), players[1].pos, players[1].room, false, getAnchor(players[1], FLOOR), vec(0, -500))
+	if not roomDebugChanged and not turtleSpawned then
+		if key == "1" then
+			spawnItem(newKatana(), players[1].pos, players[1].room, false, getAnchor(players[1], FLOOR), vec(0, -500))
+		end
+		if key == "2" then
+			spawnItem(
+				newSlingShot(),
+				players[1].pos,
+				players[1].room,
+				false,
+				getAnchor(players[1], FLOOR),
+				vec(0, -500)
+			)
+		end
 	end
-	if key == "2" then
-		spawnItem(newSlingShot(), players[1].pos, players[1].room, false, getAnchor(players[1], FLOOR), vec(0, -500))
-	end
-
-	::numkeyhandled::
 
 	if key == "0" then
 		debugMode = not debugMode

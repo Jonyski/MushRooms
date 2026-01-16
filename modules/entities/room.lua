@@ -46,6 +46,7 @@ EVENT_ROOM = "event room"
 ---@field sprites table
 ---@field explored boolean
 ---@field destructibles Destructible[]
+---@field interactives Interactive[]
 ---@field items Item[]
 ---@field enemies Enemy[]
 ---@field npcs Npc[]
@@ -69,19 +70,20 @@ function Room.new(pos, dimensions, roomLimits, blueprint, sprites)
 	local room = setmetatable({}, Room)
 
 	-- atributos que variam
-	room.pos = pos                                    -- posição da sala na array de salas
-	room.dimensions = dimensions                      -- largura e altura da sala
-	room.hitbox = roomLimits                          -- pontos superior esquerdo (p1) e inferior direito (p2) da sala
+	room.pos = pos -- posição da sala na array de salas
+	room.dimensions = dimensions -- largura e altura da sala
+	room.hitbox = roomLimits -- pontos superior esquerdo (p1) e inferior direito (p2) da sala
 	room.center = midpoint(roomLimits.p1, roomLimits.p2) -- ponto central da sala
-	room.color = blueprint.color                      -- cor da sala
-	room.sprites = sprites                            -- os sprites da sala em camadas
+	room.color = blueprint.color -- cor da sala
+	room.sprites = sprites -- os sprites da sala em camadas
 	-- atributos fixos na instanciação
-	room.explored = false                             -- se algum jogador já entrou na sala ou não
-	room.destructibles = {}                           -- lista de objetos destrutíveis da sala
-	room.items = {}                                   -- lista de itens dropados na sala
-	room.enemies = {}                                 -- lista de inimigos na sala
-	room.npcs = {}                                    -- lista de NPCs na sala
-	room.playersInRoom = Set.new()                    -- lista de jogadores na sala
+	room.explored = false -- se algum jogador já entrou na sala ou não
+	room.destructibles = {} -- lista de objetos destrutíveis da sala
+	room.interactives = {} -- lista de objetos interativos na sala
+	room.items = {} -- lista de itens dropados na sala
+	room.enemies = {} -- lista de inimigos na sala
+	room.npcs = {} -- lista de NPCs na sala
+	room.playersInRoom = Set.new() -- lista de jogadores na sala
 
 	return room
 end
@@ -92,6 +94,10 @@ function Room:update(dt)
 	-- atualiza destrutíveis
 	for _, d in pairs(self.destructibles) do
 		d:update(dt)
+	end
+	-- atualiza objetos interativos
+	for _, i in pairs(self.interactives) do
+		i:update(dt)
 	end
 	-- atualiza items
 	for _, item in pairs(self.items) do
@@ -135,7 +141,7 @@ function Room:setExplored()
 			if not rooms[pos.y][pos.x] then
 				newRoom(pos, Room.stdDim)
 			end
-		end	
+		end
 	end
 end
 

@@ -64,7 +64,7 @@ function Item.new(object, pos, room, autoPick, floorY)
 	item.canPick = false -- se o item pode ser coletado (true após terminar de cair)
 	item.state = "falling" -- estado inicial do item
 
-	local sprite_path = pngPathFormat({ "assets", "sprites", "items", object.name })
+	local sprite_path = object.path or pngPathFormat({ "assets", "sprites", "items", object.name })
 	item.image = love.graphics.newImage(sprite_path)
 	item.image:setFilter("nearest", "nearest")
 

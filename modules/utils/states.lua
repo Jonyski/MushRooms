@@ -21,3 +21,7 @@ DYING = "dying"
 INTACT = "intact"
 BREAKING = "breaking"
 BROKEN = "broken"
+
+------------- INTERAGIVEIS -------------
+
+MOVING = "moving"

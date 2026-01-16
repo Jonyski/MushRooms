@@ -49,6 +49,15 @@ function renderEntities(camera)
 				end,
 			})
 		end
+		-- Adiciona objetos interativos
+		for _, i in pairs(r.interactives) do
+			table.insert(drawList, {
+				y = i.pos.y + getAnchor(i, FLOOR),
+				draw = function()
+					i:draw(camera)
+				end,
+			})
+		end
 		-- Adiciona items
 		for _, i in pairs(r.items) do
 			table.insert(drawList, {
@@ -139,10 +148,9 @@ function renderHitboxes(camera)
 		return
 	end
 
-	
 	---@type table<string, table<Entity, HitboxesData>>
 	local registry = collisionManager.registry
-	
+
 	for _, reg in pairs(registry) do
 		for entity, data in pairs(reg) do
 			local hitboxes = data.hb
@@ -227,7 +235,13 @@ end
 --- renderiza a hitbox retangular na perspectiva da `camera`
 function renderRectangleHitbox(camera, hitbox)
 	local viewPos = camera:viewPos(hitbox.offset)
-	love.graphics.rectangle("fill", viewPos.x - hitbox.shape.width / 2, viewPos.y - hitbox.shape.height / 2, hitbox.shape.width, hitbox.shape.height)
+	love.graphics.rectangle(
+		"fill",
+		viewPos.x - hitbox.shape.width / 2,
+		viewPos.y - hitbox.shape.height / 2,
+		hitbox.shape.width,
+		hitbox.shape.height
+	)
 end
 
 ---@param camera Camera

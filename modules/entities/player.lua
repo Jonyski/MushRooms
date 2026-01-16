@@ -229,7 +229,7 @@ function Player:updateState()
 	local isMoving = not nullVec(self.vel)
 	if love.keyboard.isDown(self.controls.act2) then
 		-- só defende se está completamente parado; se não, muda de arma
-		if not isMoving then
+		if not isMoving and not self.interactiveObj then
 			if prevState ~= DEFENDING then
 				self.particles[DEFENDING]:start()
 			end
@@ -310,6 +310,8 @@ function Player:checkAction2(key)
 		if self.interactiveObj.type == NPC then
 			DialogueManager:start(self.interactiveObj.dialogue, self.interactiveObj, self)
 			stopMovement(self)
+		elseif self.interactiveObj.type == INTERACTIVE then
+			self.interactiveObj.onInteract(self.interactiveObj, self)
 		end
 	elseif self.vel.x ~= 0 then
 		local len = #self.weapons

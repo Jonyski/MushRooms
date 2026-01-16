@@ -15,6 +15,7 @@ require("modules.entities.weapon")
 require("modules.systems.dialogue")
 require("modules.tooling.roomcontrol")
 require("modules.tooling.spawnDrop")
+require("modules.tooling.turtledebug")
 require("modules.UI.menu")
 require("modules.UI.ui")
 require("table")
@@ -69,6 +70,7 @@ function love.keypressed(key, scancode, isrepeat)
 	elseif _spawnDropCondition() then
 		_spawnDropDebugHandler(key)
 	else
+    _turtleDebugHandler(key)
 		if key == "0" then
 			debugMode = not debugMode
 		end

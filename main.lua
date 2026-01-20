@@ -166,6 +166,8 @@ function love.update(dt)
 	end
 
 	DialogueManager:update(dt)
+	----------- Colisões ----------
+	collisionManager:update(dt)
 	---------- Jogadores ----------
 	for _, p in pairs(players) do
 		p:update(dt)
@@ -178,8 +180,6 @@ function love.update(dt)
 	for _, r in activeRooms:iter() do
 		r:update(dt)
 	end
-	----------- Colisões ----------
-	collisionManager:update(dt)
 
 	-------------- UI -------------
 	::uiupdate::

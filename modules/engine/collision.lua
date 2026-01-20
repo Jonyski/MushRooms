@@ -497,6 +497,7 @@ function CollisionManager:fetchHitboxesByRoom(room)
 		end
 	end
 
+	-- pegando hitboxes de interativos
 	for _, inter in pairs(room.interactives) do
 		self:register(inter)
 	end
@@ -698,7 +699,7 @@ function CollisionManager:handleCollisions()
 		end
 
 		if not hitSomeInteractive and player.interactiveObj and player.interactiveObj.type == INTERACTIVE then
-			CollisionManager:onPlayerInteractiveExit(player, player.interactiveObj)
+			self:onPlayerInteractiveExit(player, player.interactiveObj)
 		end
 	end
 
@@ -748,7 +749,6 @@ function CollisionManager:handleCollisions()
 end
 
 ---@param entity Entity
----@param startPos Vec
 ---@param nextPos Vec
 ---@return Vec correctedPos
 function CollisionManager:resolveSolidCollisions(entity, nextPos)
@@ -873,19 +873,15 @@ end
 ---@param npc Npc
 -- trata a colisão entre um `player` e um `npc`
 function CollisionManager:onPlayerNpc(player, npc)
-	player.interactiveObj = npc
-	npc.reachable = true
+	player:considerInteractive(npc)
 end
 
 ---@param player Player
 ---@param npc Npc
 -- trata o fim da colisão entre um `player` e um `npc`
 function CollisionManager:onPlayerNpcExit(player, npc)
-	if player.interactiveObj == npc then
-		player.interactiveObj = nil
-	end
-
-	npc.reachable = false
+	print(npc.name .. " onExit by " .. player.name)
+	npc:onExit(player)
 end
 
 ---@param destructible Destructible
@@ -898,14 +894,15 @@ end
 ---@param inter Interactive
 -- trata o início de colisão de um `player` com um objeto `interactive`
 function CollisionManager:onPlayerInteractive(player, inter)
-	player.interactiveObj = inter
+	player:considerInteractive(inter)
 end
 
 ---@param player Player
 ---@param inter Interactive
 -- trata o fim de colisão entre um `player` e um objeto `interactive`
 function CollisionManager:onPlayerInteractiveExit(player, inter)
-	player.interactiveObj = nil
+	print(inter.name .. " onExit by " .. player.name)
+	inter:onExit(player)
 end
 
 ---@param attackA AtkEvent

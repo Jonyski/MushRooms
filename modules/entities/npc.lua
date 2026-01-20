@@ -29,6 +29,7 @@ LOYAL = "loyal" -- vai para a base do jogador, caso ela exista
 ---@field dialogue Dialogue
 ---@field inDialogue boolean
 ---@field reachable boolean
+---@field playersInReach table<Player, boolean>
 
 Npc = setmetatable({}, { __index = Entity })
 Npc.__index = Npc
@@ -56,6 +57,7 @@ function Npc.new(description, spawnPos, hitboxes, room)
 	npc.dialogue = nil -- diálogo do npc
 	npc.inDialogue = false -- se o npc está em diálogo
 	npc.reachable = false -- indica se algum player está perto o suficiente para falar com o NPC
+	npc.playersInReach = {} -- tabela para rastrear quais players estão ao alcance do NPC
 
 	table.insert(room.npcs, npc)
 	return npc
@@ -95,6 +97,23 @@ end
 -- atualiza os estados do npc
 function Npc:update(dt)
 	self.animations[self.state]:update(dt)
+end
+
+---@param player Player
+-- registra que um player entrou na área de alcance do NPC
+function Npc:onEnter(player)
+	self.playersInReach[player] = true
+	self.reachable = true
+end
+
+---@param player Player
+-- registra que um player saiu da área de alcance do NPC
+function Npc:onExit(player)
+	self.playersInReach[player] = nil
+
+	if next(self.playersInReach) == nil then
+		self.reachable = false
+	end
 end
 
 ---@param camera Camera

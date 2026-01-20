@@ -252,8 +252,10 @@ function Player:updateState()
 
 	-- atualizando a situação do sistema de partículas de caminhada
 	if isMoving then
-		self.particles[self.state]:setDirection(math.atan2(self.vel.y, self.vel.x) + math.pi)
-		self.particles[self.state]:start()
+		if self.particles[self.state] then
+			self.particles[self.state]:setDirection(math.atan2(self.vel.y, self.vel.x) + math.pi)
+			self.particles[self.state]:start()
+		end
 	else
 		self.particles[WALKING_UP]:stop()
 	end

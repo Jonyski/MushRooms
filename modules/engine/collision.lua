@@ -745,7 +745,7 @@ function CollisionManager:handleCollisions()
 	------- PLAYER / DESTRUTIVEL --------
 	for destr, destrhb in pairs(registry[DESTRUCTIBLE]) do
 		for player, playerhb in pairs(registry[PLAYER]) do
-			local hit = checkColision(destrhb.solids, destr, playerhb.default, player)
+			local hit = checkColision(destrhb.default, destr, playerhb.default, player)
 
 			if hit then
 				self:onPlayerDestructible(player, destr)
@@ -795,7 +795,7 @@ function CollisionManager:handleCollisions()
 	------- ATAQUE / DESTRUTIVEL --------
 	for destr, destrhb in pairs(registry[DESTRUCTIBLE]) do
 		for attack, attackhb in pairs(registry[PLAYER_ATTACK]) do
-			local hit = checkColision(destrhb.solids, destr, attackhb.default, attack)
+			local hit = checkColision(destrhb.default, destr, attackhb.default, attack)
 
 			if hit then
 				self:onPlayerDestructible(attack, destr)
@@ -968,7 +968,7 @@ end
 ---@param destructible Destructible
 -- trata a colisão entre um `player` ou um `attack` do player e um `destructible`
 function CollisionManager:onPlayerDestructible(_, destructible)
-	--destructible:damage(math.huge)
+	destructible:damage(math.huge)
 end
 
 ---@param player Player

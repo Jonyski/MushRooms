@@ -38,9 +38,11 @@ EVENT_ROOM = "event room"
 ----------------------------------------
 
 ---@class Room
+---@field arrPos Vec
 ---@field pos Vec
 ---@field dimensions Size
----@field hitbox RoomLimits
+---@field hb Hitboxes
+---@field limits RoomLimits
 ---@field center Vec
 ---@field color Color
 ---@field sprites table
@@ -54,6 +56,7 @@ EVENT_ROOM = "event room"
 ---@field playersInRoom Set
 ---@field populate function
 ---@field visit function
+---@field adjacentRooms Vec[]
 
 Room = {}
 Room.__index = Room
@@ -62,22 +65,25 @@ Room.type = ROOM
 
 ---@param pos Vec
 ---@param dimensions Size
----@param roomLimits RoomLimits
+---@param hitboxes Hitboxes
+---@param limits RoomLimits
 ---@param blueprint Blueprint
 ---@param sprites table
 ---@return Room
 -- cria uma instância de `Room`
-function Room.new(pos, dimensions, roomLimits, blueprint, sprites)
+function Room.new(pos, dimensions, hitboxes, limits, blueprint, sprites)
 	local room = setmetatable({}, Room)
 
 	-- atributos que variam
-	room.pos = pos -- posição da sala na array de salas
+	room.arrPos = pos -- posição da sala na array de salas
 	room.dimensions = dimensions -- largura e altura da sala
-	room.hitbox = roomLimits -- pontos superior esquerdo (p1) e inferior direito (p2) da sala
-	room.center = midpoint(roomLimits.p1, roomLimits.p2) -- ponto central da sala
+	room.hb = hitboxes -- hitbox da sala
+	room.limits = limits -- limites da sala nas coordenadas de mundo
+	room.pos = midpoint(room.limits.p1, room.limits.p2) -- centro da sala nas coordenadas de mundo
 	room.color = blueprint.color -- cor da sala
 	room.sprites = sprites -- os sprites da sala em camadas
 	-- atributos fixos na instanciação
+	room.adjacentRooms = {} -- salas adjacentes
 	room.explored = false -- se algum jogador já entrou na sala ou não
 	room.destructibles = {} -- lista de objetos destrutíveis da sala
 	room.interactives = {} -- lista de objetos interativos na sala
@@ -122,8 +128,10 @@ function Room:visit(player)
 		return
 	end
 
+	self:setExplored()
 	self.playersInRoom:add(player.id, player)
-	activeRooms:add(makeKey(self.pos.x, self.pos.y), self)
+	activeRooms:add(makeKey(self.arrPos.x, self.arrPos.y), self)
+	player.room = self
 
 	collisionManager.roomsDirty = true
 end
@@ -131,19 +139,23 @@ end
 -- define a sala como estando explorada, gerando as 4 salas
 -- vizinhas à ela
 function Room:setExplored()
-	if not self.explored then
-		self.explored = true
+	if self.explored then
+		return
+	end
 
-		-- criando salas adjacentes se eles ainda não existem
-		local adjacentPos = self:getAdjacentPos()
-		for _, pos in pairs(adjacentPos) do
-			if not rooms[pos.y] then
-				rooms:insert(pos.y, BiList.new())
-			end
-			if not rooms[pos.y][pos.x] then
-				newRoom(pos, Room.stdDim)
-			end
+	self.explored = true
+
+	-- criando salas adjacentes se eles ainda não existem
+	local adjacentPos = self:getAdjacentPos()
+	for _, pos in pairs(adjacentPos) do
+		if not rooms[pos.y] then
+			rooms:insert(pos.y, BiList.new())
 		end
+		if not rooms[pos.y][pos.x] then
+			newRoom(pos, Room.stdDim)
+		end
+
+		table.insert(self.adjacentRooms, pos)
 	end
 end
 
@@ -152,17 +164,17 @@ end
 -- essa função existe mais por praticidade
 function Room:getAdjacentPos()
 	local adjacentPos = {}
-	table.insert(adjacentPos, { x = self.pos.x - 1, y = self.pos.y })
-	table.insert(adjacentPos, { x = self.pos.x + 1, y = self.pos.y })
-	table.insert(adjacentPos, { x = self.pos.x, y = self.pos.y - 1 })
-	table.insert(adjacentPos, { x = self.pos.x, y = self.pos.y + 1 })
+	table.insert(adjacentPos, { x = self.arrPos.x - 1, y = self.arrPos.y })
+	table.insert(adjacentPos, { x = self.arrPos.x + 1, y = self.arrPos.y })
+	table.insert(adjacentPos, { x = self.arrPos.x, y = self.arrPos.y - 1 })
+	table.insert(adjacentPos, { x = self.arrPos.x, y = self.arrPos.y + 1 })
 	return adjacentPos
 end
 
 -- se a sala está vazia (sem jogadores), remove ela da lista de salas ativas
 function Room:verifyIsEmpty()
 	if self.playersInRoom:size() == 0 then
-		activeRooms:remove(makeKey(self.pos.x, self.pos.y))
+		activeRooms:remove(makeKey(self.arrPos.x, self.arrPos.y))
 
 		collisionManager.roomsDirty = true
 	end
@@ -189,7 +201,7 @@ end
 function Room:spawn(entity, pos)
 	-- print("Tipo: " .. entity.type .. " Nome: " .. entity.name)
 	local constructor = CONSTRUCTORS[entity.type][entity.name]
-	local real_pos = addVec(pos, self.center)
+	local real_pos = addVec(pos, self.pos)
 	constructor(real_pos, self) -- instancia a entidade na sala
 end
 
@@ -197,26 +209,54 @@ end
 -- Funções Globais
 ----------------------------------------
 
+---@param pos Vec
+---@return Room | nil
+-- retorna a sala na posição `pos` da lista global de salas (`rooms`)
+function getRoomAt(pos)
+	if rooms[pos.y] then
+		return rooms[pos.y][pos.x]
+	end
+
+	return nil
+end
+
 ---@param pos any
 ---@param dimensions any
+---@param roomType? RoomType
 -- cria uma nova sala no índice indicado por `pos` da
 -- lista global de salas (`rooms`)
-function newRoom(pos, dimensions)
+function newRoom(pos, dimensions, roomType)
 	if not rooms[pos.y] then
 		rooms:insert(pos.y, BiList.new())
 	end
+
+	local actualRoom = rooms[pos.y][pos.x]
+	if actualRoom then
+		-- TODO: remover entidades da sala antiga
+		activeRooms:remove(makeKey(pos.x, pos.y))
+		collisionManager:unregister(actualRoom)
+		for _, adjPos in pairs(actualRoom.adjacentRooms) do
+			local adjRoom = getRoomAt(adjPos)
+			if adjRoom then
+				collisionManager:unregister(adjRoom)
+			end
+		end
+	end
+
 	-- escolhendo uma blueprint para a sala
-	local roomType = randRoomType()
+	roomType = roomType or randRoomType()
 	local blueprint = randRoomBlueprint(roomType)
 	-- gerando os atributos derivadoss
 	local p1 = vec(pos.x * Room.stdDim.width, pos.y * Room.stdDim.height)
 	local p2 = vec(p1.x + dimensions.width, p1.y + dimensions.height)
-	local hitbox = { p1 = p1, p2 = p2 }
+	local limits = { p1 = p1, p2 = p2 }
+	local hb = hitbox(Rectangle.new(dimensions.width, dimensions.height))
+	local hbs = hitboxes({}, {}, { hb })
 	local sprites = {}
 	sprites.floor = love.graphics.newImage("assets/sprites/rooms/testRoom.png")
 	sprites.floor:setFilter("nearest", "nearest")
 	-- instanciando e populando com entidades (inimigos, destrutíveis, etc)
-	local room = Room.new(pos, dimensions, hitbox, blueprint, sprites)
+	local room = Room.new(pos, dimensions, hbs, limits, blueprint, sprites)
 	room:populate(blueprint.spawnpoints)
 	rooms[pos.y]:insert(pos.x, room)
 end
@@ -226,22 +266,6 @@ function createInitialRooms()
 	-- cria a sala inicial do jogo e suas vizinhas
 	newRoom({ x = 0, y = 0 }, Room.stdDim)
 	rooms[0][0]:setExplored()
-end
-
----@param room Room
----@return table
--- calcula as posições dos pontos superior esquerdo e inferior direito da sala
--- nas coordenadas de mundo
-function calculateRoomLimits(room)
-	local p1 = {
-		x = room.pos.x * Room.stdDim.width - 265,
-		y = room.pos.y * Room.stdDim.height - 260,
-	}
-	local p2 = {
-		x = p1.x + room.dimensions.width,
-		y = p1.y + room.dimensions.height,
-	}
-	return { p1 = p1, p2 = p2 }
 end
 
 ---@param x number

@@ -16,7 +16,7 @@ end
 function _roomDebugHandler(numberKey)
 	local roomChange = false
 
-	local debugRoomPos = { x = players[1].room.pos.x + 1, y = players[1].room.pos.y }
+	local debugRoomPos = { x = players[1].room.arrPos.x + 1, y = players[1].room.arrPos.y }
 	if numberKey == "1" then
 		_newRoomDebug(debugRoomPos, Room.stdDim, BATTLE_ROOM)
 		roomChange = true
@@ -42,18 +42,6 @@ function _roomDebugHandler(numberKey)
 	return roomChange
 end
 
-function _newRoomDebug(pos, dimensions, roomType)
-	if not rooms[pos.y] then
-		rooms:insert(pos.y, BiList.new())
-	end
-	local blueprint = randRoomBlueprint(roomType)
-	local p1 = vec(pos.x * Room.stdDim.width, pos.y * Room.stdDim.height)
-	local p2 = vec(p1.x + dimensions.width, p1.y + dimensions.height)
-	local hitbox = { p1 = p1, p2 = p2 }
-	local sprites = {}
-	sprites.floor = love.graphics.newImage("assets/sprites/rooms/testRoom.png")
-	sprites.floor:setFilter("nearest", "nearest")
-	local room = Room.new(pos, dimensions, hitbox, blueprint, sprites)
-	room:populate(blueprint.spawnpoints)
-	rooms[pos.y]:insert(pos.x, room)
+function _newRoomDebug(pos, dimensions, type)
+	newRoom(pos, dimensions, type)
 end

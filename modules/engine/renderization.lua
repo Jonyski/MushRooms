@@ -20,7 +20,7 @@ function renderRooms(camera)
 			end
 
 			love.graphics.setColor(r.color.r, r.color.g, r.color.b, r.color.a)
-			local roomViewPos = camera:viewPos(r.hitbox.p1)
+			local roomViewPos = camera:viewPos(r.limits.p1)
 			love.graphics.draw(r.sprites.floor, roomViewPos.x, roomViewPos.y, 0, 6, 6)
 
 			-- reseta a cor de renderização
@@ -158,13 +158,11 @@ function renderHitboxes(camera)
 		return
 	end
 
-	---@type table<string, table<Entity, HitboxesData>>
+	---@type table<string, table<Entity, Hitboxes>>
 	local registry = collisionManager.registry
 
 	for _, reg in pairs(registry) do
-		for entity, data in pairs(reg) do
-			local hitboxes = data.hb
-
+		for entity, hitboxes in pairs(reg) do
 			renderSolids(camera, hitboxes.solids, entity)
 			renderDefaults(camera, hitboxes.default, entity)
 			renderTriggers(camera, hitboxes.triggers, entity)

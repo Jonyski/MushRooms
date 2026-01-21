@@ -50,6 +50,7 @@ EVENT_ROOM = "event room"
 ---@field items Item[]
 ---@field enemies Enemy[]
 ---@field npcs Npc[]
+---@field obstacles Obstacle[]
 ---@field playersInRoom Set
 ---@field populate function
 ---@field visit function
@@ -83,6 +84,7 @@ function Room.new(pos, dimensions, roomLimits, blueprint, sprites)
 	room.items = {} -- lista de itens dropados na sala
 	room.enemies = {} -- lista de inimigos na sala
 	room.npcs = {} -- lista de NPCs na sala
+	room.obstacles = {} -- lista de obstáculos na sala
 	room.playersInRoom = Set.new() -- lista de jogadores na sala
 
 	return room

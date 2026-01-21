@@ -468,6 +468,7 @@ function CollisionManager:startRegistry()
 	reg[NPC] = {}
 	reg[PLAYER_ATTACK] = {}
 	reg[ENEMY_ATTACK] = {}
+	reg[OBSTACLE] = {}
 
 	return reg
 end
@@ -511,6 +512,11 @@ function CollisionManager:fetchHitboxesByRoom(room)
 	for _, npc in pairs(room.npcs) do
 		self:register(npc)
 	end
+
+	-- pegando hitboxes de obstáculos
+	for _, obs in pairs(room.obstacles) do
+		self:register(obs)
+	end
 end
 
 ---@param room Room
@@ -543,6 +549,11 @@ function CollisionManager:clearHitboxesByRoom(room)
 	-- removendo hitboxes de npcs
 	for _, npc in pairs(room.npcs) do
 		self:unregister(npc)
+	end
+
+	-- removendo hitboxes de obstáculos
+	for _, obs in pairs(room.obstacles) do
+		self:unregister(obs)
 	end
 end
 
@@ -624,6 +635,23 @@ end
 function CollisionManager:handleCollisions()
 	---@type table<string, table<any, HitboxesData>>
 	local registry = self.registry
+
+	--------- PLAYER / OBSTACLE ----------
+	for obstacle, obstaclehb in pairs(registry[OBSTACLE]) do
+		local hitByAnyPlayer = false
+		for player, playerhb in pairs(registry[PLAYER]) do
+			local hit = checkColision(playerhb.hb.default, player, obstaclehb.hb.triggers, obstacle)
+
+			if hit then
+				hitByAnyPlayer = true
+				self:onPlayerObstacle(obstacle)
+			end
+		end
+
+		if not hitByAnyPlayer then
+			self:onPlayerObstacleExit(obstacle)
+		end
+	end
 
 	----------- PLAYER / ITEM -----------
 	for item, itemhb in pairs(registry[ITEM]) do
@@ -915,4 +943,16 @@ function CollisionManager:onAttackAttack(attackA, attackB)
 
 	attackA.piercesLeft = attackA.piercesLeft - 1
 	attackB.piercesLeft = attackB.piercesLeft - 1
+end
+
+---@param obstacle Obstacle
+-- trata a colisão entre o `player` e um `obstacle`
+function CollisionManager:onPlayerObstacle(obstacle)
+	obstacle.transparent = true
+end
+
+---@param obstacle Obstacle
+-- trata o fim da colisão entre o `player` e um `obstacle`
+function CollisionManager:onPlayerObstacleExit(obstacle)
+	obstacle.transparent = false
 end

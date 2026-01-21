@@ -91,6 +91,16 @@ function renderEntities(camera)
 				end,
 			})
 		end
+
+		-- Adiciona obstáculos
+		for _, obs in pairs(r.obstacles) do
+			table.insert(drawList, {
+				y = obs.pos.y + getAnchor(obs, FLOOR),
+				draw = function()
+					obs:draw(camera)
+				end,
+			})
+		end
 	end
 
 	-- Adiciona jogadores e suas possíveis armas

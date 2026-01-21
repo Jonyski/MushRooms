@@ -157,7 +157,12 @@ end
 ---@return Blueprint
 -- retorna um `Blueprint` aleatório de sala de **Puzzle**
 function randPuzzleRoomBP()
-	return newPuzzleRoom1()
+	local random = math.random()
+	-- if random < 0.5 then
+	-- 	return newPuzzleRoom1()
+	-- end
+
+	return newPuzzleRoom2()
 end
 
 ---@return Blueprint

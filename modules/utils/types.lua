@@ -23,6 +23,7 @@ SPAWN_DATA = "spawn data"
 COLLISION_MANAGER = "collision manager"
 DIALOGUE = "dialogue"
 INVENTORY = "inventory"
+OBSTACLE = "obstacle"
 
 ----------------------------------------
 -- Registro das entidades do jogo
@@ -67,3 +68,6 @@ IRON = registerEntity(RESOURCE, "iron")
 GOLD = registerEntity(RESOURCE, "gold")
 
 ----------------- ROOM -----------------
+---
+------------- OBSTACLES ----------------
+PILLAR = registerEntity(OBSTACLE, "pillar")

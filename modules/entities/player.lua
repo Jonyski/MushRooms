@@ -45,6 +45,7 @@ players = {}
 ---@field inDialogue boolean
 ---@field interactiveObj? Entity
 ---@field inventory Inventory
+---@field candidateInteractives Interactive|Npc[]
 
 Player = setmetatable({}, { __index = Entity })
 Player.__index = Player
@@ -81,6 +82,7 @@ function Player.new(name, spawnPos, controls, colors, room)
 	player.inDialogue = false -- se o player está em diálogo
 	player.interactiveObj = nil -- objeto próximo ao player com o qual ele pode interagir (ex: NPC)
 	player.inventory = Inventory.new(player) -- inventário do jogador
+	player.candidateInteractives = {} -- lista de objetos interativos próximos ao jogador
 
 	collisionManager:register(player)
 	return player
@@ -139,6 +141,7 @@ function Player:update(dt)
 	self:updateInvulnerability(dt)
 	self:updateState()
 	self:updateParticles(dt)
+	self:resolveInteractive()
 end
 
 ---@param dt number
@@ -252,8 +255,10 @@ function Player:updateState()
 
 	-- atualizando a situação do sistema de partículas de caminhada
 	if isMoving then
-		self.particles[self.state]:setDirection(math.atan2(self.vel.y, self.vel.x) + math.pi)
-		self.particles[self.state]:start()
+		if self.particles[self.state] then
+			self.particles[self.state]:setDirection(math.atan2(self.vel.y, self.vel.x) + math.pi)
+			self.particles[self.state]:start()
+		end
 	else
 		self.particles[WALKING_UP]:stop()
 	end
@@ -429,6 +434,50 @@ function Player:tryCollectItem(item)
 		self:collectItem(item)
 		return
 	end
+end
+
+-- adiciona um objeto interativo candidato à lista do `Player`
+function Player:considerInteractive(obj)
+	table.insert(self.candidateInteractives, obj)
+end
+
+-- resolve qual objeto interativo o `Player` deve interagir
+function Player:resolveInteractive()
+	local old = self.interactiveObj
+	local new = nil
+
+	if #self.candidateInteractives > 0 then
+		new = self:chooseBestInteractive(self.candidateInteractives)
+	end
+
+	if new ~= old then
+		if old and old.onExit then
+			old:onExit(self)
+		end
+		self.interactiveObj = new
+		if new and new.onEnter then
+			new:onEnter(self)
+		end
+	end
+
+	self.candidateInteractives = {}
+end
+
+---@param list Interactive|Npc[]
+-- escolhe o objeto interativo mais perto dentre uma lista de candidatos
+function Player:chooseBestInteractive(list)
+	local best = nil
+	local nearest = math.huge
+
+	for _, obj in ipairs(list) do
+		local d = dist(self.pos, obj.pos)
+		if d < nearest then
+			nearest = d
+			best = obj
+		end
+	end
+
+	return best
 end
 
 

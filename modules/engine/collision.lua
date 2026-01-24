@@ -468,6 +468,7 @@ function CollisionManager:startRegistry()
 	reg[NPC] = {}
 	reg[PLAYER_ATTACK] = {}
 	reg[ENEMY_ATTACK] = {}
+	reg[OBSTACLE] = {}
 
 	return reg
 end
@@ -497,6 +498,7 @@ function CollisionManager:fetchHitboxesByRoom(room)
 		end
 	end
 
+	-- pegando hitboxes de interativos
 	for _, inter in pairs(room.interactives) do
 		self:register(inter)
 	end
@@ -509,6 +511,11 @@ function CollisionManager:fetchHitboxesByRoom(room)
 	-- pegando hitboxes de npcs
 	for _, npc in pairs(room.npcs) do
 		self:register(npc)
+	end
+
+	-- pegando hitboxes de obstáculos
+	for _, obs in pairs(room.obstacles) do
+		self:register(obs)
 	end
 end
 
@@ -542,6 +549,11 @@ function CollisionManager:clearHitboxesByRoom(room)
 	-- removendo hitboxes de npcs
 	for _, npc in pairs(room.npcs) do
 		self:unregister(npc)
+	end
+
+	-- removendo hitboxes de obstáculos
+	for _, obs in pairs(room.obstacles) do
+		self:unregister(obs)
 	end
 end
 
@@ -624,6 +636,23 @@ function CollisionManager:handleCollisions()
 	---@type table<string, table<any, HitboxesData>>
 	local registry = self.registry
 
+	--------- PLAYER / OBSTACLE ----------
+	for obstacle, obstaclehb in pairs(registry[OBSTACLE]) do
+		local hitByAnyPlayer = false
+		for player, playerhb in pairs(registry[PLAYER]) do
+			local hit = checkColision(playerhb.hb.default, player, obstaclehb.hb.triggers, obstacle)
+
+			if hit then
+				hitByAnyPlayer = true
+				self:onPlayerObstacle(obstacle)
+			end
+		end
+
+		if not hitByAnyPlayer then
+			self:onPlayerObstacleExit(obstacle)
+		end
+	end
+
 	----------- PLAYER / ITEM -----------
 	for item, itemhb in pairs(registry[ITEM]) do
 		if item.collected then
@@ -698,7 +727,7 @@ function CollisionManager:handleCollisions()
 		end
 
 		if not hitSomeInteractive and player.interactiveObj and player.interactiveObj.type == INTERACTIVE then
-			CollisionManager:onPlayerInteractiveExit(player, player.interactiveObj)
+			self:onPlayerInteractiveExit(player, player.interactiveObj)
 		end
 	end
 
@@ -748,7 +777,6 @@ function CollisionManager:handleCollisions()
 end
 
 ---@param entity Entity
----@param startPos Vec
 ---@param nextPos Vec
 ---@return Vec correctedPos
 function CollisionManager:resolveSolidCollisions(entity, nextPos)
@@ -873,19 +901,15 @@ end
 ---@param npc Npc
 -- trata a colisão entre um `player` e um `npc`
 function CollisionManager:onPlayerNpc(player, npc)
-	player.interactiveObj = npc
-	npc.reachable = true
+	player:considerInteractive(npc)
 end
 
 ---@param player Player
 ---@param npc Npc
 -- trata o fim da colisão entre um `player` e um `npc`
 function CollisionManager:onPlayerNpcExit(player, npc)
-	if player.interactiveObj == npc then
-		player.interactiveObj = nil
-	end
-
-	npc.reachable = false
+	print(npc.name .. " onExit by " .. player.name)
+	npc:onExit(player)
 end
 
 ---@param destructible Destructible
@@ -898,14 +922,15 @@ end
 ---@param inter Interactive
 -- trata o início de colisão de um `player` com um objeto `interactive`
 function CollisionManager:onPlayerInteractive(player, inter)
-	player.interactiveObj = inter
+	player:considerInteractive(inter)
 end
 
 ---@param player Player
 ---@param inter Interactive
 -- trata o fim de colisão entre um `player` e um objeto `interactive`
 function CollisionManager:onPlayerInteractiveExit(player, inter)
-	player.interactiveObj = nil
+	print(inter.name .. " onExit by " .. player.name)
+	inter:onExit(player)
 end
 
 ---@param attackA AtkEvent
@@ -918,4 +943,16 @@ function CollisionManager:onAttackAttack(attackA, attackB)
 
 	attackA.piercesLeft = attackA.piercesLeft - 1
 	attackB.piercesLeft = attackB.piercesLeft - 1
+end
+
+---@param obstacle Obstacle
+-- trata a colisão entre o `player` e um `obstacle`
+function CollisionManager:onPlayerObstacle(obstacle)
+	obstacle.transparent = true
+end
+
+---@param obstacle Obstacle
+-- trata o fim da colisão entre o `player` e um `obstacle`
+function CollisionManager:onPlayerObstacleExit(obstacle)
+	obstacle.transparent = false
 end

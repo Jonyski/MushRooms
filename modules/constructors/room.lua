@@ -5,6 +5,20 @@ function newPuzzleRoom1()
 end
 
 ---@return Blueprint
+-- Sala de Puzzle 2: contém pilares
+function newPuzzleRoom2()
+	local bp = Blueprint.new(PUZZLE_ROOM, "Test Puzzle Room 2", rgba8(12, 253, 255, 255))
+	local sp1 = SpawnPoint.new(vec(-150, 0))
+	local sp2 = SpawnPoint.new(vec(150, 0))
+	local pillarData1 = SpawnData.new(PILLAR, 1.0)
+	local pillarData2 = SpawnData.new(PILLAR, 1.0)
+	sp1:insert(pillarData1)
+	sp2:insert(pillarData2)
+	bp:insert(sp1):insert(sp2)
+	return bp
+end
+
+---@return Blueprint
 -- Sala de NPC 1: contém barrís e jarros
 function newNPCRoom1()
 	local bp = Blueprint.new(NPC_ROOM, "Test NPC Room", rgba8(120, 58, 242, 255))

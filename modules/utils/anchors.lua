@@ -50,6 +50,9 @@ ANCHORS = {
 
 	-- NPCs
 	glob = floorAnchor(16),
+
+	-- Obstáculos
+	pillar = floorAnchor(24),
 }
 
 ----------------------------------------

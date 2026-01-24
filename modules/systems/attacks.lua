@@ -32,7 +32,19 @@ require("modules.utils.utils")
 ---@param pierces? number
 ---@return AtkSetting
 -- construtor complementar ao anterior, usado para ataques de projétil
-function newAtkSetting(ally, damage, duration, hitboxes, cooldown, mass, speed, friction, acceleration, bounces, pierces)
+function newAtkSetting(
+	ally,
+	damage,
+	duration,
+	hitboxes,
+	cooldown,
+	mass,
+	speed,
+	friction,
+	acceleration,
+	bounces,
+	pierces
+)
 	return {
 		ally = ally,
 		dmg = damage,
@@ -77,24 +89,24 @@ Attack.type = ATTACK
 -- de um ataque e informações de controle (como o cooldown)
 function Attack.new(name, atkSettings, animSettings, updateFunc, onHit, trajectoryFunc)
 	local attack = setmetatable({}, Attack)
-	attack.name = name -- nome do tipo de ataque
-	attack.ally = atkSettings.ally -- true se for de um player e false se for de um inimigo
-	attack.dmg = atkSettings.dmg -- dano base do ataque
-	attack.dur = atkSettings.dur -- duração do evento de ataque associado
+	attack.name = name                          -- nome do tipo de ataque
+	attack.ally = atkSettings.ally              -- true se for de um player e false se for de um inimigo
+	attack.dmg = atkSettings.dmg                -- dano base do ataque
+	attack.dur = atkSettings.dur                -- duração do evento de ataque associado
 	attack.initialMass = atkSettings.initialMass
 	attack.initialSpeed = atkSettings.initialSpeed -- fator inicial de velocidade do ataque/projétil
 	attack.friction = atkSettings.friction
-	attack.accFactor = atkSettings.accFactor -- fator inicial de aceleração do ataque/projétil
-	attack.hb = atkSettings.hb -- hitboxes do ataque
-	attack.bounces = atkSettings.bounces -- quantas vezes o ataque pode ricochetear (caso seja projétil)
-	attack.pierces = atkSettings.pierces -- quantas vezes o ataque pode atravessar um alvo
-	attack.cooldown = atkSettings.cooldown -- tempo que deve passar entre ataques
-	attack.timer = 0 -- timer do cooldown, ao chegar em 0 permite gerar ataques
-	attack.canAttack = true -- se pode gerar um AttackEvent ou não
-	attack.animSettings = animSettings -- configurações da animação de cada evento
-	attack.updateEvent = updateFunc -- função executada para cada AttackEvent, atualizando seu estado atual
-	attack.onHit = onHit -- função executada toda vez que um ataque acertar um alvo
-	attack.trajectoryFunc = trajectoryFunc -- função que define a trajetória do ataque/projétil
+	attack.accFactor = atkSettings.accFactor    -- fator inicial de aceleração do ataque/projétil
+	attack.hb = atkSettings.hb                  -- hitboxes do ataque
+	attack.bounces = atkSettings.bounces        -- quantas vezes o ataque pode ricochetear (caso seja projétil)
+	attack.pierces = atkSettings.pierces        -- quantas vezes o ataque pode atravessar um alvo
+	attack.cooldown = atkSettings.cooldown      -- tempo que deve passar entre ataques
+	attack.timer = 0                            -- timer do cooldown, ao chegar em 0 permite gerar ataques
+	attack.canAttack = true                     -- se pode gerar um AttackEvent ou não
+	attack.animSettings = animSettings          -- configurações da animação de cada evento
+	attack.updateEvent = updateFunc             -- função executada para cada AttackEvent, atualizando seu estado atual
+	attack.onHit = onHit                        -- função executada toda vez que um ataque acertar um alvo
+	attack.trajectoryFunc = trajectoryFunc      -- função que define a trajetória do ataque/projétil
 	-- Atributos fixos na instanciação
 	attack.events = {}
 	return attack
@@ -199,23 +211,23 @@ function AttackEvent.new(attackState, attacker, origin, direction)
 	)
 	atkEvent:init(attackState.name, origin, hitboxes, nil, physics)
 
-	atkEvent.name = attackState.name -- para descobrirmos o caminho até os assets
-	atkEvent.attacker = attacker -- jogador ou inimigo que desferiu o ataque
-	atkEvent.pos = origin -- posição atual do ataque
-	atkEvent.dmg = attackState.dmg -- dano atual do ataque (caso mude com o tempo)
-	atkEvent.timer = attackState.dur -- tempo até o ataque terminar
-	atkEvent.dur = attackState.dur -- duração total do ataque/projétil
-	atkEvent.direction = direction -- ângulo do ataque em radianos
-	atkEvent.bouncesLeft = attackState.bounces -- número de ricochetes restantes
-	atkEvent.piercesLeft = attackState.pierces -- número de alvos atravessáveis restantes
-	atkEvent.trajectoryFunc = attackState.trajectoryFunc -- função que define a trajetória do ataque/projétil
-	atkEvent.onHit = attackState.onHit -- função executada ao acertar um alvo
-	atkEvent.target = attacker.target -- alvo do ataque
+	atkEvent.name = attackState.name                                   -- para descobrirmos o caminho até os assets
+	atkEvent.attacker = attacker                                       -- jogador ou inimigo que desferiu o ataque
+	atkEvent.pos = origin                                              -- posição atual do ataque
+	atkEvent.dmg = attackState.dmg                                     -- dano atual do ataque (caso mude com o tempo)
+	atkEvent.timer = attackState.dur                                   -- tempo até o ataque terminar
+	atkEvent.dur = attackState.dur                                     -- duração total do ataque/projétil
+	atkEvent.direction = direction                                     -- ângulo do ataque em radianos
+	atkEvent.bouncesLeft = attackState.bounces                         -- número de ricochetes restantes
+	atkEvent.piercesLeft = attackState.pierces                         -- número de alvos atravessáveis restantes
+	atkEvent.trajectoryFunc = attackState.trajectoryFunc               -- função que define a trajetória do ataque/projétil
+	atkEvent.onHit = attackState.onHit                                 -- função executada ao acertar um alvo
+	atkEvent.target = attacker.target                                  -- alvo do ataque
 	atkEvent.subType = attackState.ally and PLAYER_ATTACK or ENEMY_ATTACK -- sub-tipo do ataque (para colisões)
 
 	-- atributos fixos na instanciação
-	atkEvent.age = 0 -- tempo desde a criação do ataque
-	atkEvent.active = true -- se o ataque atualmente pode dar dano
+	atkEvent.age = 0          -- tempo desde a criação do ataque
+	atkEvent.active = true    -- se o ataque atualmente pode dar dano
 	atkEvent.targetsDamaged = {} -- lista de alvos feridos pelo ataque
 
 	-- adicionando à respectiva lista de hitboxes

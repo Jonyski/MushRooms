@@ -24,6 +24,8 @@ COLLISION_MANAGER = "collision manager"
 DIALOGUE = "dialogue"
 INVENTORY = "inventory"
 OBSTACLE = "obstacle"
+UI_MANAGER = "UI manager"
+UI_SCENE = "UI scene"
 
 ----------------------------------------
 -- Registro das entidades do jogo

@@ -10,7 +10,7 @@ end
 
 -- inicializa o jogador 1 - Mush
 function initPlayer1()
-	local firstSpawnPoint = { x = rooms[0][0].center.x, y = rooms[0][0].center.y }
+	local firstSpawnPoint = { x = rooms[0][0].pos.x, y = rooms[0][0].pos.y }
 	player1 = Player.new(
 		"Mush",
 		firstSpawnPoint,

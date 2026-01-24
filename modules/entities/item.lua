@@ -52,7 +52,6 @@ function Item.new(object, pos, room, autoPick, floorY)
 
 	item.object = object -- objeto associado ao item (arma, recurso, etc)
 	item.pos = pos -- posição do item no mundo
-	item.room = room -- sala onde o item está
 	item.autoPick = autoPick -- se o item é coletado automaticamente ou manualmente
 	item.floorY = item.pos.y + (floorY or 0) -- posição onde irá parar de cair
 

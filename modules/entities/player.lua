@@ -190,40 +190,6 @@ function Player:move(dt)
 			self.weapon:updateOrientation(movementDir)
 		end
 	end
-	self:updateRoom()
-end
-
--- redefine a sala atual onde o `Player` se encontra
-function Player:updateRoom()
-	local roomX = self.room.pos.x
-	local roomY = self.room.pos.y
-	local prevRoom = self.room
-
-	-- o jogador foi para a sala à esquerda
-	if self.pos.x < self.room.hitbox.p1.x then
-		self.room = rooms[roomY][roomX - 1]
-	end
-	-- o jogador foi para a sala à direita
-	if self.pos.x > self.room.hitbox.p2.x then
-		self.room = rooms[roomY][roomX + 1]
-	end
-	-- o jogador foi para a sala acima
-	if self.pos.y < self.room.hitbox.p1.y then
-		self.room = rooms[roomY - 1][roomX]
-	end
-	-- o jogador foi para a sala abaixo
-	if self.pos.y > self.room.hitbox.p2.y then
-		self.room = rooms[roomY + 1][roomX]
-	end
-
-	-- se mudou de sala, se retira dela e entra na próxima
-	if prevRoom and prevRoom ~= self.room then
-		prevRoom.playersInRoom:remove(self.id)
-		prevRoom:verifyIsEmpty()
-
-		self.room:setExplored()
-		self.room:visit(self)
-	end
 end
 
 -- atualiza o estado do `Player`

@@ -26,6 +26,15 @@ INVENTORY = "inventory"
 OBSTACLE = "obstacle"
 UI_MANAGER = "UI manager"
 UI_SCENE = "UI scene"
+UI_ELEMENT = "UI element"
+UI_IMAGE_ELEM = "UI image element"
+UI_BUTTON_ELEM = "UI button element"
+UI_MENU_SCENE = "UI menu scene"
+UI_EQUIPMENT_SCENE = "UI player equipment scene"
+UI_INVENTORY_SCENE = "UI player inventory scene"
+UI_MAP_SCENE = "UI player map scene"
+UI_BESTIARY_SCENE = "UI player bestiary scene"
+UI_CRAFTING_SCENE = "UI player crafting scene"
 
 ----------------------------------------
 -- Registro das entidades do jogo
@@ -70,6 +79,6 @@ IRON = registerEntity(RESOURCE, "iron")
 GOLD = registerEntity(RESOURCE, "gold")
 
 ----------------- ROOM -----------------
----
+
 ------------- OBSTACLES ----------------
 PILLAR = registerEntity(OBSTACLE, "pillar")

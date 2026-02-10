@@ -231,6 +231,14 @@ function sign(x)
 	return (x > 0 and 1) or (x == 0 and 0) or -1
 end
 
+---@param width number
+---@param height number
+---@return Size
+-- construtor do tipo Size
+function size(width, height)
+	return { width = width, height = height }
+end
+
 ----------------------------------------
 -- Funções de sistema de arquivos
 ----------------------------------------

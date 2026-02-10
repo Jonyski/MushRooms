@@ -25,3 +25,7 @@ BROKEN = "broken"
 ------------- INTERAGIVEIS -------------
 
 MOVING = "moving"
+
+------------ ELEMENTOS DE UI -----------
+
+SELECTED = "selected"

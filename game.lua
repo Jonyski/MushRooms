@@ -25,6 +25,7 @@ function startGame()
 	players[1]:collectWeapon(newSlingShot())
 	players[1]:equipWeapon(SLING_SHOT.name)
 	gameCtx = GAMEPLAY_CTX
+	globalUIManager:deactivateAllScenes()
 end
 
 function quitGame()

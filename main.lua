@@ -2,6 +2,7 @@
 -- Importações de Módulos
 ----------------------------------------
 require("modules.constructors.dialogue")
+require("modules.constructors.uimanagers")
 require("modules.engine.animation")
 require("modules.engine.camera")
 require("modules.engine.collision")
@@ -16,8 +17,7 @@ require("modules.systems.dialogue")
 require("modules.tooling.roomcontrol")
 require("modules.tooling.spawnDrop")
 require("modules.tooling.turtledebug")
-require("modules.UI.menu")
-require("modules.UI.ui")
+require("game")
 require("table")
 
 local appleCake = require("libs.applecake")(true)
@@ -46,8 +46,8 @@ function love.keypressed(key, scancode, isrepeat)
 		quitGame()
 	end
 
-	-- repassa para o handler do LUIS
-	luis.keypressed(key, scancode, isrepeat)
+	-- repassa para os UI managers
+	globalUIManager:keypressed(key, isrepeat)
 
 	-- n adiciona um player ao jogo
 	if key == "n" then
@@ -70,7 +70,7 @@ function love.keypressed(key, scancode, isrepeat)
 	elseif _spawnDropCondition() then
 		_spawnDropDebugHandler(key)
 	else
-    _turtleDebugHandler(key)
+		_turtleDebugHandler(key)
 		if key == "0" then
 			debugMode = not debugMode
 		end
@@ -88,18 +88,9 @@ function love.keypressed(key, scancode, isrepeat)
 end
 
 function love.keyreleased(key, scancode)
-	luis.keyreleased(key, scancode)
 	if key == "z" then
 		cameras[1].targetZoom = cameras[1].startingZoom
 	end
-end
-
-function love.mousepressed(x, y, button, istouch, presses)
-	luis.mousepressed(x, y, button, istouch, presses)
-end
-
-function love.mousereleased(x, y, button, istouch, presses)
-	luis.mousereleased(x, y, button, istouch, presses)
 end
 
 function love.resize(w, h)
@@ -116,8 +107,6 @@ function love.resize(w, h)
 	for _, p in pairs(players) do
 		newCamera(p)
 	end
-
-	luis.updateScale()
 end
 
 ----------------------------------------
@@ -129,24 +118,19 @@ function love.load()
 	love.graphics.setDefaultFilter("nearest", "nearest")
 
 	-- carregando a biblioteca de UI
-	setupLUIS()
+	globalUIManager = initGlobalUIManager()
 
 	-- definindo a seed de aleatoriedade
 	math.randomseed(os.time())
 
 	-- definindo a fonte padrão do jogo
-	-- não sei qual fonte é melhor
 	tempFont = love.graphics.newFont("assets/fonts/Tiny5-Regular.ttf", 16)
-	-- tempFont = love.graphics.newFont("assets/fonts/PressStart2P-Regular.ttf", 12)
 
 	-- definindo as dimensões iniciais do jogo
 	window.width = 1280
 	window.height = 720
 	window.cx = window.width / 2 -- centro no eixo x
 	window.cy = window.height / 2 -- centro no eixo y
-
-	-- criando e carregando o menu do jogo
-	initMenu()
 
 	-- métodos de estado do love
 	love.window.setMode(window.width, window.height, { resizable = true, vsync = true, msaa = 0 })
@@ -161,7 +145,7 @@ function love.update(dt)
 	updateProfile = appleCake.profileFunc(nil, updateProfile)
 
 	-- pulando o update de gameplay enquanto está no menu
-	if gameCtx == MENU_CTX or inventoryOpen then
+	if gameCtx == MENU_CTX then
 		goto uiupdate
 	end
 
@@ -183,7 +167,7 @@ function love.update(dt)
 
 	-------------- UI -------------
 	::uiupdate::
-	luis.update(dt)
+	globalUIManager:update(dt)
 
 	-- encerrando o profiling
 	updateProfile:stop()
@@ -200,7 +184,8 @@ function love.draw()
 	for _, c in pairs(cameras) do
 		c:draw()
 	end
-	luis.draw()
+
+	globalUIManager:draw()
 
 	-- encerrando o profiling
 	drawProfile:stop()

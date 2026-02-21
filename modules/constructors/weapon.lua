@@ -13,7 +13,7 @@ function newKatana()
 	end
 	local hb = hitbox(Circle.new(100))
 	local hbs = hitboxes({ hb })
-	local atkSettings = newAtkSetting(true, 15, 0.5, hbs, 0.3)
+	local atkSettings = newAtkSetting(MELEE_ATTACK, true, 15, 0.5, hbs, 0.3)
 	local atkAnimSettings = newAnimSetting(12, { width = 64, height = 64 }, 0.03, false, 1)
 	local attack = Attack.new("Katana Slice", atkSettings, atkAnimSettings, updateFunc, onHitFunc)
 

@@ -36,7 +36,8 @@ end
 function setPos(entity, pos)
 	local nextPos = vec(pos.x, pos.y)
 
-	if entity.hb and entity.hb.default then
+	---@diagnostic disable-next-line
+	if entity.hb and entity.hb.default and not entity.ignoreSolids then
 		nextPos = collisionManager:resolveSolidCollisions(entity, nextPos)
 	end
 

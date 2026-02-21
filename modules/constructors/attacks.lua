@@ -2,6 +2,7 @@
 -- Importações de Módulos
 ----------------------------------------
 require("modules.systems.movement")
+require("modules.utils.types")
 
 ----------------------------------------
 -- Construtores de Ataques
@@ -28,7 +29,7 @@ require("modules.systems.movement")
 function newPebbleShotAttack(ally, duration, cooldown, speed, trajectoryFunc)
 	local hb = hitbox(Circle.new(15))
 	local hbs = hitboxes({ hb })
-	local settings = newAtkSetting(ally, 15, duration, hbs, cooldown, 1, speed, 0.1, -speed / 2, 0, 2)
+	local settings = newAtkSetting(RANGED_ATTACK, ally, 15, duration, hbs, cooldown, 1, speed, 0.1, -speed / 2, 0, 2)
 	local anim = newAnimSetting(5, { width = 16, height = 16 }, 0.1, true, 1)
 	local updateFunc = AttackEvent.baseUpdate
 	local onHitFunc = function(e, t)

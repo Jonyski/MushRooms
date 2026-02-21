@@ -111,7 +111,11 @@ function buildWorldHitbox(hitbox, entityPos)
 end
 
 function entityKey(entity)
-	return entity.subType or entity.type
+	if entity.type ~= ATTACK_EVENT then
+		return entity.type
+	else
+		return entity.ally and PLAYER_ATTACK or ENEMY_ATTACK
+	end
 end
 
 ----------------------------------------
@@ -465,8 +469,8 @@ function CollisionManager.init()
 	local cm = setmetatable({}, CollisionManager)
 
 	cm.registry = cm:startRegistry() -- tabela mestre de hitboxes registradas
-	cm.roomsDirty = false -- flag para indicar se as listas de hitboxes precisam ser atualizadas
-	cm.solids = {} -- hitboxes sólidas
+	cm.roomsDirty = false         -- flag para indicar se as listas de hitboxes precisam ser atualizadas
+	cm.solids = {}                -- hitboxes sólidas
 
 	-- otimização: manter uma cópia das salas ativas
 	-- para minimizar o número de colisões checadas
@@ -1009,3 +1013,4 @@ end
 function CollisionManager:onPlayerObstacleExit(obstacle)
 	obstacle.transparent = false
 end
+

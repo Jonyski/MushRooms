@@ -8,6 +8,7 @@ require("modules.utils.utils")
 ----------------------------------------
 
 ---@class AtkSetting
+---@field subtype string
 ---@field ally boolean
 ---@field dmg number
 ---@field dur number
@@ -20,6 +21,7 @@ require("modules.utils.utils")
 ---@field bounces number
 ---@field pierces number
 
+---@param subtype string
 ---@param ally boolean
 ---@param damage number
 ---@param duration number
@@ -33,6 +35,7 @@ require("modules.utils.utils")
 ---@return AtkSetting
 -- construtor complementar ao anterior, usado para ataques de projétil
 function newAtkSetting(
+	subtype,
 	ally,
 	damage,
 	duration,
@@ -46,6 +49,7 @@ function newAtkSetting(
 	pierces
 )
 	return {
+		subtype = subtype,
 		ally = ally,
 		dmg = damage,
 		dur = duration,
@@ -90,6 +94,7 @@ Attack.type = ATTACK
 function Attack.new(name, atkSettings, animSettings, updateFunc, onHit, trajectoryFunc)
 	local attack = setmetatable({}, Attack)
 	attack.name = name                          -- nome do tipo de ataque
+	attack.subtype = atkSettings.subtype        -- indica se o ataque é melee, ranged ou outro tipo
 	attack.ally = atkSettings.ally              -- true se for de um player e false se for de um inimigo
 	attack.dmg = atkSettings.dmg                -- dano base do ataque
 	attack.dur = atkSettings.dur                -- duração do evento de ataque associado
@@ -179,7 +184,7 @@ end
 ---@field bouncesLeft number
 ---@field piercesLeft number
 ---@field target any
----@field subType Type
+---@field subtype Type
 ---@field age number
 ---@field active boolean
 ---@field targetsDamaged any[]
@@ -211,19 +216,21 @@ function AttackEvent.new(attackState, attacker, origin, direction)
 	)
 	atkEvent:init(attackState.name, origin, hitboxes, nil, physics)
 
-	atkEvent.name = attackState.name                                   -- para descobrirmos o caminho até os assets
-	atkEvent.attacker = attacker                                       -- jogador ou inimigo que desferiu o ataque
-	atkEvent.pos = origin                                              -- posição atual do ataque
-	atkEvent.dmg = attackState.dmg                                     -- dano atual do ataque (caso mude com o tempo)
-	atkEvent.timer = attackState.dur                                   -- tempo até o ataque terminar
-	atkEvent.dur = attackState.dur                                     -- duração total do ataque/projétil
-	atkEvent.direction = direction                                     -- ângulo do ataque em radianos
-	atkEvent.bouncesLeft = attackState.bounces                         -- número de ricochetes restantes
-	atkEvent.piercesLeft = attackState.pierces                         -- número de alvos atravessáveis restantes
-	atkEvent.trajectoryFunc = attackState.trajectoryFunc               -- função que define a trajetória do ataque/projétil
-	atkEvent.onHit = attackState.onHit                                 -- função executada ao acertar um alvo
-	atkEvent.target = attacker.target                                  -- alvo do ataque
-	atkEvent.subType = attackState.ally and PLAYER_ATTACK or ENEMY_ATTACK -- sub-tipo do ataque (para colisões)
+	atkEvent.name = attackState.name                         -- para descobrirmos o caminho até os assets
+	atkEvent.ally = attackState.ally                         -- para definir quem é afetado pelo ataque
+	atkEvent.subtype = attackState.subtype                   -- subtipo do ataque, como melee, ranged, etc
+	atkEvent.attacker = attacker                             -- jogador ou inimigo que desferiu o ataque
+	atkEvent.pos = origin                                    -- posição atual do ataque
+	atkEvent.dmg = attackState.dmg                           -- dano atual do ataque (caso mude com o tempo)
+	atkEvent.timer = attackState.dur                         -- tempo até o ataque terminar
+	atkEvent.dur = attackState.dur                           -- duração total do ataque/projétil
+	atkEvent.direction = direction                           -- ângulo do ataque em radianos
+	atkEvent.bouncesLeft = attackState.bounces               -- número de ricochetes restantes
+	atkEvent.piercesLeft = attackState.pierces               -- número de alvos atravessáveis restantes
+	atkEvent.trajectoryFunc = attackState.trajectoryFunc     -- função que define a trajetória do ataque/projétil
+	atkEvent.onHit = attackState.onHit                       -- função executada ao acertar um alvo
+	atkEvent.target = attacker.target                        -- alvo do ataque
+	atkEvent.ignoreSolids = attackState.subtype == MELEE_ATTACK -- se o ataque colide com sólidos ou não
 
 	-- atributos fixos na instanciação
 	atkEvent.age = 0          -- tempo desde a criação do ataque

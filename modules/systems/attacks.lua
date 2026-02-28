@@ -123,21 +123,18 @@ end
 -- inicia um evento de ataque no ponto `origin` com direção `direction`.
 -- `attacker` é a entidade (player ou inimigo) iniciando o ataque
 function Attack:attack(attacker, origin, direction)
+	self.timer = self.cooldown
+	self.canAttack = false
+
 	local atkEvent = AttackEvent.new(self, attacker, origin, direction)
 	atkEvent:addAnimation(self.animSettings)
 	table.insert(self.events, atkEvent)
 end
 
----@param attacker any
----@param origin Vec
----@param direction rad
 ---@return boolean
 -- se possível, ataca
-function Attack:tryAttack(attacker, origin, direction)
+function Attack:tryAttack()
 	if self.canAttack then
-		self:attack(attacker, origin, direction)
-		self.timer = self.cooldown
-		self.canAttack = false
 		return true
 	end
 	return false
@@ -184,7 +181,9 @@ end
 ---@field bouncesLeft number
 ---@field piercesLeft number
 ---@field target any
+---@field ignoreSolids boolean
 ---@field subtype Type
+---@field animDir rad
 ---@field age number
 ---@field active boolean
 ---@field targetsDamaged any[]
@@ -233,6 +232,7 @@ function AttackEvent.new(attackState, attacker, origin, direction)
 	atkEvent.ignoreSolids = attackState.subtype == MELEE_ATTACK -- se o ataque colide com sólidos ou não
 
 	-- atributos fixos na instanciação
+	atkEvent.animDir = 0          -- direção visual do sprite, usada para corrigir a rotação do sprite caso necessário
 	atkEvent.age = 0          -- tempo desde a criação do ataque
 	atkEvent.active = true    -- se o ataque atualmente pode dar dano
 	atkEvent.targetsDamaged = {} -- lista de alvos feridos pelo ataque
@@ -276,14 +276,14 @@ function AttackEvent:draw(camera)
 	local viewPos = camera:viewPos(self.pos)
 	local animation = self.animation
 	local quad = animation.frames[animation.currFrame]
-	local flipY = (self.direction / math.pi < -0.5 and self.direction / math.pi >= -1.5) and -1 or 1
+	local flipY = (self.direction / math.pi < -0.5 and self.direction / math.pi >= -1.5 and not self.animDir) and -1 or 1
 
 	love.graphics.draw(
 		self.spriteSheet,
 		quad,
 		viewPos.x,
 		viewPos.y,
-		self.direction,
+		self.direction + self.animDir, -- corrigindo a rotação para que o sprite olhe para a direção do ataque
 		3,
 		3 * flipY,
 		animation.frameDim.width / 2,

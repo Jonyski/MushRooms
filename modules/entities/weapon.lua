@@ -72,7 +72,8 @@ end
 
 -- tenta realizar um ataque, caso bem sucedido, atualiza o estado/animação da arma
 function Weapon:attack()
-	if self.atk:tryAttack(self.owner, self.owner.pos, self.rotation) then
+	if self.atk:tryAttack() then
+		self.atk:attack(self.owner, self.owner.pos, self.rotation)
 		self.state = ATTACKING
 		if self.animations[ATTACKING] then
 			self.animations[ATTACKING]:reset()

@@ -38,3 +38,19 @@ function newPebbleShotAttack(ally, duration, cooldown, speed, trajectoryFunc)
 
 	return Attack.new("Pebble Shot", settings, anim, updateFunc, onHitFunc, trajectoryFunc)
 end
+
+function newNuclearShotAttack(ally, duration, cooldown, speed, trajectoryFunc)
+	local hb = hitbox(Circle.new(25))
+	local hbs = hitboxes({ hb })
+	local settings = newAtkSetting(RANGED_ATTACK, ally, 30, duration, hbs, cooldown, 1, speed, 0.1, -speed / 2, 0, 2)
+	local anim = newAnimSetting(3, { width = 32, height = 32 }, 0.1, false, 1)
+	local updateFunc = function(e, dt)
+		AttackEvent.baseUpdate(e, dt)
+		e.animDir = -math.rad(90)
+	end
+	local onHitFunc = function(e, t)
+		print("Nuclear Shot acertou um alvo")
+	end
+
+	return Attack.new("Nuclear Shot", settings, anim, updateFunc, onHitFunc, trajectoryFunc)
+end

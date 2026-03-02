@@ -16,6 +16,13 @@ require("modules.systems.movement")
 -- movimento. Ou seja, estamos criando uma implementação do
 -- padrão estratégia baseada em closures
 
+function straightMovement()
+	return function(entity, dt)
+		local desiredVel = polarToVec(entity.direction or 0, entity.speed)
+		applySteering(entity, desiredVel)
+	end
+end
+
 ---@param period? number
 ---@param ampDeg? rad
 ---@return MovementFunc

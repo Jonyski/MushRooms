@@ -13,22 +13,22 @@ function Inventory.new(owner)
 end
 
 function Inventory:startItems()
-	local items = {}
-	items[RESOURCE] = {}
+  local items = {}
+  items[RESOURCE] = {}
 
-	return items
+  return items
 end
 
 function Inventory:addItem(item)
   local index = self:hasItem(item)
-  
-  if index == -1 then
+
+  if not index then
     local newItem = {
       name = item.name,
       type = item.type,
       description = item.description,
       weight = item.weight,
-      quantity = 1
+      quantity = 1,
     }
 
     table.insert(self.items[item.type], newItem)
@@ -76,5 +76,9 @@ function Inventory:hasItem(item)
     end
   end
 
-  return -1
+  return false
+end
+
+function Inventory:length(itemType)
+  return #self.items[itemType]
 end

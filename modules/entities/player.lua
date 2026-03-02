@@ -46,6 +46,7 @@ players = {}
 ---@field interactiveObj? Entity
 ---@field inventory Inventory
 ---@field candidateInteractives Interactive|Npc[]
+---@field uiManager table
 
 Player = setmetatable({}, { __index = Entity })
 Player.__index = Player
@@ -67,22 +68,23 @@ function Player.new(name, spawnPos, controls, colors, room)
 	player:init(name, spawnPos, hbs, room, physicsSettings(1, 9000, 12))
 
 	-- atributos que variam
-	player.id = #players + 1 -- número do jogador
-	player.hp = 100 -- pontos de vida
-	player.controls = controls -- os comandos para controlar o boneco, no formato {up = "", left = "", down = "", ...}
-	player.colors = colors -- paleta de cores do jogador
+	player.id = #players + 1                   -- número do jogador
+	player.hp = 100                            -- pontos de vida
+	player.controls = controls                 -- os comandos para controlar o boneco, no formato {up = "", left = "", down = "", ...}
+	player.colors = colors                     -- paleta de cores do jogador
 	-- atributos fixos na instanciação
-	player.movementVec = { x = 0, y = 0 } -- vetor de direção e magnitude do movimento do jogador
-	player.state = IDLE -- define o estado atual do jogador, estreitamente relacionado às animações
-	player.spriteSheets = {} -- no tipo imagem do love
-	player.animations = {} -- as chaves são estados e os valores são Animações
-	player.particles = {} -- efeitos de partícula emitidos pelo player
-	player.weapons = {} -- lista das armas que o jogador possui
-	player.weapon = nil -- arma equipada
-	player.inDialogue = false -- se o player está em diálogo
-	player.interactiveObj = nil -- objeto próximo ao player com o qual ele pode interagir (ex: NPC)
-	player.inventory = Inventory.new(player) -- inventário do jogador
-	player.candidateInteractives = {} -- lista de objetos interativos próximos ao jogador
+	player.movementVec = { x = 0, y = 0 }      -- vetor de direção e magnitude do movimento do jogador
+	player.state = IDLE                        -- define o estado atual do jogador, estreitamente relacionado às animações
+	player.spriteSheets = {}                   -- no tipo imagem do love
+	player.animations = {}                     -- as chaves são estados e os valores são Animações
+	player.particles = {}                      -- efeitos de partícula emitidos pelo player
+	player.weapons = {}                        -- lista das armas que o jogador possui
+	player.weapon = nil                        -- arma equipada
+	player.inDialogue = false                  -- se o player está em diálogo
+	player.interactiveObj = nil                -- objeto próximo ao player com o qual ele pode interagir (ex: NPC)
+	player.inventory = Inventory.new(player)   -- inventário do jogador
+	player.candidateInteractives = {}          -- lista de objetos interativos próximos ao jogador
+	player.uiManager = newPlayerUIManager(player) -- gerenciador da UI do jogador
 
 	collisionManager:register(player)
 	return player
@@ -305,17 +307,8 @@ end
 ---@param key string
 -- verifica se o `Player` está pressionando a combinação de teclas para abrir o inventário
 function Player:checkSpecialActions(key)
-	local c = self.controls
-
-	if key == c.up or key == c.down or
-		 key == c.left or key == c.right then
-
-		if love.keyboard.isDown(c.up) and love.keyboard.isDown(c.down) and
-			 love.keyboard.isDown(c.left) and love.keyboard.isDown(c.right) then
-	
-			print(self.name .. " abriu/fechou o inventário")
-			inventoryOpen = not inventoryOpen
-		end
+	if key == "i" and love.keyboard.isDown(self.controls.act1) then
+		self.uiManager:toggleScene(UI_INVENTORY_SCENE)
 	end
 end
 
@@ -364,7 +357,12 @@ end
 ---@param resource Resource
 ---@return boolean
 function Player:collectResource(resource)
-  return self.inventory:addItem(resource)
+	local firstResource = not self.inventory:hasItem(resource)
+	local success = self.inventory:addItem(resource)
+	if success and firstResource then
+		self.uiManager.scenes[UI_INVENTORY_SCENE]:addResourceEl(resource, self.inventory, self.uiManager.canvasSize)
+	end
+	return success
 end
 
 ---@param item Item
@@ -445,8 +443,6 @@ function Player:chooseBestInteractive(list)
 
 	return best
 end
-
-
 
 ---@param camera Camera
 -- renderiza o `Player` na perspectiva da `camera`

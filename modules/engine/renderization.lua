@@ -141,6 +141,10 @@ function renderEntities(camera)
 	end
 end
 
+function renderPlayerUIs(camera)
+	camera.playerAttached.uiManager:draw(camera)
+end
+
 ---@param camera Camera
 -- renderiza os diálogos ativos na perspectiva da `camera`
 function renderDialogues(camera)

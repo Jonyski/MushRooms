@@ -8,26 +8,22 @@ UIManager.type = UI_MANAGER
 
 function UIManager.new(player)
     local uimanager = setmetatable({}, UIManager)
-    uimanager.parentCanvas = player and cameras[player.id].canvas or nil
-    uimanager.parentCanvasPos = player and cameras[player.id].canvasPos or vec(0, 0)
     uimanager.player = player
-    if player then
-        local canvaW, canvaH
-        if #players == 3 then
-            canvaW = 512
-            canvaH = 800
-        else
-            canvaW = 512
-            canvaH = 400
-        end
-        uimanager.canvas = love.graphics.newCanvas(canvaW, canvaH)
-    else
-        uimanager.canvas = love.graphics.newCanvas(1280, 720)
-    end
+    uimanager.canvas = love.graphics.newCanvas(1280, 720)
+    uimanager.canvasSize = size(1280, 720)
     uimanager.canvasPos = vec(0, 0)
     uimanager.scenes = {}
     uimanager.activeScene = nil
     return uimanager
+end
+
+function UIManager:setParentCanvas(canvas, canvasPos)
+    self.parentCanvas = canvas
+    self.parentCanvasPos = canvasPos
+    local parentW = canvas:getWidth()
+    local parentH = canvas:getHeight()
+    self.canvas = love.graphics.newCanvas(parentW, parentH)
+    self.canvasSize = size(parentW, parentH)
 end
 
 function UIManager:addScene(scene)
@@ -44,6 +40,14 @@ function UIManager:deactivateScene(sceneType)
     self.scenes[sceneType].active = false
     -- !TODO: implementar um stack de cenas ativas para UIs sobrepostas
     self.activeScene = nil
+end
+
+function UIManager:isSceneActive(sceneType)
+    return self.scenes[sceneType].active
+end
+
+function UIManager:toggleScene(sceneType)
+    self.scenes[sceneType].active = not self.scenes[sceneType].active
 end
 
 function UIManager:deactivateAllScenes()

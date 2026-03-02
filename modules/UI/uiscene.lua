@@ -58,6 +58,7 @@ function UIScene:update(dt)
 end
 
 function UIScene:draw()
+	love.graphics.clear(0.0, 0.0, 0.0, 0.3)
 	for _, layer in pairs(self.layers) do
 		for _, row in pairs(layer) do
 			for _, el in pairs(row) do

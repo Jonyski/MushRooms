@@ -47,6 +47,10 @@ function UIElement:draw(camera)
     end
     local anim = self.animations[self.state]
     local quad = anim.frames[anim.currFrame]
+    if not quad then
+        print(self.state)
+        print(#anim.frames)
+    end
     local scale = self.size.width / anim.frameDim.width
     local offset = {
         x = anim.frameDim.width / 2,

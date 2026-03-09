@@ -10,7 +10,8 @@ Obstacle.type = OBSTACLE
 function Obstacle.new(name, hbs, spawnPos, room, scale)
   ---@type Obstacle
   local ob = setmetatable({}, Obstacle) ---@diagnostic disable-line
-  ob:init(name, spawnPos, hbs, room)
+  local entityPhysics = physicsSettings(math.huge, 0, 1, nil, nil, nil, 0)
+  ob:init(name, spawnPos, hbs, room, entityPhysics)
   ob.scale = scale or 1
 
   local sprite_path = pngPathFormat({ "assets", "sprites", "obstacles", ob.name })

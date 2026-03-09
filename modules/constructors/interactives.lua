@@ -4,7 +4,7 @@
 require("modules.entities.interactive")
 
 function newTurtle(spawnPos, room)
-	local physics = physicsSettings(2, 800, 0.6)
+	local physics = physicsSettings(2, 800, 0.6, nil, nil, nil, 0.5)
 	local defaulthb = { hitbox(Circle.new(20)) }
 	local solidhb = { hitbox(Circle.new(20)) }
 	local triggerhb = { hitbox(Circle.new(100)) }

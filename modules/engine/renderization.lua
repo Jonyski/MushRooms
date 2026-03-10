@@ -223,6 +223,10 @@ function renderTriggers(camera, hitboxes, entity)
 end
 
 function renderByShape(camera, hitbox, entity)
+	if entity.type == ROOM then
+		return
+	end
+
 	local worldHb = buildWorldHitbox(hitbox, entity.pos)
 
 	if worldHb.shape.shape == CIRCLE then

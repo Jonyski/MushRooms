@@ -2,6 +2,7 @@
 -- Importações de Módulos
 ----------------------------------------
 require("modules.entities.player")
+require("modules.utils.easing")
 require("modules.utils.utils")
 
 ----------------------------------------
@@ -12,16 +13,47 @@ cameras = {}
 ----------------------------------------
 -- Classe Camera
 ----------------------------------------
+
+---@class Camera
+---@field playerAttached Player
+---@field target Player | Npc | Enemy Alvo que a câmera segue
+---@field viewport Size
+---@field canvas table
+---@field canvasPos Vec
+---@field cx number
+---@field cy number
+---@field targetPos Vec
+---@field transitionSpeed number
+---@field shakeOffset Vec
+---@field shakeIntensity number
+---@field shakeDuration number
+---@field shakeTimer number
+---@field startingZoom number
+---@field zoom number
+---@field targetZoom number
+---@field zoomSpeed number
+---@field cinematicTimer number
+---@field viewPos function
+---@field changeTarget function
+
 Camera = {}
 Camera.__index = Camera
 
+---@param pos Vec
+---@param viewport Size
+---@param canvas table
+---@param canvasPos Vec
+---@param player Player
+---@return Camera
+-- cria uma câmera atrelada a um jogador e um canvas
 function Camera.new(pos, viewport, canvas, canvasPos, player)
 	local camera = setmetatable({}, Camera)
 
-	camera.playerAttached = player 	            -- jogador associado à câmera
-	camera.viewport = viewport                  -- tamanho da câmera (o espaço que ela enxerga)
-	camera.canvas = canvas                      -- canvas associado à câmera
-	camera.canvasPos = canvasPos                -- posição do canvas na tela
+	camera.playerAttached = player -- jogador associado à câmera
+	camera.target = player      -- alvo que a câmera segue (inicialmente o player)
+	camera.viewport = viewport  -- tamanho da câmera (o espaço que ela enxerga)
+	camera.canvas = canvas      -- canvas associado à câmera
+	camera.canvasPos = canvasPos -- posição do canvas na tela
 	camera.cx = (pos.x + viewport.width) / 2
 	camera.cy = (pos.y + viewport.height) / 2
 	camera.targetPos = { x = pos.x, y = pos.y } -- onde a câmera deve ir
@@ -33,13 +65,18 @@ function Camera.new(pos, viewport, canvas, canvasPos, player)
 	camera.shakeTimer = 0                    -- tempo restante do shake
 	-- atributos de zoom
 	camera.startingZoom = camera:calculateZoom()
-	camera.zoom = camera.startingZoom        -- zoom atual
-	camera.targetZoom = camera.startingZoom  -- zoom desejado
-	camera.zoomSpeed = 3                     -- velocidade da transição
+	camera.zoom = 1                      -- zoom atual
+	camera.targetZoom = camera.startingZoom -- zoom desejado
+	camera.zoomSpeed = 3                 -- velocidade da transição
+	-- atributos de cinemática
+	camera.cinematicTimer = 0
 
+	player.uiManager:setParentCanvas(canvas, canvasPos)
 	return camera
 end
 
+---@param dt number
+-- atualiza a posição da câmera com certa suavização ao seguir o alvo
 function Camera:updatePosition(dt)
 	-- suaviza o zoom atual
 	self.zoom = lerp(self.zoom, self.targetZoom, dt * self.zoomSpeed)
@@ -59,30 +96,44 @@ function Camera:updatePosition(dt)
 		self.targetPos.x = pos.x / #players - viewportZoomed.width / 2
 		self.targetPos.y = pos.y / #players - viewportZoomed.height / 2
 	else
-		-- a câmera segue os jogadores individualmente
-		local i = tableFind(cameras, self)
-		local player = players[i]
-		local room = player.room
+		-- a câmera segue o target (que pode ser o player ou outra entidade)
+		if self.target and self.target.pos and self.target.room then
+			local room = self.target.room
 
-		-- limita a posição da câmera ao hitbox da sala
-		self.targetPos.x =
-			clamp(player.pos.x, room.hitbox.p1.x + viewportZoomed.width / 2, room.hitbox.p2.x - viewportZoomed.width / 2)
-		self.targetPos.y =
-			clamp(player.pos.y, room.hitbox.p1.y + viewportZoomed.height / 2, room.hitbox.p2.y - viewportZoomed.height / 2)
+			if room then
+				-- limita a posição da câmera ao hitbox da sala
+				self.targetPos.x = clamp(
+					self.target.pos.x,
+					room.limits.p1.x + viewportZoomed.width / 2,
+					room.limits.p2.x - viewportZoomed.width / 2
+				)
+				self.targetPos.y = clamp(
+					self.target.pos.y,
+					room.limits.p1.y + viewportZoomed.height / 2,
+					room.limits.p2.y - viewportZoomed.height / 2
+				)
+			end
+		end
 	end
 
 	self:updateShake(dt)
+	self:updateCinematic(dt)
 
 	self.cx = lerp(self.cx, self.targetPos.x, dt * self.transitionSpeed) + self.shakeOffset.x
 	self.cy = lerp(self.cy, self.targetPos.y, dt * self.transitionSpeed) + self.shakeOffset.y
 end
 
+---@param intensity number
+---@param duration number
+-- causa um tremor na câmera com certa intensidade e duração
 function Camera:shake(intensity, duration)
 	self.shakeIntensity = intensity or 10
 	self.shakeDuration = duration or 0.3
 	self.shakeTimer = self.shakeDuration
 end
 
+---@param dt number
+-- atualiza o estado do tremor da câmera
 function Camera:updateShake(dt)
 	-- atualiza shake se estiver ativo
 	if self.shakeTimer > 0 then
@@ -101,6 +152,40 @@ function Camera:updateShake(dt)
 	end
 end
 
+---@param dt number
+-- atualiza o timer de uma cena - que por proxy define o tamanho
+-- das barras horizontais na câmera
+function Camera:updateCinematic(dt)
+	if self.playerAttached and self.playerAttached.inDialogue then
+		self.cinematicTimer = self.cinematicTimer + dt
+	else
+		self.cinematicTimer = 0
+	end
+end
+
+-- calcula o zoom atual da câmera
+function Camera:calculateZoom()
+	if not self.playerAttached then
+		return 1
+	end
+
+	local roomDim = self.playerAttached.room.stdDim
+	local rawZoom = self.viewport.width / window.width
+	local rightZoom = remap(rawZoom, (1 / 3), 1, 0.7, 1.0)
+
+	return clamp(rightZoom, self.viewport.width / roomDim.width, 2)
+end
+
+---@param target Player | Npc | Enemy
+-- muda o alvo que a câmera deve seguir
+function Camera:changeTarget(target)
+	self.target = target
+end
+
+---@param entityPos Vec
+---@return Vec
+-- retorna a posição da entidade dada pelo parâmetro `entityPos`
+-- no frame de referência relativo à posição da câmera
 function Camera:viewPos(entityPos)
 	return {
 		x = entityPos.x - self.cx + self.viewport.width / 2,
@@ -111,6 +196,9 @@ end
 ----------------------------------------
 -- Função de Renderização
 ----------------------------------------
+
+-- renderiza o conteúdo visto pela câmera no `canvas`
+-- associado à ela
 function Camera:draw()
 	love.graphics.setCanvas(self.canvas)
 	love.graphics.clear(0.0, 0.0, 0.0, 1.0)
@@ -123,49 +211,96 @@ function Camera:draw()
 
 	-- renderiza mundo
 	renderRooms(self)
+	-- renderiza entidades com Y-sorting
 	renderEntities(self)
+	-- renderiza as hitboxes ativas (debug)
+	renderHitboxes(self)
+	-- renderiza caixas de diálogo por cima de tudo
+	renderDialogues(self)
 
 	love.graphics.pop()
+
+	-- renderiza a UI do jogador associado
+	renderPlayerUIs(self)
+
 	love.graphics.setCanvas()
+
+	love.graphics.push()
+	love.graphics.translate(window.offset.x, window.offset.y)
+	love.graphics.scale(window.scale)
+
+	-- renderizando os canvas na janela
 	love.graphics.draw(self.canvas, self.canvasPos.x, self.canvasPos.y)
-end
 
-function Camera:calculateZoom()
-	
-	if not self.playerAttached then
-		return 1
-	end
+	love.graphics.pop()
 
-	local roomDim = self.playerAttached.room.stdDim
-	local rawZoom = self.viewport.width / window.width
-	local rightZoom = remap(rawZoom, (1/3), 1, 0.7, 1.0)
-
-	return clamp(rightZoom, self.viewport.width / roomDim.width, 2)
+	-- barras pretas em espaço de tela (fora do canvas/zoom)
+	renderBlackBars(self)
 end
 
 ----------------------------------------
 -- Funções Globais
 ----------------------------------------
 
+---@param camera Camera
+-- renderiza barras pretas em no topo e na base do canvas
+function renderBlackBars(camera)
+	local maxBarHeight = #players < 4 and 70 or 35
+	local barHeight = Easing.outQuad(clamp(camera.cinematicTimer, 0, 1)) * maxBarHeight
+
+	-- desenha barras relativas à região do canvas da câmera
+	local x = camera.canvasPos.x + window.offset.x
+	local y = camera.canvasPos.y + window.offset.y
+	local w = camera.viewport.width * window.scale
+	local h = camera.viewport.height * window.scale
+
+	love.graphics.setColor(0, 0, 0, 1)
+	-- barra superior
+	love.graphics.rectangle("fill", x, y, w, barHeight)
+	-- barra inferior
+	love.graphics.rectangle("fill", x, y + h - barHeight, w, barHeight)
+	love.graphics.setColor(1, 1, 1, 1)
+end
+
+---@param player Player
+---@return Camera | nil
+--- retorna a câmera associada ao `player` passado como argumento
+function getCameraByPlayer(player)
+	for _, cam in pairs(cameras) do
+		if cam.playerAttached == player then
+			return cam
+		end
+	end
+	return nil
+end
+
+---@param player Player
+-- cria uma câmera atrelada ao `player` passado como argumento
 function newCamera(player)
+	print("Criando câmera para o jogador " .. player.name)
 	-- limite de cameras alcançado
 	if #cameras >= 4 then
 		return
 	end
 
+	local cameraPlayers = {}
+
 	local numOfCams = #cameras + 1
 	for i = 1, #cameras do
+		cameraPlayers[i] = cameras[i].playerAttached
 		cameras[i] = nil
 	end
+
+	table.insert(cameraPlayers, player)
 
 	for i = 1, numOfCams do
 		if numOfCams <= 3 then
 			local camera = Camera.new(
-				{ x = 0, y = 0 },
+				cameraPlayers[i].pos,
 				{ width = window.width / numOfCams, height = window.height },
 				love.graphics.newCanvas(window.width / numOfCams, window.height),
 				{ x = (i - 1) * (window.width / numOfCams), y = 0 },
-				player
+				cameraPlayers[i]
 			)
 			table.insert(cameras, camera)
 		else -- no caso de 4 câmeras
@@ -176,11 +311,11 @@ function newCamera(player)
 				{ x = window.width / 2, y = window.height / 2 },
 			}
 			local camera = Camera.new(
-				{ x = 0, y = 0 },
+				cameraPlayers[i].pos,
 				{ width = window.width / 2, height = window.height / 2 },
 				love.graphics.newCanvas(window.width / 2, window.height / 2),
 				canvasPositions[i],
-				player
+				cameraPlayers[i]
 			)
 			table.insert(cameras, camera)
 		end

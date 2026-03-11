@@ -1,56 +1,165 @@
-require("modules.utils.types")
-require("modules.utils.states")
+----------------------------------------
+-- Importações de Módulos
+----------------------------------------
 require("modules.engine.collision")
-require("modules.utils.easing")
+require("modules.entities.entity")
+require("modules.utils.states")
+require("modules.utils.types")
 require("table")
 
 ----------------------------------------
 -- Classe Enemy
 ----------------------------------------
-Enemy = {}
+
+---@class Enemy : Entity
+---@field hp number
+---@field move function
+---@field attack Attack
+---@field state string
+---@field spriteSheets table<string, table>
+---@field animations table<string, Animation>
+---@field target any
+---@field atk Attack
+---@field isAttacking boolean
+---@field hasTriggeredAttackThisAnim boolean
+---@field attackJustStarted boolean
+---@field attackFrame number
+---@field addAnimations function
+---@field setProjectileAtk function
+
+Enemy = setmetatable({}, { __index = Entity })
 Enemy.__index = Enemy
 Enemy.type = ENEMY
 
-function Enemy.new(name, hp, spawnPos, speed, move, attack, hitbox, room)
-	local enemy = setmetatable({}, Enemy)
+---@param name string
+---@param hp number
+---@param spawnPos Vec
+---@param physics PhysicsSettings
+---@param move function
+---@param attack Attack
+---@param hitboxes Hitboxes
+---@param room Room
+---@param attackFrame number
+---@return Enemy
+-- cria uma instância de `Enemy`
+function Enemy.new(name, hp, spawnPos, physics, move, attack, hitboxes, room, attackFrame)
+	---@type Enemy
+	local enemy = setmetatable({}, Enemy) ---@diagnostic disable-line
+	enemy:init(name, spawnPos, hitboxes, room, physics)
 
 	-- atributos que variam
-	enemy.name = name -- nome do tipo de inimigo
 	enemy.hp = hp -- pontos de vida do inimigo
-	enemy.pos = spawnPos -- posição do inimigo
-	enemy.speed = speed -- velocidade de movimento do inimigo
 	enemy.move = move -- função de movimento do inimigo
-	enemy.attack = attack -- função de ataque do inimigo
-	enemy.hb = hitbox -- hitbox do inimigo
-	enemy.room = room -- sala do inimigo
+	enemy.atk = attack -- objeto Attack associado ao inimigo (caso possua)
+	enemy.attackFrame = attackFrame -- frame de ataque do inimigo
 	-- atributos fixos na instanciação
-	enemy.size = { height = 32, width = 32 }
-	enemy.cooldownTable = {} -- tabela para cooldowns múltiplos, caso necessário
-	enemy.movementDirections = {} -- tabela com as direções de movimento atualmente ativas
 	enemy.state = IDLE -- define o estado atual do inimigo, estreitamente relacionado às animações
 	enemy.spriteSheets = {} -- no tipo imagem do love
 	enemy.animations = {} -- as chaves são estados e os valores são Animações
 	enemy.target = nil -- alvo atual do inimigo
-	enemy.moveTargetPos = vec(0, 0) -- posição alvo para movimentação randômica
-	enemy.moveOriginPos = vec(0, 0) -- posição inicial para movimentação com easing
-	enemy.moveTimer = 0 -- timer para movimentação com easing
-	enemy.moveDuration = 0 -- duração da movimentação com easing
-	enemy.attackObj = nil -- objeto Attack associado ao inimigo (caso possua)
+	enemy.isAttacking = false -- indica se o inimigo está atualmente atacando
+	enemy.hasTriggeredAttackThisAnim = false -- garante que cada animação de ataque dispare apenas uma vez
+	enemy.attackJustStarted = false -- indica se um novo ataque acabou de começar
 
+	table.insert(room.enemies, enemy)
 	return enemy
 end
 
-function Enemy:addAnimations(idleSettings, dyingSettings)
+---@param idleSettings AnimSettings
+---@param walkingSettings AnimSettings
+---@param attackSettings AnimSettings
+---@param dyingSettings AnimSettings
+-- adiciona as animações dos estados dos inimigos à sua tabela de animações
+function Enemy:addAnimations(idleSettings, walkingSettings, attackSettings, dyingSettings)
 	----------------- IDLE -----------------
 	local path = pngPathFormat({ "assets", "animations", "enemies", self.name, IDLE })
 	addAnimation(self, path, IDLE, idleSettings)
+	---------------- WALKING UP -----------------
+	path = pngPathFormat({ "assets", "animations", "enemies", self.name, WALKING_UP })
+	addAnimation(self, path, WALKING_UP, walkingSettings)
+	---------------- WALKING DOWN -----------------
+	path = pngPathFormat({ "assets", "animations", "enemies", self.name, WALKING_DOWN })
+	addAnimation(self, path, WALKING_DOWN, walkingSettings)
+	---------------- WALKING LEFT -----------------
+	path = pngPathFormat({ "assets", "animations", "enemies", self.name, WALKING_LEFT })
+	addAnimation(self, path, WALKING_LEFT, walkingSettings)
+	---------------- WALKING RIGHT -----------------
+	path = pngPathFormat({ "assets", "animations", "enemies", self.name, WALKING_RIGHT })
+	addAnimation(self, path, WALKING_RIGHT, walkingSettings)
+	---------------- ATTACKING UP -----------------
+	path = pngPathFormat({ "assets", "animations", "enemies", self.name, ATTACKING_UP })
+	addAnimation(self, path, ATTACKING_UP, attackSettings)
+	self:initAttackAnim(self.animations[ATTACKING_UP])
+	---------------- ATTACKING DOWN -----------------
+	path = pngPathFormat({ "assets", "animations", "enemies", self.name, ATTACKING_DOWN })
+	addAnimation(self, path, ATTACKING_DOWN, attackSettings)
+	self:initAttackAnim(self.animations[ATTACKING_DOWN])
+	---------------- ATTACKING LEFT -----------------
+	path = pngPathFormat({ "assets", "animations", "enemies", self.name, ATTACKING_LEFT })
+	addAnimation(self, path, ATTACKING_LEFT, attackSettings)
+	self:initAttackAnim(self.animations[ATTACKING_LEFT])
+	---------------- ATTACKING RIGHT -----------------
+	path = pngPathFormat({ "assets", "animations", "enemies", self.name, ATTACKING_RIGHT })
+	addAnimation(self, path, ATTACKING_RIGHT, attackSettings)
+	self:initAttackAnim(self.animations[ATTACKING_RIGHT])
 	---------------- DYING -----------------
-	local path = pngPathFormat({ "assets", "animations", "enemies", self.name, IDLE })
+	path = pngPathFormat({ "assets", "animations", "enemies", self.name, DYING })
 	addAnimation(self, path, DYING, dyingSettings)
-
-	-- TODO: adicionar o resto das animações
 end
 
+---@param anim Animation
+-- inicializa a animação de ataque do inimigo, definindo seu callback `onFinish`
+function Enemy:initAttackAnim(anim)
+	anim.onFinish = function()
+		self.isAttacking = false
+		self.hasTriggeredAttackThisAnim = false
+	end
+end
+
+-- verifica se um estado é de ataque
+function Enemy:isAttackState(state)
+	return state == ATTACKING_UP
+		or state == ATTACKING_DOWN
+		or state == ATTACKING_LEFT
+		or state == ATTACKING_RIGHT
+end
+
+-- reseta todas as animações de ataque para o primeiro frame
+function Enemy:resetAttackAnimations()
+	local attackStates = { ATTACKING_UP, ATTACKING_DOWN, ATTACKING_LEFT, ATTACKING_RIGHT }
+	for _, state in ipairs(attackStates) do
+		local anim = self.animations[state]
+		if anim then
+			anim:reset()
+			anim.timer = 0
+		end
+	end
+end
+
+-- sincroniza o frame atual entre todas as animações de ataque
+function Enemy:synchronizeAttackAnimations()
+	if not self:isAttackState(self.state) then
+		return
+	end
+
+	local sourceAnim = self.animations[self.state]
+	if not sourceAnim then
+		return
+	end
+
+	local attackStates = { ATTACKING_UP, ATTACKING_DOWN, ATTACKING_LEFT, ATTACKING_RIGHT }
+	for _, state in ipairs(attackStates) do
+		local anim = self.animations[state]
+		if anim and anim ~= sourceAnim then
+			anim.currFrame = sourceAnim.currFrame
+			anim.timer = sourceAnim.timer
+		end
+	end
+end
+
+---@param damage number
+-- reduz a vida do `Enemy` em `damage` pontos. Caso a vida
+-- chegue abaixo de 0, mata o inimigo
 function Enemy:takeDamage(damage)
 	if self.state == DYING then
 		return
@@ -62,42 +171,118 @@ function Enemy:takeDamage(damage)
 	end
 end
 
+-- inicia o processo de morte do inimigo
 function Enemy:die()
 	self.state = DYING
 	local anim = self.animations[DYING]
 	anim.onFinish = function()
-		collisionManager.enemies[self] = nil
+		collisionManager:unregister(self)
+		for _, atk in pairs(self.atk.events) do
+			collisionManager:unregister(atk)
+		end
+
 		table.remove(self.room.enemies, tableIndexOf(self.room.enemies, self))
 	end
 end
 
-function Enemy:update(dt)
-	self:reduceCooldowns(dt)
-	self:defineTarget()
-	self:move(dt)
-	self:executeMovementDirections()
-
-	if self.attackObj then
-		self.attackObj:update(dt)
+function Enemy:attack()
+	-- as condições para tentar um ataque não são cumpridas
+	if not self.target or not self.target.pos or not self.atk then
+		return
 	end
-
-	self:attack(dt)
-	self.animations[self.state]:update(dt)
+	if self.atk:tryAttack() and not self.isAttacking then
+		self.isAttacking = true
+		self.hasTriggeredAttackThisAnim = false
+		self.attackJustStarted = true
+	end
 end
 
-function Enemy:setPos(pos)
-	self.pos = pos
-	self.hb.pos = pos
+function Enemy:updateAttack()
+	if self.isAttacking then		
+		local anim = self.animations[self.state]
+
+		if anim.currFrame >= self.attackFrame and not self.hasTriggeredAttackThisAnim then
+			local dir = math.atan2(self.target.pos.y - self.pos.y, self.target.pos.x - self.pos.x)
+			self.atk:attack(self, self.pos, dir)
+			self.hasTriggeredAttackThisAnim = true
+		end
+
+	end
+end
+
+---@param dt number
+-- atualiza os estados do inimigo e seus ataques, além de movê-lo
+function Enemy:update(dt)
+	self:defineTarget()
+	if self.move and self.state ~= DYING and not self.isAttacking then
+		self:move(dt)
+	end
+	if self.atk then
+		self.atk:update(dt)
+	end
+	
+	self:updateInvulnerability(dt)
+	self:attack()
+	self:updateState()
+	if self.isAttacking and self.attackJustStarted then
+		self:resetAttackAnimations()
+		self.attackJustStarted = false
+	end
+	self:updateAttack()
+	self.animations[self.state]:update(dt)
+	if self.isAttacking then
+		self:synchronizeAttackAnimations()
+	end
+	applyPhysics(self, dt)
 end
 
 ----------------------------------------
 -- Funções de Estado
 ----------------------------------------
 
+function Enemy:updateState()
+	if self.state == DYING then
+		return
+	end
+
+	if self.atk and self.isAttacking then
+		local dirVec = subVec(self.target.pos, self.pos)
+
+		local isVerticalAttack = math.abs(dirVec.y) > math.abs(dirVec.x)
+		if isVerticalAttack and dirVec.y < 0 then
+			self.state = ATTACKING_UP
+		elseif isVerticalAttack and dirVec.y > 0 then
+			self.state = ATTACKING_DOWN
+		elseif not isVerticalAttack and dirVec.x > 0 then
+			self.state = ATTACKING_RIGHT
+		elseif not isVerticalAttack and dirVec.x < 0 then
+			self.state = ATTACKING_LEFT
+		end
+	elseif self.move then
+		local isVerticalMovement = math.abs(self.vel.y) > math.abs(self.vel.x)
+		if self.vel.y < 0 and isVerticalMovement then
+			self.state = WALKING_UP
+		elseif self.vel.y > 0 and isVerticalMovement then
+			self.state = WALKING_DOWN
+		elseif self.vel.x > 0 then
+			self.state = WALKING_RIGHT
+		elseif self.vel.x < 0 then
+			self.state = WALKING_LEFT
+		else
+			self.state = IDLE
+		end
+
+	end
+	
+end
+
+-- define o alvo atual do `Enemy`
 function Enemy:defineTarget()
 	self.target = self:getClosestPlayer()
 end
 
+---@return any
+-- encontra o jogador mais próximo ao `Enemy`
 function Enemy:getClosestPlayer()
 	local closestDist = math.huge
 	local closestPlayer = nil
@@ -112,197 +297,17 @@ function Enemy:getClosestPlayer()
 	return closestPlayer
 end
 
-function Enemy:reduceCooldowns(dt)
-	for key, value in pairs(self.cooldownTable) do
-		if value > 0 then
-			self.cooldownTable[key] = value - dt
-		end
-	end
-end
-
-function Enemy:isCooldownActive(cooldownName)
-	if self.cooldownTable[cooldownName] and self.cooldownTable[cooldownName] > 0 then
-		return true
-	end
-	return false
-end
-
-function Enemy:setCooldown(cooldownName, value)
-	self.cooldownTable[cooldownName] = value
-end
-
-----------------------------------------
--- Funções de Movimento
-----------------------------------------
-
--- se move na direção de um ponto específico
-function Enemy:moveTowards(pos, dt)
-	if self.easingFunc and self.moveOriginPos and self.moveDuration and self.moveTimer then
-		self.moveTimer = self.moveTimer + dt
-		local t = math.min(self.moveTimer / self.moveDuration, 1)
-		local progress = self.easingFunc(t)
-		local targetPos = addVec(self.moveOriginPos, scaleVec(subVec(pos, self.moveOriginPos), progress))
-		local movementVec = subVec(targetPos, self.pos)
-
-		self.movementDirections["moveTowards"] = movementVec
-
-		return
-	end
-
-	-- movimento normal (sem easing)
-	local direction = normalize(subVec(pos, self.pos))
-	self.movementDirections["moveTowards"] = scaleVec(direction, self.speed * dt)
-end
-
--- se move na direção contrário do target
-function Enemy:avoidTarget(dt)
-	if self.target == nil or self:isCooldownActive("avoidTarget") then
-		return
-	end
-
-	local distTarget = dist(self.pos, self.target.pos)
-
-	if nullVec(self.moveTargetPos) and distTarget < 300 then
-		local baseDir = normalize(subVec(self.target.pos, self.pos))
-		baseDir = scaleVec(baseDir, -1)
-		local travelDistance = math.random(150, 180)
-
-		self.moveTargetPos = addVec(self.pos, scaleVec(baseDir, travelDistance))
-		self.moveOriginPos = self.pos
-		self.moveTimer = 0
-		self.moveDuration = travelDistance / self.speed
-	end
-
-	local arrived = false
-	if self.easingFunc then
-		if self.moveTimer >= self.moveDuration then
-			arrived = true
-		end
-	elseif nullVec(self.moveTargetPos) or dist(self.pos, self.moveTargetPos) <= 4 then
-		arrived = true
-	end
-
-	if not arrived then
-		self:moveTowards(self.moveTargetPos, dt)
-	else
-		self.movementDirections["moveTowards"] = vec(0, 0)
-		self.moveTargetPos = vec(0, 0)
-		self:setCooldown("avoidTarget", 1.0 + math.random() / 2)
-	end
-end
-
--- se move na direção de um target
-function Enemy:moveFollowTarget(dt)
-	if self.target == nil then
-		return
-	end
-
-	local distance = dist(self.pos, self.target.pos)
-
-	if distance > 100 then
-		self:moveTowards(self.target.pos, dt)
-	end
-end
-
-function Enemy:moveTargetDirection(dt)
-	if self.target == nil or self:isCooldownActive("moveTargetDirection") then
-		return
-	end
-
-	if nullVec(self.moveTargetPos) then
-		local baseDir = normalize(subVec(self.target.pos, self.pos))
-		local randAngle = math.rad(45) * (math.random() - 0.5) * 2
-
-		local newDir = rotateVec(baseDir, randAngle)
-		local travelDistance = math.random(110, 200)
-
-		self.moveTargetPos = addVec(self.pos, scaleVec(newDir, travelDistance))
-		self.moveOriginPos = self.pos
-		self.moveTimer = 0
-		self.moveDuration = travelDistance / self.speed
-	end
-
-	local arrived = false
-	if self.easingFunc then
-		if self.moveTimer >= self.moveDuration then
-			arrived = true
-		end
-	elseif dist(self.pos, self.moveTargetPos) <= 4 then
-		arrived = true
-	end
-
-	if not arrived then
-		self:moveTowards(self.moveTargetPos, dt)
-	else
-		self.movementDirections["moveTowards"] = vec(0, 0)
-		self.moveTargetPos = vec(0, 0)
-		self:setCooldown("moveTargetDirection", 0.3 + math.random())
-	end
-end
-
--- soma todos os vetores de direção de movimento e atualiza a posição do inimigo
-function Enemy:executeMovementDirections()
-	local finalDir = vec(0, 0)
-
-	for _, v in pairs(self.movementDirections) do
-		finalDir = addVec(finalDir, v)
-	end
-
-	self:setPos(addVec(self.pos, finalDir))
-end
-
-----------------------------------------
--- Funções de Ataque
-----------------------------------------
-function Enemy:simpleAttack(dt)
-	if self:isCooldownActive("simpleAttack") then
-		return
-	end
-
-	if math.abs(dist(self.pos, self.target.pos)) < 75 then
-		print(self.name .. " ataca")
-		self:setCooldown("simpleAttack", 2)
-
-		return
-	end
-end
-
-function Enemy:shootAttack(dt)
-	if self.target == nil or self:isCooldownActive("shootAttack") then
-		return
-	end
-
-	self:setCooldown("shootAttack", 2)
-
-	local dir = math.atan2(self.target.pos.y - self.pos.y, self.target.pos.x - self.pos.x)
-	self.attackObj:attack(self, self.pos, dir)
-end
-
-function Enemy:setProjectileAtk()
-	local updateFunc = function(dt, atkEvent)
-		atkEvent:baseUpdate(dt)
-	end
-
-	local onHitFunc = function(atkEvent, target)
-		-- TODO: colocar partículas bonitinhas ao acertar
-
-		print(atkEvent.attacker.name .. " acertou um " .. target.type .. " por " .. atkEvent.dmg .. " de dano!")
-		target.hp = target.hp - atkEvent.dmg
-	end
-
-	local hb = hitbox(Circle.new(15), vec(0, 0))
-	local baseAtkSettings = newBaseAtkSetting(true, 15, 5, hb)
-	local atkSettings = newProjectileAtkSetting(baseAtkSettings, 10, 5, 0, 1)
-	local atkAnimSettings = newAnimSetting(5, { width = 16, height = 16 }, 0.1, true, 1)
-	local trajectoryFunc = SineTrajectory
-
-	self.attackObj = Attack.new("Pebble Shot", atkSettings, atkAnimSettings, updateFunc, onHitFunc, trajectoryFunc)
-end
-
 ----------------------------------------
 -- Funções de Renderização
 ----------------------------------------
+
+---@param camera Camera
+-- função de renderização de `Enemy`
 function Enemy:draw(camera)
+	if self:isInvulnerable() then
+		return
+	end
+
 	local viewPos = camera:viewPos(self.pos)
 	local animation = self.animations[self.state]
 	local quad = animation.frames[animation.currFrame]
@@ -311,46 +316,4 @@ function Enemy:draw(camera)
 		y = animation.frameDim.height / 2,
 	}
 	love.graphics.draw(self.spriteSheets[self.state], quad, viewPos.x, viewPos.y, 0, 3, 3, offset.x, offset.y)
-
-	---------- HITBOX DEBUG ----------
-	if self.hb.shape.shape == CIRCLE then
-		love.graphics.circle("line", viewPos.x, viewPos.y, self.hb.shape.radius)
-	elseif self.hb.shape.shape == RECTANGLE then
-		love.graphics.rectangle(
-			"line",
-			viewPos.x - self.hb.shape.halfW,
-			viewPos.y - self.hb.shape.halfH,
-			self.hb.shape.width,
-			self.hb.shape.height
-		)
-	end
-	----------------------------------
-end
-
-----------------------------------------
--- Construtores
-----------------------------------------
-function newNuclearCat(spawnPos, room)
-	local movementFunc = Enemy.avoidTarget
-	local attackFunc = Enemy.shootAttack
-	local hitbox = hitbox(Rectangle.new(40, 70), spawnPos)
-	local enemy = Enemy.new(NUCLEAR_CAT.name, 30, spawnPos, 180, movementFunc, attackFunc, hitbox, room)
-	local idleAnimSettings = newAnimSetting(6, { width = 32, height = 32 }, 0.15, true, 1)
-	local dyingAnimSettings = newAnimSetting(6, { width = 32, height = 32 }, 0.001, false, 1)
-	enemy:addAnimations(idleAnimSettings, dyingAnimSettings)
-	enemy:setProjectileAtk()
-	enemy.easingFunc = Easing.outQuad
-	return enemy
-end
-
-function newSpiderDuck(spawnPos, room)
-	local movementFunc = Enemy.moveTargetDirection
-	local attackFunc = Enemy.simpleAttack
-	local hitbox = hitbox(Circle.new(25), spawnPos)
-	local enemy = Enemy.new(SPIDER_DUCK.name, 20, spawnPos, 180, movementFunc, attackFunc, hitbox, room)
-	local idleAnimSettings = newAnimSetting(4, { width = 32, height = 32 }, 0.4, true, 1)
-	local dyingAnimSettings = newAnimSetting(4, { width = 32, height = 32 }, 0.001, false, 1)
-	enemy:addAnimations(idleAnimSettings, dyingAnimSettings)
-	enemy.easingFunc = Easing.outQuad
-	return enemy
 end

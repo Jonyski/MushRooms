@@ -1,0 +1,3 @@
+[submodule "libs/applecake"]
+	path = libs/applecake
+	url = git@github.com:EngineerSmith/AppleCake.git

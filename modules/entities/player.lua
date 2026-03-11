@@ -1,83 +1,122 @@
 ----------------------------------------
 -- Importações de Módulos
 ----------------------------------------
-require("modules.utils.utils")
+require("modules.constructors.particles")
 require("modules.engine.animation")
-require("modules.utils.vec")
-require("modules.systems.particles")
-require("modules.utils.colors")
-require("modules.utils.types")
-require("modules.utils.states")
-require("modules.utils.shapes")
 require("modules.engine.collision")
+require("modules.entities.entity")
+require("modules.systems.inventory")
+require("modules.utils.colors")
+require("modules.utils.constructors")
+require("modules.utils.shapes")
+require("modules.utils.states")
+require("modules.utils.types")
+require("modules.utils.utils")
+require("modules.utils.vec")
 require("table")
 
 ----------------------------------------
 -- Variáveis e Enums
 ----------------------------------------
+
 players = {}
 
 ----------------------------------------
 -- Classe Player
 ----------------------------------------
-Player = {}
+
+---@class Player : Entity
+---@field id number
+---@field hp number
+---@field controls table<string, string>
+---@field colors Color[]
+---@field speed number
+---@field movementVec Vec
+---@field state string
+---@field spriteSheets table<string, table>
+---@field animations table<string, Animation>
+---@field particles table<string, ParticleSystem>
+---@field weapons table[]
+---@field weapon table
+---@field invulnerableTimer number
+---@field blinkTimer number
+---@field addAnimations function
+---@field addParticles function
+---@field inDialogue boolean
+---@field interactiveObj? Entity
+---@field inventory Inventory
+---@field candidateInteractives Interactive|Npc[]
+---@field uiManager table
+
+Player = setmetatable({}, { __index = Entity })
 Player.__index = Player
 Player.type = PLAYER
 
--- Construtor
-function Player.new(id, name, spawn_pos, controls, colors, room)
-	local player = setmetatable({}, Player)
+---@param name string
+---@param spawnPos Vec
+---@param controls table<string, string>
+---@param colors Color[]
+---@param room Room
+---@return Player
+-- cria uma instância de `Player` e o adiciona à lista global de `players`
+function Player.new(name, spawnPos, controls, colors, room)
+	---@type Player
+	local player = setmetatable({}, Player) ---@diagnostic disable-line
+
+	local hb = hitbox(Circle.new(20))
+	local hbs = hitboxes({ hb })
+	player:init(name, spawnPos, hbs, room, physicsSettings(1, 9000, 12))
 
 	-- atributos que variam
-	player.id = id -- número do jogador
-	player.name = name -- nome do jogador
-	player.hp = 100 -- pontos de vida
-	player.pos = spawn_pos -- posição do jogador (inicializa para a posição do spawn)
-	player.controls = controls -- os comandos para controlar o boneco, no formato {up = "", left = "", down = "", right = "", action = ""}
-	player.colors = colors -- paleta de cores do jogador
-	player.room = room -- sala na qual o jogador está atualmente
+	player.id = #players + 1                   -- número do jogador
+	player.hp = 100                            -- pontos de vida
+	player.controls = controls                 -- os comandos para controlar o boneco, no formato {up = "", left = "", down = "", ...}
+	player.colors = colors                     -- paleta de cores do jogador
 	-- atributos fixos na instanciação
-	player.speed = 360 -- velocidade em pixels por segundo
-	player.size = { height = 32, width = 32 } -- em pixels
-	player.movementVec = { x = 0, y = 0 } -- vetor de direção e magnitude do movimento do jogador
-	player.state = IDLE -- define o estado atual do jogador, estreitamente relacionado às animações
-	player.spriteSheets = {} -- no tipo imagem do love
-	player.animations = {} -- as chaves são estados e os valores são Animações
-	player.particles = {} -- efeitos de partícula emitidos pelo player
-	player.weapons = {} -- lista das armas que o jogador possui
-	player.weapon = nil -- arma equipada
-	player.hb = hitbox(Circle.new(20), player.pos) -- hitbox do player
-	player.invulnerableTimer = 0 -- timer de invulnerabilidade após levar dano
-	player.blinkTimer = 0 -- timer para piscar o sprite do player quando invulnerável
+	player.movementVec = { x = 0, y = 0 }      -- vetor de direção e magnitude do movimento do jogador
+	player.state = IDLE                        -- define o estado atual do jogador, estreitamente relacionado às animações
+	player.spriteSheets = {}                   -- no tipo imagem do love
+	player.animations = {}                     -- as chaves são estados e os valores são Animações
+	player.particles = {}                      -- efeitos de partícula emitidos pelo player
+	player.weapons = {}                        -- lista das armas que o jogador possui
+	player.weapon = nil                        -- arma equipada
+	player.inDialogue = false                  -- se o player está em diálogo
+	player.interactiveObj = nil                -- objeto próximo ao player com o qual ele pode interagir (ex: NPC)
+	player.inventory = Inventory.new(player)   -- inventário do jogador
+	player.candidateInteractives = {}          -- lista de objetos interativos próximos ao jogador
+	player.uiManager = newPlayerUIManager(player) -- gerenciador da UI do jogador
 
-	collisionManager.players[player] = player.hb
+	collisionManager:register(player)
 	return player
 end
 
-function Player:addAnimations()
-	-- animação idle
-	self:addAnimation(IDLE, 2, 0.5, true, 1)
-	-- animação defesa
-	self:addAnimation(DEFENDING, 15, 0.05, true, 12)
-	-- animação andar para cima
-	self:addAnimation(WALKING_UP, 4, 0.18, true, 1)
-	-- animação andar para baixo
-	self:addAnimation(WALKING_DOWN, 4, 0.18, true, 1)
-	-- animação andar para esquerda
-	self:addAnimation(WALKING_LEFT, 4, 0.18, true, 1)
-	-- animação andar para direita
-	self:addAnimation(WALKING_RIGHT, 4, 0.18, true, 1)
+---@param idleSettings AnimSettings
+---@param defSettings AnimSettings
+---@param WalkSettings AnimSettings
+-- adiciona animações à tabela do `Player`, associando-as aos seus estados respectivos
+function Player:addAnimations(idleSettings, defSettings, WalkSettings)
+	----------------- IDLE -----------------
+	local path = pngPathFormat({ "assets", "animations", "players", self.name, IDLE })
+	addAnimation(self, path, IDLE, idleSettings)
+	--------------- DEFENDING --------------
+	path = pngPathFormat({ "assets", "animations", "players", self.name, DEFENDING })
+	addAnimation(self, path, DEFENDING, defSettings)
+	-------------- WALKING UP --------------
+	path = pngPathFormat({ "assets", "animations", "players", self.name, WALKING_UP })
+	addAnimation(self, path, WALKING_UP, WalkSettings)
+	------------- WALKING DOWN -------------
+	path = pngPathFormat({ "assets", "animations", "players", self.name, WALKING_DOWN })
+	addAnimation(self, path, WALKING_DOWN, WalkSettings)
+	------------- WALKING LEFT -------------
+	path = pngPathFormat({ "assets", "animations", "players", self.name, WALKING_LEFT })
+	addAnimation(self, path, WALKING_LEFT, WalkSettings)
+	------------- WALKING RIGHT ------------
+	path = pngPathFormat({ "assets", "animations", "players", self.name, WALKING_RIGHT })
+	addAnimation(self, path, WALKING_RIGHT, WalkSettings)
 end
 
-function Player:addAnimation(action, numFrames, frameDur, looping, loopFrame)
-	local path = pngPathFormat({ "assets", "animations", "players", self.name, action })
-	local quadSize = { width = 32, height = 32 }
-	local animation = newAnimation(path, numFrames, quadSize, frameDur, looping, loopFrame, quadSize)
-	self.animations[action] = animation
-	self.spriteSheets[action] = love.graphics.newImage(path)
-	self.spriteSheets[action]:setFilter("nearest", "nearest")
-end
-
+-- adiciona os efeitos de partícula à tabela do `Player`,
+-- associando-os aos seus estados respectivos
 function Player:addParticles()
 	-- Efeito de partícula do player se defendendo
 	self.particles[DEFENDING] = newDefenseParticles(self.colors[1], self.colors[3])
@@ -89,6 +128,8 @@ function Player:addParticles()
 	self.particles[WALKING_RIGHT] = walkingParticles
 end
 
+---@param dt number
+-- move o `Player`, atualiza seu estado e o de suas animações e efeitos de partícula
 function Player:update(dt)
 	self:move(dt)
 	self.animations[self.state]:update(dt)
@@ -99,114 +140,82 @@ function Player:update(dt)
 		end
 		w:update(dt)
 	end
-	if self.invulnerableTimer > 0 then
-		self.invulnerableTimer = self.invulnerableTimer - dt
-		self.blinkTimer = (self.blinkTimer + dt * 10) % 1
-	end
+	self:updateInvulnerability(dt)
 	self:updateState()
 	self:updateParticles(dt)
+	self:resolveInteractive()
 end
 
-function Player:setPos(pos)
-	self.pos = pos
-	self.hb.pos = pos
-end
-
+---@param dt number
+-- movimenta o `Player` de acordo com o input do jogador
 function Player:move(dt)
-	self.movementVec = vec(0, 0)
-
-	if self.state == DEFENDING then
+	local movementDir = vec(0, 0)
+	if self.state == DEFENDING or self.inDialogue then
 		return
 	end
 	if love.keyboard.isDown(self.controls.up) then
-		self.movementVec.y = -1
+		movementDir.y = -1
 	end
 	if love.keyboard.isDown(self.controls.down) then
-		self.movementVec.y = 1
+		movementDir.y = 1
 	end
 	if love.keyboard.isDown(self.controls.left) then
-		self.movementVec.x = -1
+		movementDir.x = -1
 	end
 	if love.keyboard.isDown(self.controls.right) then
-		self.movementVec.x = 1
+		movementDir.x = 1
 	end
 
-	if self.movementVec.x == 0 and self.movementVec.y == 0 then
+	if nullVec(movementDir) then
+		applyPhysics(self, dt)
 		return
 	end
 
-	-- Normalizando para impedir movimentos na diagonal de serem mais rápidos
-	self.movementVec = normalize(self.movementVec)
-	-- Levando o dt e a velocidade do cogumelo em consideração
-	self.movementVec = scaleVec(self.movementVec, dt * self.speed)
+	-- a normalização impede o movimento de ser mais rápido na diagonal
+	local walkForce = scaleVec(normalize(movementDir), self.speed)
 
 	------------ HACK PARA DEBUG ------------
 	if love.keyboard.isDown("lctrl") then
-		self.movementVec = scaleVec(self.movementVec, 5)
+		walkForce = scaleVec(walkForce, 5)
 	end
 	-----------------------------------------
 
-	self:setPos(addVec(self.pos, self.movementVec))
+	applyForce(self, walkForce)
+	applyPhysics(self, dt)
 
 	self:updateParticlesPos()
 	if self.weapon then
-		self.weapon:updateOrientation({ x = self.movementVec.x, y = self.movementVec.y })
-	end
-	self:updateRoom()
-end
-
-function Player:updateRoom()
-	local roomX = self.room.pos.x
-	local roomY = self.room.pos.y
-	local prevRoom = self.room
-
-	-- o jogador foi para a sala à esquerda
-	if self.pos.x < self.room.hitbox.p1.x then
-		self.room = rooms[roomY][roomX - 1]
-	end
-	-- o jogador foi para a sala à direita
-	if self.pos.x > self.room.hitbox.p2.x then
-		self.room = rooms[roomY][roomX + 1]
-	end
-	-- o jogador foi para a sala acima
-	if self.pos.y < self.room.hitbox.p1.y then
-		self.room = rooms[roomY - 1][roomX]
-	end
-	-- o jogador foi para a sala abaixo
-	if self.pos.y > self.room.hitbox.p2.y then
-		self.room = rooms[roomY + 1][roomX]
-	end
-
-	-- se mudou de sala, se retira dela e entra na próxima
-	if prevRoom ~= self.room then
-		prevRoom.playersInRoom:remove(self.id)
-		prevRoom:verifyIsEmpty()
-
-		self.room:setExplored()
-		self.room:visit(self)
+		-- separa a orientação da arma em dois casos para amenizar o bug ao colidir com paredes
+		if not nullVec(self.vel) then
+			self.weapon:updateOrientation({ x = self.vel.x, y = self.vel.y })
+		else
+			self.weapon:updateOrientation(movementDir)
+		end
 	end
 end
 
+-- atualiza o estado do `Player`
 function Player:updateState()
 	local prevState = self.state
-	local isMoving = not nullVec(self.movementVec)
+	local isMoving = not nullVec(self.vel)
 	if love.keyboard.isDown(self.controls.act2) then
 		-- só defende se está completamente parado; se não, muda de arma
-		if not isMoving then
+		if not isMoving and not self.interactiveObj then
 			if prevState ~= DEFENDING then
 				self.particles[DEFENDING]:start()
 			end
 			self.state = DEFENDING
 		end
 	else
-		if self.movementVec.y < 0 then
+		local isVerticalMovement = math.abs(self.vel.y) > math.abs(self.vel.x)
+		if self.vel.y < 0 and isVerticalMovement then
 			self.state = WALKING_UP
-		elseif self.movementVec.x > 0 then
-			self.state = WALKING_RIGHT
-		elseif self.movementVec.x < 0 then
-			self.state = WALKING_LEFT
-		elseif self.movementVec.y > 0 then
+		elseif self.vel.y > 0 and isVerticalMovement then
 			self.state = WALKING_DOWN
+		elseif self.vel.x > 0 then
+			self.state = WALKING_RIGHT
+		elseif self.vel.x < 0 then
+			self.state = WALKING_LEFT
 		else
 			self.state = IDLE
 		end
@@ -214,8 +223,10 @@ function Player:updateState()
 
 	-- atualizando a situação do sistema de partículas de caminhada
 	if isMoving then
-		self.particles[self.state]:setDirection(math.atan2(self.movementVec.y, self.movementVec.x) + math.pi)
-		self.particles[self.state]:start()
+		if self.particles[self.state] then
+			self.particles[self.state]:setDirection(math.atan2(self.vel.y, self.vel.x) + math.pi)
+			self.particles[self.state]:start()
+		end
 	else
 		self.particles[WALKING_UP]:stop()
 	end
@@ -229,25 +240,53 @@ function Player:updateState()
 	end
 end
 
+---@param dt number
+-- atualiza os efeitos de partícula do `Player`
 function Player:updateParticles(dt)
 	self.particles[DEFENDING]:update(dt)
 	-- atualiza as partículas de caminhada como um todo
 	self.particles[WALKING_UP]:update(dt)
 end
 
+-- atualiza as posições dos efeitos de partícula do `Player`
 function Player:updateParticlesPos()
 	self.particles[DEFENDING]:setPosition(self.pos.x, self.pos.y)
 	self.particles[WALKING_UP]:setPosition(self.pos.x, self.pos.y + 24)
 end
 
+---@param key string
+-- verifica se o `Player` está pressionando a tecla de ação 1,
+-- caso esteja em diálogo, avança o diálogo; caso contrário, chama a função de ataque dele
 function Player:checkAction1(key)
-	if key == self.controls.act1 then
-		self:attack()
+	if key ~= self.controls.act1 then
+		return
+	end
+
+	if self.inDialogue then
+		DialogueManager:getDialogueByPlayer(self):advance()
+		return
+	end
+
+	if self.weapon then
+		self.weapon:attack()
 	end
 end
 
+---@param key string
+-- verifica se o `Player` está pressionando a tecla de ação 2
+-- caso positivo, executa a ação correta dependendo do contexto
 function Player:checkAction2(key)
-	if key == self.controls.act2 and self.movementVec.x ~= 0 then
+	if key ~= self.controls.act2 then
+		return
+	end
+	if self.interactiveObj then
+		if self.interactiveObj.type == NPC then
+			DialogueManager:start(self.interactiveObj.dialogue, self.interactiveObj, self)
+			stopMovement(self)
+		elseif self.interactiveObj.type == INTERACTIVE then
+			self.interactiveObj.onInteract(self.interactiveObj, self)
+		end
+	elseif self.vel.x ~= 0 then
 		local len = #self.weapons
 		if len <= 1 then
 			return
@@ -255,7 +294,7 @@ function Player:checkAction2(key)
 		local indexWeapon = tableIndexOf(self.weapons, self.weapon)
 		local nextIndex = indexWeapon
 		-- caminha ciclicamente entre as armas
-		if self.movementVec.x > 0 then
+		if self.vel.x > 0 then
 			nextIndex = (indexWeapon % len) + 1
 		else
 			nextIndex = ((indexWeapon - 2 + len) % len) + 1
@@ -265,6 +304,17 @@ function Player:checkAction2(key)
 	end
 end
 
+---@param key string
+-- verifica se o `Player` está pressionando a combinação de teclas para abrir o inventário
+function Player:checkSpecialActions(key)
+	if key == "i" and love.keyboard.isDown(self.controls.act1) then
+		self.uiManager:toggleScene(UI_INVENTORY_SCENE)
+	end
+end
+
+---@param weapon any
+---@return boolean
+-- adiciona uma arma ao arsenal do `Player` caso ele não a tenha
 function Player:collectWeapon(weapon)
 	-- previne de pegar a mesma arma novamente
 	if self:hasWeapon(weapon.name) then
@@ -275,6 +325,8 @@ function Player:collectWeapon(weapon)
 	return true
 end
 
+---@param weaponName string
+-- equipa uma arma com nome `weaponName` caso o `Player` a tenha
 function Player:equipWeapon(weaponName)
 	for _, w in pairs(self.weapons) do
 		if w.name == weaponName then
@@ -283,6 +335,9 @@ function Player:equipWeapon(weaponName)
 	end
 end
 
+---@param weaponName string
+---@return boolean
+-- verifica se o `Player` possui uma arma com nome `weaponName`
 function Player:hasWeapon(weaponName)
 	for _, w in pairs(self.weapons) do
 		if w.name == weaponName then
@@ -292,19 +347,26 @@ function Player:hasWeapon(weaponName)
 	return false
 end
 
-function Player:attack()
-	if self.weapon and self.weapon.canShoot then
-		self.weapon.atk:attack(self, self.pos, self.weapon.rotation)
-		self.weapon.canShoot = false
-		self.weapon.state = ATTACKING
-	end
-end
-
+---@return boolean
+-- coleta uma moeda; função não séria
 function Player:collectCoin()
 	print("moedinhaaa")
 	return true
 end
 
+---@param resource Resource
+---@return boolean
+function Player:collectResource(resource)
+	local firstResource = not self.inventory:hasItem(resource)
+	local success = self.inventory:addItem(resource)
+	if success and firstResource then
+		self.uiManager.scenes[UI_INVENTORY_SCENE]:addResourceEl(resource, self.inventory, self.uiManager.canvasSize)
+	end
+	return success
+end
+
+---@param item Item
+-- coleta um item e o marca como coletado
 function Player:collectItem(item)
 	local result = false
 	if item.object.type == WEAPON then
@@ -314,12 +376,17 @@ function Player:collectItem(item)
 		end
 	elseif item.object.type == ITEM then
 		result = self:collectCoin()
+	elseif item.object.type == RESOURCE then
+		result = self:collectResource(item.object)
 	end
 	if result then
 		item:setCollected()
 	end
 end
 
+---@param item Item
+-- verifica se condições-chave para a coleta de um item
+-- são verdadeiras, caso positivo, coleta o item
 function Player:tryCollectItem(item)
 	if not item.canPick then
 		return
@@ -333,6 +400,52 @@ function Player:tryCollectItem(item)
 	end
 end
 
+-- adiciona um objeto interativo candidato à lista do `Player`
+function Player:considerInteractive(obj)
+	table.insert(self.candidateInteractives, obj)
+end
+
+-- resolve qual objeto interativo o `Player` deve interagir
+function Player:resolveInteractive()
+	local old = self.interactiveObj
+	local new = nil
+
+	if #self.candidateInteractives > 0 then
+		new = self:chooseBestInteractive(self.candidateInteractives)
+	end
+
+	if new ~= old then
+		if old and old.onExit then
+			old:onExit(self)
+		end
+		self.interactiveObj = new
+		if new and new.onEnter then
+			new:onEnter(self)
+		end
+	end
+
+	self.candidateInteractives = {}
+end
+
+---@param list Interactive|Npc[]
+-- escolhe o objeto interativo mais perto dentre uma lista de candidatos
+function Player:chooseBestInteractive(list)
+	local best = nil
+	local nearest = math.huge
+
+	for _, obj in ipairs(list) do
+		local d = dist(self.pos, obj.pos)
+		if d < nearest then
+			nearest = d
+			best = obj
+		end
+	end
+
+	return best
+end
+
+---@param camera Camera
+-- renderiza o `Player` na perspectiva da `camera`
 function Player:draw(camera)
 	-- desenhando o efeito de partículas de caminhada atrás do player
 	local particles_offset = {
@@ -341,7 +454,7 @@ function Player:draw(camera)
 	}
 	love.graphics.draw(self.particles[WALKING_UP], particles_offset.x, particles_offset.y)
 
-	if self.invulnerableTimer > 0 and self.blinkTimer <= 0.5 then
+	if self:isInvulnerable() then
 		return
 	end
 	-- desenhando o player em si
@@ -354,10 +467,6 @@ function Player:draw(camera)
 	}
 	love.graphics.draw(self.spriteSheets[self.state], quad, viewPos.x, viewPos.y, 0, 3, 3, offset.x, offset.y)
 
-	---------- HITBOX DEBUG ----------
-	love.graphics.circle("line", viewPos.x, viewPos.y, self.hb.shape.radius)
-	----------------------------------
-
 	-- desenhando o efeito de partículas da defesa em cima do player
 	love.graphics.draw(self.particles[DEFENDING], particles_offset.x, particles_offset.y)
 end
@@ -365,67 +474,19 @@ end
 ----------------------------------------
 -- Funções Globais
 ----------------------------------------
+
+---@return boolean
+-- inicializa o próximo jogador, caso os 4 jogadores
+-- já tenham sido inicializados, retorna `false`
 function newPlayer()
 	-- limite de jogadores alcançado
 	if #players >= 4 then
 		return false
 	end
-
-	if #players == 0 then
-		local firstSpawnPoint = { x = rooms[0][0].center.x, y = rooms[0][0].center.y }
-		player1 = Player.new(
-			1,
-			"Mush",
-			firstSpawnPoint,
-			{ up = "w", left = "a", down = "s", right = "d", act1 = "space", act2 = "lshift" },
-			getP1ColorPalette(),
-			rooms[0][0]
-		)
-		player1:addAnimations()
-		player1:addParticles()
-		player1.room:visit(player1)
-		table.insert(players, player1)
-	elseif #players == 1 then
-		player2 = Player.new(
-			2,
-			"Shroom",
-			{ x = player1.pos.x + 75, y = player1.pos.y },
-			{ up = "up", left = "left", down = "down", right = "right", act1 = "rctrl", act2 = "rshift" },
-			getP2ColorPalette(),
-			players[1].room
-		)
-		player2:addAnimations()
-		player2:addParticles()
-		player2.room:visit(player2)
-		table.insert(players, player2)
-	elseif #players == 2 then
-		player3 = Player.new(
-			3,
-			"Musho",
-			{ x = player1.pos.x + 75, y = player1.pos.y },
-			{ up = "t", left = "f", down = "g", right = "h", act1 = "r", act2 = "y" },
-			getP3ColorPalette(),
-			players[1].room
-		)
-		player3:addAnimations()
-		player3:addParticles()
-		player3.room:visit(player3)
-		table.insert(players, player3)
-	else
-		player4 = Player.new(
-			4,
-			"Roomy",
-			{ x = player1.pos.x + 75, y = player1.pos.y },
-			{ up = "i", left = "j", down = "k", right = "l", act1 = "u", act2 = "o" },
-			getP4ColorPalette(),
-			players[1].room
-		)
-		player4:addAnimations()
-		player4:addParticles()
-		player4.room:visit(player4)
-		table.insert(players, player4)
-	end
+	CONSTRUCTORS[PLAYER][#players + 1]()
 	newCamera(players[#players])
+
+	return true
 end
 
 return Player

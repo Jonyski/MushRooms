@@ -1,36 +1,61 @@
 ----------------------------------------
 -- Importações de Módulos
 ----------------------------------------
-require("table")
-require("modules.entities.room")
-require("modules.engine.renderization")
-require("modules.entities.player")
-require("modules.engine.camera")
+require("modules.constructors.dialogue")
+require("modules.constructors.uimanagers")
 require("modules.engine.animation")
-require("modules.entities.enemy")
-require("modules.entities.weapon")
-require("modules.entities.destructibles")
-require("modules.entities.items")
+require("modules.engine.camera")
 require("modules.engine.collision")
+require("modules.engine.renderization")
+require("modules.entities.destructible")
+require("modules.entities.enemy")
+require("modules.entities.item")
+require("modules.entities.player")
+require("modules.entities.room")
+require("modules.entities.weapon")
+require("modules.systems.dialogue")
+require("modules.tooling.roomcontrol")
+require("modules.tooling.spawnDrop")
+require("modules.tooling.turtledebug")
+require("game")
+require("table")
+
+local appleCake = require("libs.applecake")(true)
+appleCake = require("libs.applecake")()
+appleCake.setBuffer(true)
+appleCake.beginSession()
 
 ----------------------------------------
 -- Variáveis Globais
 ----------------------------------------
-window = {}
-sec_timer = {}
+
+debugMode = false
+inventoryOpen = false
+window = { scale = 1, offset = vec(0, 0) }
+gameCtx = MENU_CTX
+local updateProfile
+local drawProfile
 
 ----------------------------------------
 -- Callbacks
 ----------------------------------------
+
 function love.keypressed(key, scancode, isrepeat)
 	-- esc fecha o jogo
 	if key == "escape" then
-		love.event.quit()
+		quitGame()
 	end
+
+	-- repassa para os UI managers
+	globalUIManager:keypressed(key, isrepeat)
+
 	-- n adiciona um player ao jogo
 	if key == "n" then
 		newPlayer()
 	end
+
+	---------- DEBUG ----------
+
 	-- q faz a câmera 1 tremer (teste)
 	if key == "c" then
 		cameras[1]:shake(20, 1)
@@ -40,33 +65,42 @@ function love.keypressed(key, scancode, isrepeat)
 		cameras[1].targetZoom = 2
 	end
 
-	if key == "1" then
-		spawnItem(newKatana(), players[1].pos, players[1].room, false, getAnchor(players[1], FLOOR), vec(0,0))
+	if _roomCondition() then
+		_roomDebugHandler(key)
+	elseif _spawnDropCondition() then
+		_spawnDropDebugHandler(key)
+	else
+		_turtleDebugHandler(key)
+		if key == "0" then
+			debugMode = not debugMode
+		end
 	end
 
-	if key == "2" then
-		spawnItem(newSlingShot(), players[1].pos, players[1].room, false, getAnchor(players[1], FLOOR), vec(0,0))
-	end
+	-------- FIM DEBUG --------
 
 	if not isrepeat then
 		for _, p in pairs(players) do
+			p:checkSpecialActions(key)
 			p:checkAction1(key)
 			p:checkAction2(key)
 		end
 	end
 end
 
-function love.keyreleased(key)
+function love.keyreleased(key, scancode)
 	if key == "z" then
 		cameras[1].targetZoom = cameras[1].startingZoom
 	end
 end
 
 function love.resize(w, h)
-	window.width = w
-	window.height = h
-	window.cx = w / 2
-	window.cy = h / 2
+	local sx = w / window.width
+	local sy = h / window.height
+	window.scale = math.max(sx, sy)
+	local offsetX = (w - window.width * window.scale) / 2
+	local offsetY = (h - window.height * window.scale) / 2
+	window.offset = vec(offsetX, offsetY)
+
 	for i, _ in pairs(cameras) do
 		cameras[i] = nil
 	end
@@ -78,28 +112,46 @@ end
 ----------------------------------------
 -- Inicialização
 ----------------------------------------
+
 function love.load()
+	-- muda o filtro padrão para eliminar o efeito de blur
+	love.graphics.setDefaultFilter("nearest", "nearest")
+
+	-- carregando a biblioteca de UI
+	globalUIManager = initGlobalUIManager()
+
+	-- definindo a seed de aleatoriedade
 	math.randomseed(os.time())
-	window.width = 800
-	window.height = 800
-	window.cx = 400 -- centro no eixo x
-	window.cy = 400 -- centro no eixo y
-	sec_timer = { prev = 0, curr = 0 }
-	createInitialRooms()
-	collisionManager = CollisionManager.init() -- gerenciador global de colisões
-	newPlayer()
-	-- debug
-	players[1]:collectWeapon(newSlingShot())
-	players[1]:equipWeapon(SLING_SHOT.name)
+
+	-- definindo a fonte padrão do jogo
+	tempFont = love.graphics.newFont("assets/fonts/Tiny5-Regular.ttf", 16)
+
+	-- definindo as dimensões iniciais do jogo
+	window.width = 1280
+	window.height = 720
+	window.cx = window.width / 2 -- centro no eixo x
+	window.cy = window.height / 2 -- centro no eixo y
 
 	-- métodos de estado do love
-	love.window.setMode(window.width, window.height, { resizable = true })
+	love.window.setMode(window.width, window.height, { resizable = true, vsync = true, msaa = 0 })
 end
 
 ----------------------------------------
 -- Atualização
 ----------------------------------------
+
 function love.update(dt)
+	-- iniciando o profiling da função de update
+	updateProfile = appleCake.profileFunc(nil, updateProfile)
+
+	-- pulando o update de gameplay enquanto está no menu
+	if gameCtx == MENU_CTX then
+		goto uiupdate
+	end
+
+	DialogueManager:update(dt)
+	----------- Colisões ----------
+	collisionManager:update(dt)
 	---------- Jogadores ----------
 	for _, p in pairs(players) do
 		p:update(dt)
@@ -112,16 +164,38 @@ function love.update(dt)
 	for _, r in activeRooms:iter() do
 		r:update(dt)
 	end
-	----------- Colisões ----------
-	collisionManager:updateHitboxLists()
-	collisionManager:handleCollisions()
+
+	-------------- UI -------------
+	::uiupdate::
+	globalUIManager:update(dt)
+
+	-- encerrando o profiling
+	updateProfile:stop()
 end
 
 ----------------------------------------
 -- Renderização
 ----------------------------------------
+
 function love.draw()
+	-- iniciando o profiling da função de update
+	drawProfile = appleCake.profileFunc(nil, drawProfile)
+
 	for _, c in pairs(cameras) do
 		c:draw()
 	end
+
+	globalUIManager:draw()
+
+	-- encerrando o profiling
+	drawProfile:stop()
+	appleCake.flush()
+end
+
+----------------------------------------
+-- Encerramento
+----------------------------------------
+
+function love.quit()
+	appleCake.endSession()
 end

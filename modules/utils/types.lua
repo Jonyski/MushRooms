@@ -71,7 +71,7 @@ BARREL = registerEntity(DESTRUCTIBLE, "barrel")
 ----------------- ITEM -----------------
 COIN = registerEntity(ITEM, "coin")
 
------------- RESOURCES --------------
+-------------- RECURSOS ----------------
 WOOD = registerEntity(RESOURCE, "wood")
 STONE = registerEntity(RESOURCE, "stone")
 BREAD = registerEntity(RESOURCE, "bread")
@@ -80,7 +80,11 @@ FEATHER = registerEntity(RESOURCE, "feather")
 IRON = registerEntity(RESOURCE, "iron")
 GOLD = registerEntity(RESOURCE, "gold")
 
------------------ ROOM -----------------
+----------------- SALA -----------------
 
-------------- OBSTACLES ----------------
+------------- OBSTÁCULO ----------------
 PILLAR = registerEntity(OBSTACLE, "pillar")
+WALL = registerEntity(OBSTACLE, "wall")
+
+------------- INTERATIVO ---------------
+DOOR = registerEntity(INTERACTIVE, "door")

@@ -603,6 +603,11 @@ function CollisionManager:fetchHitboxesByRoom(room)
 		self:register(inter)
 	end
 
+	-- pegando hitboxes de interativos
+	for _, door in pairs(room.doors) do
+		self:register(door)
+	end
+
 	-- pegando hitboxes de itens
 	for _, item in pairs(room.items) do
 		self:register(item)
@@ -702,8 +707,6 @@ function CollisionManager:register(entity)
 		return
 	end
 
-	-- print("Registering " .. entity.name .. " to CollisionManager")
-
 	if entity.hb.solids and #entity.hb.solids > 0 then
 		self.solids[entity] = entity.hb.solids
 	end
@@ -719,8 +722,6 @@ function CollisionManager:unregister(entity)
 	if not data then
 		return
 	end
-
-	-- print("Unregistering " .. entity.name .. " from CollisionManager")
 
 	if data.solids and #data.solids > 0 then
 		self.solids[entity] = nil
@@ -917,7 +918,7 @@ function CollisionManager:resolveSolidCollisions(entity, nextPos)
 						finalPos = addVec(finalPos, pushOut)
 						-- Atualiza a hitbox para a nova posição (para a próxima iteração do loop i)
 						desiredhb = buildWorldHitbox(entityhb, finalPos)
-						-- para sólidos estáticos, mantemos o comportamento antigo; 
+						-- para sólidos estáticos, mantemos o comportamento antigo;
 						-- para sólidos dinâmicos aplicamos impulso de contato obedecendo a 3ª lei.
 						local isStaticSolid = solid.isStatic == true
 						if isStaticSolid then
@@ -1088,4 +1089,3 @@ end
 function CollisionManager:onPlayerObstacleExit(obstacle)
 	obstacle.transparent = false
 end
-

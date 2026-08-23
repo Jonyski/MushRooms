@@ -20,7 +20,10 @@ function renderRooms(camera)
 			end
 
 			local roomViewPos = addVec(camera:viewPos(r.limits.p1), vec(Room.spacingH / 2, Room.spacingV / 2))
-			love.graphics.draw(r.sprites.floor, roomViewPos.x, roomViewPos.y, 0, 3, 3)
+			-- love.graphics.draw(r.sprites.floor, roomViewPos.x, roomViewPos.y, 0, 3, 3)
+			love.graphics.setColor(25 / 255, 21 / 255, 83 / 255, 1)
+			love.graphics.rectangle("fill", roomViewPos.x - 1000, roomViewPos.y - 1000, 2000, 2000)
+			love.graphics.setColor(1, 1, 1, 1)
 
 			::nextroom::
 		end
@@ -231,6 +234,27 @@ function renderEntities(camera)
 		end
 	end
 
+	for particleType, particle in pairs(globalVFXManager.particles) do
+		local x, y = globalVFXManager:getPosition(particleType)
+		table.insert(drawList, {
+			it = particle,
+			y = y,
+			draw = function()
+				globalVFXManager:drawParticle(particleType, x, y)
+			end,
+		})
+	end
+
+	for _, instance in pairs(globalVFXManager.animInstances) do
+		table.insert(drawList, {
+			it = instance,
+			y = instance.pos.y,
+			draw = function()
+				globalVFXManager:drawAnimation(instance, camera)
+			end,
+		})
+	end
+
 	-- Ordena por posição Y
 	table.sort(drawList, function(a, b)
 		return a.y < b.y
@@ -248,31 +272,67 @@ function renderEntities(camera)
 	end
 end
 
+---@param drawFunc function
+---@param color table
+---@param lightLevels number
+---@param gridSize number
+function renderWithLight(drawFunc, color, lightLevels, gridSize)
+	love.graphics.setShader(glowShader)
+	glowShader:send("glow_color", color)
+	glowShader:send("steps", lightLevels)
+	glowShader:send("grid_size", gridSize)
+	glowShader:send("time", love.timer.getTime())
+	drawFunc()
+	love.graphics.setShader()
+end
+
 ---@param camera Camera
--- renderiza pós processamentos como por exemplo iluminação
-function renderPostProcessing(camera)
+-- renderiza iluminações, como as de tochas ou dos players
+function renderLighting(camera)
 	for _, r in activeRooms:iter() do
 		-- Iluminações de obstáculos
 		for _, obs in pairs(r.obstacles) do
 			if obs.emitsLight then
 				local viewPos = camera:viewPos(obs.pos)
-				love.graphics.setShader(glowShader)
-				glowShader:send("glow_color", { 0.9, 0.2, 0.4, 0.66 })
-				glowShader:send("steps", lightLevels)
-				glowShader:send("grid_size", obs.glowRadius / 5)
-				glowShader:send("time", love.timer.getTime())
-				love.graphics.draw(
-					assetManager.emptyTex,
-					viewPos.x - obs.glowRadius / 2,
-					viewPos.y - obs.glowRadius / 2,
-					0,
-					obs.glowRadius,
-					obs.glowRadius
-				)
-				love.graphics.setShader()
+				local drawFunc = function()
+					love.graphics.draw(
+						assetManager.emptyTex,
+						viewPos.x - obs.glowRadius / 2,
+						viewPos.y - obs.glowRadius / 2,
+						0,
+						obs.glowRadius,
+						obs.glowRadius
+					)
+				end
+				renderWithLight(drawFunc, { 0.9, 0.2, 0.4, 0.66 }, lightLevels, obs.glowRadius / 5)
 			end
 		end
 	end
+
+	-- Player
+	for _, p in pairs(players) do
+		local viewPos = camera:viewPos(p.pos)
+		local glowRadius = p.glowRadius or 600
+		local lightLevels = p.lightLevels or 20
+		local drawFunc = function()
+			love.graphics.draw(
+				assetManager.emptyTex,
+				viewPos.x - glowRadius / 2,
+				viewPos.y - glowRadius / 2,
+				0,
+				glowRadius,
+				glowRadius
+			)
+		end
+		renderWithLight(drawFunc, { 0.7, 0.7, 0.9, 0.15 }, lightLevels, glowRadius / 5)
+	end
+end
+
+function renderVignette(camera)
+	-- renderizando a vinheta escura nas bordas da câmera
+	love.graphics.setShader(darkVignetteShader)
+	love.graphics.draw(assetManager.emptyTex, 0, 0, 0, camera.viewport.width, camera.viewport.height)
+	love.graphics.setShader()
 end
 
 function renderPlayerUIs(camera)

@@ -8,20 +8,30 @@
 ---@field arrPos Vec?
 ---@field scale number?
 ---@field transparent boolean
+---@field mirrored boolean?
+---@field addAnimations fun(self: Obstacle, idleSettings: AnimSettings): nil
 
 Obstacle = setmetatable({}, { __index = Entity })
 Obstacle.__index = Obstacle
 Obstacle.type = OBSTACLE
 
-function Obstacle.new(name, hbs, spawnPos, room, scale)
+---@param name string
+---@param hbs Hitboxes
+---@param spawnPos Vec
+---@param room Room
+---@param canMirror? boolean
+---@return Obstacle
+-- cria um obstáculo (como paredes ou decorações)
+function Obstacle.new(name, hbs, spawnPos, room, canMirror)
 	---@type Obstacle
 	local ob = setmetatable({}, Obstacle) ---@diagnostic disable-line
 	local entityPhysics = physicsSettings(math.huge, 0, 1, nil, nil, nil, 0)
 	ob:init(name, spawnPos, hbs, room, entityPhysics)
-	ob.scale = scale or 1
+	ob.scale = 3
 	ob.animations = {}
 	ob.spriteSheets = {}
 	ob.transparent = false
+	ob.mirrored = canMirror and math.random() < 0.5
 
 	if name:sub(1, 4) ~= "wall" then
 		table.insert(room.obstacles, ob)
@@ -43,7 +53,7 @@ end
 -- adiciona a animação do obstáculo (só possuem IDLE)
 function Obstacle:addAnimations(idleSettings)
 	----------------- IDLE -----------------
-	local path = pngPathFormat({ "assets", "animations", "obstacles", self.name, IDLE })
+	local path = pngPathFormat({ "assets", "animations", "obstacles", self.name })
 	addAnimation(self, path, IDLE, idleSettings)
 end
 
@@ -51,6 +61,13 @@ end
 -- atualiza a animação do obstáculo, se houver
 function Obstacle:update(dt)
 	self.animations[IDLE]:update(dt)
+end
+
+---@param glowRadius number
+-- faz o objeto emitir luz
+function Obstacle:makeGlow(glowRadius)
+	self.emitsLight = true
+	self.glowRadius = 600
 end
 
 function Obstacle:updateTransparentShaderUniforms(shader)
@@ -94,13 +111,15 @@ function Obstacle:draw(camera)
 		self:updateTransparentShaderUniforms(seeThroughShader)
 	end
 
+	local flip = self.mirrored and -1 or 1
+
 	love.graphics.draw(
 		self.spriteSheets[IDLE],
 		quad,
 		viewPos.x,
 		viewPos.y,
 		0,
-		self.scale,
+		self.scale * flip,
 		self.scale,
 		offset.x,
 		offset.y

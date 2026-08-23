@@ -135,6 +135,11 @@ end
 ---@param dyingSettings AnimSettings
 -- adiciona animações à tabela do `Player`, associando-as aos seus estados respectivos
 function Player:addAnimations(idleSettings, defSettings, WalkSettings, dyingSettings)
+	-- !TODO: refatorar o addAnimations
+	-- for state, settings in pairs(animSettings) do
+	-- 	local path = pngPathFormat({ "assets", "animations", "players", self.name, state })
+	-- 	addAnimation(self, path, state, settings)
+	-- end
 	----------------- IDLE -----------------
 	local path = pngPathFormat({ "assets", "animations", "players", self.name, IDLE })
 	addAnimation(self, path, IDLE, idleSettings)

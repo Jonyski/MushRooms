@@ -96,6 +96,11 @@ end
 ---@param attackSettings table<string, AnimSettings>
 -- adiciona as animações dos estados dos inimigos à sua tabela de animações
 function Enemy:addAnimations(idleSettings, walkingSettings, dyingSettings, attackSettings)
+	-- !TODO: refatorar o addAnimations
+	-- for state, settings in pairs(animSettings) do
+	-- 	local path = pngPathFormat({ "assets", "animations", "enemies", self.name, state })
+	-- 	addAnimation(self, path, state, settings)
+	-- end
 	----------------- IDLE -----------------
 	local path = pngPathFormat({ "assets", "animations", "enemies", self.name, IDLE })
 	addAnimation(self, path, IDLE, idleSettings)

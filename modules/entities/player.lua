@@ -516,6 +516,8 @@ function Player:checkSpecialActions(key)
 		self.uiManager:toggleScene(UI_CRAFTING_SCENE)
 		stopMovement(self)
 	end
+
+	-- DEBUG --
 	if key == "p" and love.keyboard.isDown(self.controls.act1) then
 		self.room:toggleDoors()
 	end

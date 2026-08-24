@@ -68,7 +68,7 @@ local updateDoor = function(door, dt)
 			end
 			collisionManager:register(door)
 		end
-		if door.closingTimer < 0 then
+		if door.closingTimer <= 0 then
 			door.state = CLOSED
 		end
 	end
@@ -77,7 +77,7 @@ end
 function newDoor(spawnPos, room, doorType)
 	local physics = physicsSettings(math.huge, 0, 0, nil, nil, nil, 0.0)
 	local hbs = hitboxes({}, {}, {})
-	local door = Interactive.new(doorType.name, spawnPos, hbs, room, physics, onInteractDoor, updateDoor)
+	local door = Interactive.new(doorType.name, spawnPos, hbs, room, physics, onInteractDoor, nil, updateDoor)
 
 	door.state = OPEN
 	door.openingTimer = 0 ---@diagnostic disable-line

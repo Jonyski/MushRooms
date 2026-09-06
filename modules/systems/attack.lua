@@ -2,6 +2,7 @@
 -- Importações de Módulos
 ----------------------------------------
 require("modules.utils.utils")
+require("modules.utils.vfxs")
 
 ----------------------------------------
 -- Classe AtkSetting e Construtor
@@ -68,6 +69,7 @@ end
 ---@field weapon? Weapon
 ---@field hasShadow boolean
 ---@field shadowWidth number
+---@field particles? AtkParticles
 ---@field addAnimations fun(self: Attack, intactSettings: AnimSettings, breakingSettings?: AnimSettings)
 Attack = {}
 Attack.__index = Attack
@@ -80,11 +82,12 @@ Attack.type = ATTACK
 ---@param onShot? function
 ---@param trajectoryFuncBuilder? function
 ---@param rotationFunc? function
+---@param particles? AtkParticles
 ---@return Attack
 -- `Attacks` agem como emissores de `AttackEvents`;
 -- eles armazenam as configurações, dados iniciais
 -- de um ataque e informações de controle (como o cooldown)
-function Attack.new(name, atkSettings, updateFunc, onHit, onShot, trajectoryFuncBuilder, rotationFunc)
+function Attack.new(name, atkSettings, updateFunc, onHit, onShot, trajectoryFuncBuilder, rotationFunc, particles)
 	local attack = setmetatable({}, Attack)
 	attack.name = name -- nome do tipo de ataque
 	attack.subtype = atkSettings.subtype -- indica se o ataque é melee, ranged ou outro tipo
@@ -102,16 +105,16 @@ function Attack.new(name, atkSettings, updateFunc, onHit, onShot, trajectoryFunc
 	attack.tick = atkSettings.tick -- tempo mínimo entre acertos em um mesmo alvo
 	attack.cooldown = atkSettings.cooldown -- tempo que deve passar entre ataques
 	attack.targetStrats = atkSettings.targetStrats -- estratégias de targeting para os AtkEvents emitidos
-	attack.timer = 0 -- timer do cooldown, ao chegar em 0 permite gerar ataques
-	attack.canAttack = true -- se pode gerar um AttackEvent ou não
 	attack.updateEvent = updateFunc or AttackEvent.baseUpdate -- função executada para cada AttackEvent, atualizando seu estado atual
 	attack.onHit = onHit or function() end -- função executada toda vez que um ataque acertar um alvo
 	attack.onShot = onShot or function() end -- função executada quando um ataque é disparado
 	attack.trajectoryFuncBuilder = trajectoryFuncBuilder -- função que define a trajetória do ataque/projétil
 	attack.rotationFunc = rotationFunc -- função que define a rotação do ataque/projétil
 	attack.holdTime = atkSettings.holdTime -- tempo que o botão de ataque deve ser segurado
-
+	attack.particles = particles or {} -- partículas a serem usada no ataque
 	-- Atributos fixos na instanciação
+	attack.timer = 0 -- timer do cooldown, ao chegar em 0 permite gerar ataques
+	attack.canAttack = true -- se pode gerar um AttackEvent ou não
 	attack.events = {}
 	return attack
 end
@@ -178,7 +181,9 @@ function Attack:update(dt)
 				e.state = BREAKING
 				e.active = false
 				collisionManager:unregister(e)
-				globalVFXManager:playAnimation(PARTICLE_EXPLOSION, e.pos)
+				-- trocando da partícula que segue o projétil para a do projétil quebrando
+				globalVFXManager:stopParticle(e.atk.particles.projTrail, e)
+				globalVFXManager:playParticle(e.atk.particles.onBreak, e, nil, false)
 			else
 				if e.state == BREAKING then
 					if not e.animations[BREAKING] or e.breakingFinished then
@@ -299,11 +304,14 @@ function AttackEvent.new(attackState, attacker, origin, direction)
 
 	-- adicionando à respectiva lista de hitboxes
 	collisionManager:register(atkEvent)
-	
+
 	table.insert(attackState.events, atkEvent)
 	if attackState.animIntactSettings then
 		atkEvent:addAnimation(attackState.animIntactSettings, attackState.animBreakingSettings)
 	end
+
+	globalVFXManager:playParticle(attackState.particles.onAtk, atkEvent, nil, true)
+	globalVFXManager:playParticle(attackState.particles.projTrail, atkEvent, nil, true)
 
 	return atkEvent
 end
@@ -392,9 +400,8 @@ function AttackEvent:draw(camera)
 		return
 	end
 
-	local viewPos = camera:viewPos(self.pos)
+	local viewX, viewY = camera:viewPos(self.pos)
 	local animation = self.animations[self.state]
-	local quad = animation.frames[animation.currFrame]
 
 	local rotation
 	if self.rotationFunc then
@@ -403,14 +410,17 @@ function AttackEvent:draw(camera)
 		rotation = self.direction
 	end
 
+	local scale = 3
+	local flip = self.subtype == MELEE_ATTACK and invertSecondAndThirdQuadrants(rotation) or 1
+
 	love.graphics.draw(
 		self.spriteSheets[self.state],
-		quad,
-		viewPos.x,
-		viewPos.y,
+		animation.frames[animation.currFrame],
+		viewX,
+		viewY,
 		rotation,
-		3,
-		3,
+		scale,
+		scale * flip,
 		animation.frameDim.width / 2,
 		animation.frameDim.height / 2
 	)

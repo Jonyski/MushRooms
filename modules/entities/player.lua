@@ -1,7 +1,6 @@
 ----------------------------------------
 -- Importações de Módulos
 ----------------------------------------
-require("modules.constructors.particles")
 require("modules.constructors.craftings")
 require("modules.engine.animation")
 require("modules.engine.audiomanager")
@@ -55,7 +54,6 @@ local MAX_HP = 100
 ---@field invulnerableTimer number
 ---@field blinkTimer number
 ---@field addAnimations function
----@field addParticles function
 ---@field inDialogue boolean
 ---@field interactiveObj? Entity
 ---@field activeInteraction? Interactive|Npc[]
@@ -115,7 +113,6 @@ function Player.new(name, spawnPos, keybind, colors, room)
 	player.uiManager = newPlayerUIManager(player) -- gerenciador da UI do jogador
 	player.audioManager = AudioManager.new({ AUDIO_MOVEMENT, AUDIO_GET_HIT }, player) -- gerenciador de áudios do jogador
 	player.blessingManager = BlessingManager.new(player) -- gerenciador de bênçãos do jogador
-	player.vfxManager = VFXManager.new(nil, player) -- gerenciador de partículas do jogador
 	player.building = nil -- construção que o player está posicionando para construir
 	player.buildingModeTimer = 0
 	player.defaultInvulnerableTime = 0.3
@@ -160,15 +157,6 @@ function Player:addAnimations(idleSettings, defSettings, WalkSettings, dyingSett
 	addAnimation(self, path, WALKING_RIGHT, WalkSettings)
 end
 
--- adiciona os efeitos de partícula à tabela do `Player`,
--- associando-os aos seus estados respectivos
-function Player:addParticles()
-	-- Efeito de partícula do player se defendendo
-	self.vfxManager:addParticle(PARTICLE_DEFENSE, newDefenseParticles(self.colors[1], self.colors[3]))
-	-- Efeito de partícula do player caminhando
-	self.vfxManager:addParticle(PARTICLE_WALKING, newWalkingParticles())
-end
-
 function Player:calcHitboxes()
 	local hb = hitbox(Circle.new(self.size))
 	local hbs = hitboxes({ hb })
@@ -181,6 +169,7 @@ function Player:update(dt)
 	if self.state == DYING then
 		self.candidateInteractives = {}
 		self.interactiveObj = nil
+		self:tryRespawn()
 	else
 		self:move(dt)
 		self.inputBuffer:update(dt)
@@ -253,7 +242,6 @@ function Player:move(dt)
 
 	-- atualizando objetos cujo movimento depende do Player
 	self:updateBuildingPos()
-	self:updateParticlesPos()
 	if self.weapon then
 		-- separa a orientação da arma em dois casos para amenizar o bug ao colidir com paredes
 		if not nullVec(self.vel) then
@@ -297,10 +285,9 @@ function Player:updateState()
 
 	-- atualizando a situação do sistema de partículas de caminhada
 	if isMoving then
-		self.vfxManager:setDirection(PARTICLE_WALKING, math.atan2(self.vel.y, self.vel.x) + math.pi)
-		self.vfxManager:playParticle(PARTICLE_WALKING)
+		globalVFXManager:playParticle(PARTICLE_WALKING, self, vec(0, 24), true)
 	else
-		self.vfxManager:stopParticle(PARTICLE_WALKING)
+		globalVFXManager:stopParticle(PARTICLE_WALKING, self)
 	end
 
 	-- situações que ocorrem em troca de estado
@@ -309,7 +296,7 @@ function Player:updateState()
 		self.animations[prevState]:reset()
 		-- parando efeito de partículas
 		if prevState == DEFENDING then
-			self.vfxManager:stopParticle(PARTICLE_DEFENSE)
+			globalVFXManager:stopParticle(PARTICLE_DEFENSE, self)
 		end
 		-- iniciando ou parando áudio de movimento
 		local wasMoving = isMovementState(prevState)
@@ -319,18 +306,6 @@ function Player:updateState()
 			self.audioManager:stop(AUDIO_MOVEMENT)
 		end
 	end
-end
-
----@param dt number
--- atualiza os efeitos de partícula do `Player`
-function Player:updateParticles(dt)
-	self.vfxManager:update(dt)
-end
-
--- atualiza as posições dos efeitos de partícula do `Player`
-function Player:updateParticlesPos()
-	self.vfxManager:setPos(PARTICLE_DEFENSE, self.pos.x, self.pos.y)
-	self.vfxManager:setPos(PARTICLE_WALKING, self.pos.x, self.pos.y + 24)
 end
 
 -- faz com que a construção fique na direção aproximada em que o player está olhando (considera colisões)
@@ -359,10 +334,14 @@ end
 -- posiciona a construção e
 function Player:build()
 	-- timer necessário para não bugar e construir imediatamente ao comprar
-	if self.building and self.buildingModeTimer > 0.5 then
+	if self.building and self.buildingModeTimer > 0.3 then
 		-- !TODO: consumir recursos do player
 		self.building.actualized = true
 		self.room:addBuilding(self.building)
+		if self.building.name == FIRECAMP.name then
+			respawnRoom = self.room.arrPos
+			respawnPos = self.building.pos
+		end
 		self.building = nil
 	end
 end
@@ -526,13 +505,6 @@ function Player:hasArtifact(artifactName)
 	return false
 end
 
----@return boolean
--- coleta uma moeda; função não séria
-function Player:collectCoin()
-	print("moedinhaaa")
-	return true
-end
-
 ---@param resource Resource
 ---@return boolean
 function Player:collectResource(resource)
@@ -553,8 +525,6 @@ function Player:collectDrop(drop)
 		if result then
 			self:equipWeapon(drop.object.name)
 		end
-	elseif drop.object.type == drop then
-		result = self:collectCoin()
 	elseif drop.object.type == RESOURCE then
 		result = self:collectResource(drop.object)
 	elseif drop.object.type == BLESSING then
@@ -633,6 +603,24 @@ function Player:takeDamage(damage)
 	self.audioManager:play(AUDIO_GET_HIT)
 end
 
+-- tenta reespawnar quando está morto
+function Player:tryRespawn()
+	if self.deathTimer < 2 then
+		return
+	end
+	-- movendo player de uma sala para a outra
+	self.pos = respawnPos
+	collisionManager:onPlayerRoom(self, rooms[respawnRoom.y][respawnRoom.x])
+	-- resetando os estados e
+	collisionManager:register(self)
+	if #self.weapons > 0 then
+		self:equipWeapon(self.weapons[1].name)
+	end
+	self.state = IDLE
+	self.hp = MAX_HP
+	self.deathTimer = 0
+end
+
 ---@param chest Interactive
 -- abre a UI do baú e a preenche com os recursos necessários
 function Player:openChest(chest)
@@ -677,29 +665,19 @@ end
 ---@param camera Camera
 -- renderiza o `Player` na perspectiva da `camera`
 function Player:draw(camera)
-	-- desenhando o efeito de partículas de caminhada atrás do player
-	local particles_offset = {
-		x = -camera.cx + camera.viewport.width / 2,
-		y = -camera.cy + camera.viewport.height / 2,
-	}
-	self.vfxManager:drawParticle(PARTICLE_WALKING, particles_offset.x, particles_offset.y)
-
 	-- TODO: usar algum tipo de "vinheta" na tela para indicar que o player está com pouca vida (igual no Deadly Encounter)
 
 	-- desenhando o player em si
-	local viewPos = camera:viewPos(self.pos)
+	local viewX, viewY = camera:viewPos(self.pos)
 	local animation = self.animations[self.state]
-	local quad = animation.frames[animation.currFrame]
 	local p = self.invulnerableTimer > 0
 			and (self.defaultInvulnerableTime - self.invulnerableTimer) / self.defaultInvulnerableTime
 		or 0
 	local defaultScale = self.scale
 	local scaleX = defaultScale - 0.8 * math.sin(2 * math.pi * p)
 	local scaleY = defaultScale + 0.8 * math.sin(2 * math.pi * p)
-	local offset = {
-		x = animation.frameDim.width / 2,
-		y = (animation.frameDim.height * scaleY - (animation.frameDim.height / 2) * defaultScale) / scaleY,
-	}
+	local offsetX = animation.frameDim.width / 2
+	local offsetY = (animation.frameDim.height * scaleY - (animation.frameDim.height / 2) * defaultScale) / scaleY
 
 	self:drawShaders()
 
@@ -707,16 +685,24 @@ function Player:draw(camera)
 
 	-- rotaciona o player em torno de um ponto de rotação (offset) para dar o efeito de "tremor" ao defender
 	love.graphics.push()
-	love.graphics.translate(viewPos.x + rotateOffset.x, viewPos.y + rotateOffset.y)
+	love.graphics.translate(viewX + rotateOffset.x, viewY + rotateOffset.y)
 	love.graphics.rotate(angle)
-	love.graphics.translate(-viewPos.x - rotateOffset.x, -viewPos.y - rotateOffset.y)
+	love.graphics.translate(-viewX - rotateOffset.x, -viewY - rotateOffset.y)
 
-	love.graphics.draw(self.spriteSheets[self.state], quad, viewPos.x, viewPos.y, 0, scaleX, scaleY, offset.x, offset.y)
+	love.graphics.draw(
+		self.spriteSheets[self.state],
+		animation.frames[animation.currFrame],
+		viewX,
+		viewY,
+		0,
+		scaleX,
+		scaleY,
+		offsetX,
+		offsetY
+	)
 
 	love.graphics.pop()
 
-	-- desenhando o efeito de partículas da defesa em cima do player
-	self.vfxManager:drawParticle(PARTICLE_DEFENSE, particles_offset.x, particles_offset.y)
 	love.graphics.setShader()
 end
 

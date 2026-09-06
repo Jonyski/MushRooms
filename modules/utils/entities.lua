@@ -26,6 +26,7 @@ SPIDER_DUCK_BOSS = registerEntity(ENEMY, "Spider Duck Boss")
 ----------------- NPCs -----------------
 TENKAR = registerEntity(NPC, "Tenkar")
 SHOUM_SHOUM = registerEntity(NPC, "Shoum Shoum")
+BIGUIRI = registerEntity(NPC, "Biguiri")
 
 ---------------- ARMAS -----------------
 KATANA = registerEntity(WEAPON, "Katana")

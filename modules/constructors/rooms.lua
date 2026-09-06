@@ -32,6 +32,18 @@ function newNPCRoom1()
 end
 
 ---@return Blueprint
+-- sala de NPC 1: contém o Biguiri
+function newBiguiriRoom()
+	local bp = Blueprint.new(NPC_ROOM, "Test NPC Room", rgba8(120, 58, 242, 255))
+	local sp1 = SpawnPoint.new(vec(0, 0))
+	local biguiriData = SpawnData.new(BIGUIRI, 1.0)
+	sp1:insert(biguiriData)
+	bp:insert(sp1)
+	insertGeneralDecorations(bp)
+	return bp
+end
+
+---@return Blueprint
 -- sala de recurso 1: contém barrís e jarros
 function newResourceRoom1()
 	local bp = Blueprint.new(RESOURCE_ROOM, "Test Resource Room", rgba8(255, 248, 122, 255))

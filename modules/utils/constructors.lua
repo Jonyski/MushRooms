@@ -42,6 +42,7 @@ CONSTRUCTORS[ENEMY] = {
 CONSTRUCTORS[NPC] = {
 	[TENKAR.name] = initTenkar,
 	[SHOUM_SHOUM.name] = initShoumShoum,
+	[BIGUIRI.name] = initBiguiri,
 }
 
 CONSTRUCTORS[ARTIFACT] = {

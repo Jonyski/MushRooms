@@ -11,25 +11,38 @@ require("modules.systems.dialogue")
 ---@return Dialogue
 -- cria um diálogo de teste com falas simples
 function tenkarDialogue()
-  local blocks = parseDialogueBlocks("assets/dialogues/tenkar.txt")
-  local data = buildDialogueData(blocks)
+	local blocks = parseDialogueBlocks("assets/dialogues/tenkar.txt")
+	local data = buildDialogueData(blocks)
 
-  return Dialogue.new({
-    intro = data.intro,
-    loop = data.loop,
-    event = data.event,
-  })
+	return Dialogue.new({
+		intro = data.intro,
+		loop = data.loop,
+		event = data.event,
+	})
 end
 
 ---@return Dialogue
 -- cria um diálogo de teste com falas simples
 function shoumShoumDialogue()
-  local blocks = parseDialogueBlocks("assets/dialogues/shoum_shoum.txt")
-  local data = buildDialogueData(blocks)
+	local blocks = parseDialogueBlocks("assets/dialogues/shoum_shoum.txt")
+	local data = buildDialogueData(blocks)
 
-  return Dialogue.new({
-    intro = data.intro,
-    loop = data.loop,
-    event = data.event,
-  })
+	return Dialogue.new({
+		intro = data.intro,
+		loop = data.loop,
+		event = data.event,
+	})
+end
+
+---@return Dialogue
+-- cria um diálogo de teste com falas simples
+function biguiriDialogue()
+	local blocks = parseDialogueBlocks("assets/dialogues/biguiri.txt")
+	local data = buildDialogueData(blocks)
+
+	return Dialogue.new({
+		intro = data.intro,
+		loop = data.loop,
+		event = data.event,
+	})
 end

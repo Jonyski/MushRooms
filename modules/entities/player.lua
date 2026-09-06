@@ -67,7 +67,6 @@ local MAX_HP = 100
 ---@field building any
 ---@field buildingModeTimer number
 ---@field startBuildingMode function
----@field inputBuffer InputBuffer
 ---@field age number
 ---@field defendingCooldownTimer Timer
 ---@field defendingDurationTimer Timer
@@ -78,12 +77,12 @@ Player.type = PLAYER
 
 ---@param name string
 ---@param spawnPos Vec
----@param controls Controls
+---@param keybinds table<string, string>
 ---@param colors Color[]
 ---@param room Room
 ---@return Player
 -- cria uma instância de `Player` e o adiciona à lista global de `players`
-function Player.new(name, spawnPos, keybind, colors, room)
+function Player.new(name, spawnPos, keybinds, colors, room)
 	---@type Player
 	local player = setmetatable({}, Player) ---@diagnostic disable-line
 
@@ -93,7 +92,7 @@ function Player.new(name, spawnPos, keybind, colors, room)
 
 	-- atributos que variam
 	player.id = #players + 1 -- número do jogador
-	player.controls = Controls.new(player, keybind) -- os comandos para controlar o boneco, no formato {up = "", left = "", down = "", ...}
+	player.controls = Controls.new(keybinds, player) -- os comandos para controlar o boneco, no formato {up = "", left = "", down = "", ...}
 	player.colors = colors -- paleta de cores do jogador
 	-- atributos fixos na instanciação
 	player.movementVec = { x = 0, y = 0 } -- vetor de direção e magnitude do movimento do jogador
@@ -118,7 +117,6 @@ function Player.new(name, spawnPos, keybind, colors, room)
 	player.defaultInvulnerableTime = 0.3
 	player.hasShadow = true -- indica se a entidade tem sombra (pode ser usada para efeitos visuais)
 	player.shadowWidth = 25
-	player.inputBuffer = InputBuffer.new(player)
 	player.atkSpeed = 1 -- porcentagem de velocidade de ataque do jogador (1 = 100%)
 	player.age = 0
 	player.defendingCooldownTimer = Timer.new(0.5)
@@ -166,13 +164,13 @@ end
 ---@param dt number
 -- move o `Player`, atualiza seu estado e o de suas animações e efeitos de partícula
 function Player:update(dt)
+	self.controls:update(dt)
 	if self.state == DYING then
 		self.candidateInteractives = {}
 		self.interactiveObj = nil
 		self:tryRespawn()
 	else
 		self:move(dt)
-		self.inputBuffer:update(dt)
 		self:updateBuildingMode(dt)
 		self:updateState()
 		self:resolveInteractive()
@@ -184,7 +182,6 @@ function Player:update(dt)
 	Mortal.update(self, dt)
 	self.age = self.age + dt
 	self.animations[self.state]:update(dt)
-	self:updateParticles(dt)
 
 	for _, w in pairs(self.weapons) do
 		-- atualizando a animação da arma equipada
@@ -409,7 +406,7 @@ function Player:processInput()
 
 	if self.controls:checkAction(ACT_DEF) then
 		if not self.defendingDurationTimer.active and not self.defendingDurationTimer.completed and not self.defendingCooldownTimer.active then
-			self.vfxManager:playParticle(PARTICLE_DEFENSE)
+			globalVFXManager:playParticle(PARTICLE_DEFENSE, self, vec(0, 0), true, self.colors[1], self.colors[3])
 			self.defendingDurationTimer:start()
 			self.defendingCooldownTimer:stop()
 		elseif not self.defendingCooldownTimer.active and not self.defendingCooldownTimer.completed and self.defendingDurationTimer.completed then
@@ -545,7 +542,7 @@ function Player:tryCollectDrop(drop)
 	if drop.autoPick then
 		self:collectDrop(drop)
 		return
-	elseif love.keyboard.isDown(self.controls.act2) then
+	elseif love.controls:checkInput(ACT_INT) then
 		self:collectDrop(drop)
 		return
 	end

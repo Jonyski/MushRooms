@@ -89,7 +89,14 @@ function Timer:start()
 	end
 end
 
-function Timer:restart() 
+-- começa a contagem se já não estiver contando
+function Timer:startOrContinue()
+	if not self.active then
+		self:start()
+	end
+end
+
+function Timer:restart()
 	self:start()
 end
 

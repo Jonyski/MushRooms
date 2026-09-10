@@ -19,8 +19,8 @@ QUITTING_CTX = "Quitting Context"
 ----------------------------------------
 
 function startGame()
-	createInitialRooms()
 	collisionManager = CollisionManager.init()
+	createInitialRooms()
 	newPlayer()
 	-- debug -------------------------------------------------
 	players[1]:collectWeapon(newSlingShot())

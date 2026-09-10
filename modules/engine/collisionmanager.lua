@@ -484,10 +484,8 @@ function CollisionManager:onPlayerRoom(player, room)
 
 	-- se mudou de sala, se retira dela e entra na próxima
 	if prevRoom and prevRoom ~= room then
-		prevRoom.playersInRoom:remove(player.id)
-		prevRoom:verifyIsEmpty()
-
-		room:visit(player)
+		prevRoom:onPlayerExit(player)
+		room:onPlayerEnter(player)
 	end
 end
 

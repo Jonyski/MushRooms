@@ -33,16 +33,22 @@ function newTurtle(spawnPos, room)
 end
 
 ---------- DOORS ----------
-local onInteractDoor = function(door, player)
-	if door.state == OPEN then
-		door.state = CLOSING
-		door.closingTimer = 0.05 * 17 -- sincroniza com a animação
-		door.animations[OPENING]:reset()
-	elseif door.state == CLOSED then
-		door.state = OPENING
-		door.openingTimer = 0.05 * 19 -- mesma coisa
-		door.animations[CLOSING]:reset()
+local openDoor = function(door, player)
+	if door.state == OPEN or door.state == OPENING then
+		return
 	end
+	door.state = OPENING
+	door.openingTimer = 0.05 * 19 -- sincroniza com a animação
+	door.animations[CLOSING]:reset()
+end
+
+local closeDoor = function (door, player)
+	if door.state == CLOSED or door.state == CLOSING then
+		return
+	end
+	door.state = CLOSING
+	door.closingTimer = 0.05 * 17 -- sincroniza com a animação
+	door.animations[OPENING]:reset()
 end
 
 local updateDoor = function(door, dt)
@@ -77,7 +83,7 @@ end
 function newDoor(spawnPos, room, doorType)
 	local physics = physicsSettings(math.huge, 0, 0, nil, nil, nil, 0.0)
 	local hbs = hitboxes({}, {}, {})
-	local door = Interactive.new(doorType.name, spawnPos, hbs, room, physics, onInteractDoor, nil, updateDoor)
+	local door = Interactive.new(doorType.name, spawnPos, hbs, room, physics, openDoor, closeDoor, updateDoor)
 
 	door.state = OPEN
 	door.openingTimer = 0 ---@diagnostic disable-line

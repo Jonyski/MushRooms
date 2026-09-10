@@ -21,7 +21,7 @@ function initPlayer1()
 	)
 	player1:addAnimations(getPlayersAnimSettings())
 	player1:addParticles()
-	player1.room:visit(player1)
+	player1.room:onPlayerEnter(player1)
 	table.insert(players, player1)
 end
 
@@ -36,7 +36,7 @@ function initPlayer2()
 	)
 	player2:addAnimations(getPlayersAnimSettings())
 	player2:addParticles()
-	player2.room:visit(player2)
+	player2.room:onPlayerEnter(player2)
 	table.insert(players, player2)
 end
 
@@ -51,7 +51,7 @@ function initPlayer3()
 	)
 	player3:addAnimations(getPlayersAnimSettings())
 	player3:addParticles()
-	player3.room:visit(player3)
+	player3.room:onPlayerEnter(player3)
 	table.insert(players, player3)
 end
 
@@ -66,6 +66,6 @@ function initPlayer4()
 	)
 	player4:addAnimations(getPlayersAnimSettings())
 	player4:addParticles()
-	player4.room:visit(player4)
+	player4.room:onPlayerEnter(player4)
 	table.insert(players, player4)
 end

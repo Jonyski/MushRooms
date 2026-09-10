@@ -70,10 +70,10 @@ function Animation:update(dt)
 			else
 				-- trava no último frame e chama callback se existir
 				self.currFrame = #self.frames
-				self.isFinished = true
-				if self.onFinish then
+				if not self.isFinished and self.onFinish then
 					self.onFinish(self)
 				end
+				self.isFinished = true
 			end
 		end
 	end

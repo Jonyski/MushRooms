@@ -501,6 +501,7 @@ function Player:checkAction2(key)
 	end
 end
 
+-- DEB UG --
 ---@param key string
 -- verifica se o `Player` está pressionando a combinação de teclas para abrir o inventário
 function Player:checkSpecialActions(key)
@@ -515,11 +516,6 @@ function Player:checkSpecialActions(key)
 	if key == "c" and love.keyboard.isDown(self.controls.act1) then
 		self.uiManager:toggleScene(UI_CRAFTING_SCENE)
 		stopMovement(self)
-	end
-
-	-- DEBUG --
-	if key == "p" and love.keyboard.isDown(self.controls.act1) then
-		self.room:toggleDoors()
 	end
 end
 

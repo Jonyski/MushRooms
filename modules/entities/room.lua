@@ -33,19 +33,38 @@ walls = BiList.new()
 ---@field color Color
 ---@field sprites table
 ---@field explored boolean
+---@field doorsTimer Timer
 ---@field destructibles Destructible[]
 ---@field interactives Interactive[]
 ---@field drops Drop[]
 ---@field enemies Enemy[]
 ---@field npcs Npc[]
 ---@field obstacles Obstacle[]
----@field playersInRoom Set
----@field populate function
----@field visit function
 ---@field adjacentRooms Vec[]
+---@field playersInRoom Set
 ---@field linkManager LinkManager
+---@field update fun(dt: number) : nil
+---@field setExplored fun()
+---@field createAdjacentRooms fun()
+---@field getAdjacentPos fun() : Vec[]
+---@field onPlayerEnter fun(Player)
+---@field onPlayerExit fun(Player)
+---@field openDoors function
+---@field closeDoors function
+---@field updateDoorsLogic fun(dt)
+---@field populate function
+---@field spawn function
+---@field addWallsAndDoors fun()
+---@field getDoorIndex fun(doorName: string) : Vec?
 ---@field getDoors fun() : Interactive[]
+---@field getWallIndex fun(wallName: string) : Vec?
 ---@field getWalls fun() : Obstacle[]
+---@field addBuilding fun(building: Product) : Interactive
+---@field isInCombat fun() : boolean
+---@field getRoomAt fun(pos: Vec) : Room | nil
+---@field newRoom fun(pos: Vec, dimensions: Size, roomType?: RoomType)
+---@field createInitialRooms function
+---@field makeKey fun(x: number, y: number) : string
 
 Room = {}
 Room.__index = Room
@@ -87,6 +106,7 @@ function Room.new(pos, dimensions, hitboxes, limits, blueprint, sprites)
 	room.playersInRoom = Set.new() -- lista de jogadores na sala
 	room.linkManager = LinkManager.new() -- gerenciador de links da sala
 	room.uiManager = newRoomUIManager(room) -- gerenciador de UI da sala
+	room.doorsTimer = Timer.new(3) -- timer para fechar a sala
 
 	room:addWallsAndDoors()
 
@@ -127,22 +147,7 @@ function Room:update(dt)
 
 	self.linkManager:update(dt)
 	self.uiManager:update(dt)
-end
-
----@param player Player
--- adiciona `Room` à lista de salas ativas
-function Room:visit(player)
-	if self.playersInRoom:has(player.id) then
-		return
-	end
-
-	self:setExplored()
-	self.playersInRoom:add(player.id, player)
-	activeRooms:add(makeKey(self.arrPos.x, self.arrPos.y), self)
-	self:onEnter()
-	player.room = self
-
-	collisionManager.roomsDirty = true
+	self:updateDoorsLogic(dt)
 end
 
 -- define a sala como estando explorada, gerando as 4 salas
@@ -151,10 +156,12 @@ function Room:setExplored()
 	if self.explored then
 		return
 	end
-
 	self.explored = true
+	collisionManager.roomsDirty = true
+end
 
-	-- criando salas adjacentes se eles ainda não existem
+-- cria salas adjacentes se ainda não existirem
+function Room:createAdjacentRooms()
 	local adjacentPos = self:getAdjacentPos()
 	for _, pos in pairs(adjacentPos) do
 		if not rooms[pos.y] then
@@ -180,25 +187,74 @@ function Room:getAdjacentPos()
 	return adjacentPos
 end
 
--- se a sala está vazia (sem jogadores), remove ela da lista de salas ativas
-function Room:verifyIsEmpty()
-	if self.playersInRoom:size() == 0 then
-		activeRooms:remove(makeKey(self.arrPos.x, self.arrPos.y))
-		self:onExit()
+---@param player Player
+-- lida com a entrada do player em salas, adicionando
+-- e iniciando as especificidades da sala
+function Room:onPlayerEnter(player)
+	if self.playersInRoom:has(player.id) then
+		return
+	end
 
+	self.playersInRoom:add(player.id, player)
+	player.room = self
+	activeRooms:add(makeKey(self.arrPos.x, self.arrPos.y), self)
+	self:createAdjacentRooms()
+
+	if self.roomType == BOSS_ROOM then
+		self.uiManager:toggleScene(UI_BOSS_LIFE_BAR_SCENE)
+	end
+
+	if not self.explored then
+		if not(self.roomType == BATTLE_ROOM or self.roomType == BOSS_ROOM) then
+			self:setExplored()
+		else
+			self.doorsTimer:startOrContinue()
+		end
+	end
+end
+
+---@param player Player
+-- lida com a saída do player de salas
+function Room:onPlayerExit(player)
+	self.playersInRoom:remove(player.id)
+
+	if self.playersInRoom:size() == 0 then
+		if self.roomType == BOSS_ROOM then
+			self.uiManager:toggleScene(UI_BOSS_LIFE_BAR_SCENE)
+		end
+		if not self.explored and (self.roomType == BOSS_ROOM or self.roomType == BATTLE_ROOM) then
+			self.doorsTimer:restart()
+		end
+		activeRooms:remove(makeKey(self.arrPos.x, self.arrPos.y))
 		collisionManager.roomsDirty = true
 	end
 end
 
-function Room:onEnter()
-	if self.roomType == BOSS_ROOM then
-		self.uiManager:toggleScene(UI_BOSS_LIFE_BAR_SCENE)
+-- Lida com a abertura de portas
+function Room:openDoors()
+	for _, d in pairs(self:getDoors()) do
+		d:onInteract()
 	end
 end
 
-function Room:onExit()
-	if self.roomType == BOSS_ROOM then
-		self.uiManager:toggleScene(UI_BOSS_LIFE_BAR_SCENE)
+-- Lida com o fechamento de portas
+function Room:closeDoors()
+	for _, d in pairs(self:getDoors()) do
+		d:customCloseInteract()
+	end
+end
+
+---@param dt number
+-- lida com o timer para abertura e fechamento de portas
+-- e com a conclusão de combates em sala de combate
+function Room:updateDoorsLogic(dt)
+	self.doorsTimer:update(dt)
+	if self.doorsTimer.goingOff then
+		self:closeDoors()
+	end
+	if not self.explored and not self:isInCombat() then
+		self:setExplored()
+		self:openDoors()
 	end
 end
 
@@ -250,13 +306,6 @@ function Room:addWallsAndDoors()
 	end
 	for i = 1, #walls do
 		CONSTRUCTORS[walls[i].type][walls[i].name](addVec(self.pos, wallsRelPos[i]), self)
-	end
-end
-
--- abre as portas se estiverem fechadas e fecha elas se estiverem abertas
-function Room:toggleDoors()
-	for _, d in pairs(self:getDoors()) do
-		d:onInteract()
 	end
 end
 
@@ -328,6 +377,20 @@ function Room:addBuilding(building)
 	return interactive
 end
 
+---@return boolean
+-- devolve se a sala está ou não em combate
+function Room:isInCombat()
+	if self.roomType ~= BATTLE_ROOM and self.roomType ~= BOSS_ROOM or self.playersInRoom:size() == 0 then
+		return false
+	end
+	for _, e in pairs(self.enemies) do
+		if not e.isReallyDead then
+			return true
+		end
+	end
+	return false
+end
+
 ----------------------------------------
 -- Funções Globais
 ----------------------------------------
@@ -353,12 +416,12 @@ function newRoom(pos, dimensions, roomType)
 		rooms:insert(pos.y, BiList.new())
 	end
 
-	local actualRoom = rooms[pos.y][pos.x]
-	if actualRoom then
+	local currRoom = rooms[pos.y][pos.x]
+	if currRoom then
 		-- TODO: remover entidades da sala antiga
 		activeRooms:remove(makeKey(pos.x, pos.y))
-		collisionManager:unregister(actualRoom)
-		for _, adjPos in pairs(actualRoom.adjacentRooms) do
+		collisionManager:unregister(currRoom)
+		for _, adjPos in pairs(currRoom.adjacentRooms) do
 			local adjRoom = getRoomAt(adjPos)
 			if adjRoom then
 				collisionManager:unregister(adjRoom)

@@ -295,6 +295,7 @@ end
 
 function Enemy:updateState(dt)
 	if self.state == DYING then
+		self.animations[self.state]:update(dt)
 		return
 	end
 

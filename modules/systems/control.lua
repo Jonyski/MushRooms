@@ -95,6 +95,7 @@ function Controls:checkAction(action, isBuffered)
 		or self.owner.state == DEFENDING
 		or self.owner.inDialogue
 		or self.owner.state == DYING
+		or not self.owner.weapon
 	then
 		return false
 	end

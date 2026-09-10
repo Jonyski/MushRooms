@@ -20,47 +20,34 @@ UIManager.type = UI_MANAGER
 function UIManager.new(player)
 	local uimanager = setmetatable({}, UIManager)
 	uimanager.player = player
-	uimanager.canvas = love.graphics.newCanvas(1280, 720)
-	uimanager.canvasSize = size(1280, 720)
+	uimanager.baseWidth = 1280
+	uimanager.baseHeight = 720
+	uimanager.canvas = love.graphics.newCanvas(uimanager.baseWidth, uimanager.baseHeight)
 	uimanager.canvasPos = vec(0, 0)
 	uimanager.scenes = {}
 	uimanager.activeScene = nil
 	return uimanager
 end
 
-function UIManager:scaleScenes(scaleX, scaleY)
-	for _, scene in pairs(self.scenes) do
-		for _, layer in pairs(scene.layers) do
-			for _, row in pairs(layer) do
-				for _, element in pairs(row) do
-					element.pos.x = element.pos.x * scaleX
-					element.pos.y = element.pos.y * scaleY
-					element.size.width = element.size.width * scaleX
-					element.size.height = element.size.height * scaleY
-				end
-			end
-		end
-	end
-end
-
 ---@param canvas table
----@param canvasPos Vec
 -- define em qual canvas este UI manager deveria renderizar sua UI
-function UIManager:setParentCanvas(canvas, canvasPos)
-	local previousSize = self.canvasSize
+function UIManager:setParentCanvas(canvas)
 	self.parentCanvas = canvas
-	self.parentCanvasPos = canvasPos
 	local parentW = canvas:getWidth()
 	local parentH = canvas:getHeight()
-	self.canvas = love.graphics.newCanvas(parentW, parentH)
-	if previousSize and previousSize.width and previousSize.height then
-		local scaleX = parentW / previousSize.width
-		local scaleY = parentH / previousSize.height
-		if scaleX ~= 1 or scaleY ~= 1 then
-			self:scaleScenes(scaleX, scaleY)
-		end
-	end
-	self.canvasSize = size(parentW, parentH)
+
+	-- diferença de proporção entre a resolução desejada e a resolução base da UI
+	local scale = math.min(parentW / self.baseWidth, parentH / self.baseHeight)
+	self.scaleX = scale
+	self.scaleY = scale
+
+	-- centralizando as UIs
+	local renderedW = self.baseWidth * scale
+	local renderedH = self.baseHeight * scale
+	local offsetX = (parentW - renderedW) / 2
+	local offsetY = (parentH - renderedH) / 2
+	self.canvasPos.x = offsetX
+	self.canvasPos.y = offsetY
 end
 
 ---@param scene UIScene
@@ -137,15 +124,23 @@ function UIManager:draw(camera)
 			scene:draw()
 		end
 	end
+
+	-- projetamos o canvas interno para o destino, delegando a transformação para a GPU
 	if camera then
 		love.graphics.setCanvas(camera.canvas)
-		love.graphics.draw(self.canvas, self.canvasPos.x, self.canvasPos.y)
+		love.graphics.draw(self.canvas, self.canvasPos.x, self.canvasPos.y, 0, self.scaleX, self.scaleY)
 	else
 		love.graphics.setCanvas()
 		love.graphics.push()
-		love.graphics.scale(window.scale)
 
-		love.graphics.draw(self.canvas, self.canvasPos.x, self.canvasPos.y)
+		local screenW = love.graphics.getWidth()
+		local screenH = love.graphics.getHeight()
+
+		local scale = math.min(screenW / self.baseWidth, screenH / self.baseHeight)
+		local offsetX = (screenW - (self.baseWidth * scale)) / 2
+		local offsetY = (screenH - (self.baseHeight * scale)) / 2
+
+		love.graphics.draw(self.canvas, offsetX, offsetY, 0, scale, scale)
 
 		love.graphics.pop()
 	end

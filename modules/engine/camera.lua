@@ -312,7 +312,7 @@ function newCameras()
 	cameras = {}
 
 	for i = 1, numOfCams do
-		if numOfCams <= 3 then
+		if numOfCams <= 2 then
 			local camera = Camera.new(
 				players[i].pos,
 				{ width = window.width / numOfCams, height = window.height },
@@ -324,13 +324,18 @@ function newCameras()
 				transferCameraState(camera, oldCameras[i])
 			end
 			table.insert(cameras, camera)
-		else -- no caso de 4 câmeras
-			local canvasPositions = {
-				{ x = 0, y = 0 },
-				{ x = window.width / 2, y = 0 },
-				{ x = 0, y = window.height / 2 },
-				{ x = window.width / 2, y = window.height / 2 },
-			}
+		else
+			local canvasPositions = {}
+			if numOfCams == 3 then
+				canvasPositions[1] = { x = window.width / 4, y = 0 }
+				canvasPositions[2] = { x = 0, y = window.height / 2 }
+				canvasPositions[3] = { x = window.width / 2, y = window.height / 2 }
+			else
+				canvasPositions[1] = { x = 0, y = 0 }
+				canvasPositions[2] = { x = window.width / 2, y = 0 }
+				canvasPositions[3] = { x = 0, y = window.height / 2 }
+				canvasPositions[4] = { x = window.width / 2, y = window.height / 2 }
+			end
 			local camera = Camera.new(
 				players[i].pos,
 				{ width = window.width / 2, height = window.height / 2 },

@@ -48,9 +48,9 @@ end
 -- Cenas de Player
 ----------------------------------------
 
-function newResourceInventoryScene(canvasSize)
+function newResourceInventoryScene()
 	local invScene = UIScene.new(UI_INVENTORY_SCENE)
-	local canvasCenter = vec(canvasSize.width / 2, canvasSize.height / 2)
+	local canvasCenter = vec(640, 360)
 
 	-- ANIMAÇÕES
 	local animSettings = {}
@@ -87,7 +87,7 @@ function newResourceInventoryScene(canvasSize)
 		if row > 2 then
 			return -- ultrapassou o limite do inventário
 		end
-		local topLeft = addVec(scaleVec(sizeToVec(canvasSize), 0.5), vec(-300, 0))
+		local topLeft = addVec(vec(640, 360), vec(-300, 0))
 		local resourceEl = newResourceItemElement(resource.name, invLength, topLeft, 108, 5)
 		self:addElement(resourceEl, ELEM_LAYER_2, vec(col + 1, row + 1))
 	end
@@ -95,9 +95,9 @@ function newResourceInventoryScene(canvasSize)
 	return invScene
 end
 
-function newCraftingScene(canvasSize, player)
+function newCraftingScene(player)
 	local invScene = UIScene.new(UI_CRAFTING_SCENE, player)
-	local canvasCenter = vec(canvasSize.width / 2, canvasSize.height / 2)
+	local canvasCenter = vec(640, 360)
 
 	local COLS = 3
 	local ROWS = 4
@@ -243,9 +243,9 @@ function newCraftingScene(canvasSize, player)
 	return invScene
 end
 
-function newChestScene(canvasSize)
+function newChestScene()
 	local chestScene = UIScene.new(UI_CHEST_SCENE)
-	local canvasCenter = vec(canvasSize.width / 2, canvasSize.height / 2)
+	local canvasCenter = vec(640, 360)
 
 	-- ANIMAÇÕES
 	local slotAnimSettings = {}
@@ -292,13 +292,13 @@ function newChestScene(canvasSize)
 	end
 
 	-- MÉTODOS AUXILIARES
-	function chestScene:addPlayerResourceEl(resource, inventory, canvasSize, idx, player, chest)
+	function chestScene:addPlayerResourceEl(resource, inventory, idx, player, chest)
 		local col = math.fmod(idx - 1, 3)
 		local row = math.floor((idx - 1) / 3)
 		if row > 2 then
 			return -- ultrapassou o limite do inventário
 		end
-		local topLeft = addVec(scaleVec(sizeToVec(canvasSize), 0.5), vec(-382, -124))
+		local topLeft = addVec(vec(640, 360), vec(-382, -124))
 		local resourceEl = newResourceItemElement(resource.name, idx, topLeft, 132, 3)
 		resourceEl.ctx = { resource = resource, player = player, chest = chest }
 		-- ao clicar, transfere o recurso do player ao baú e recarrega a UI (com openChest)
@@ -309,13 +309,13 @@ function newChestScene(canvasSize)
 		self:addElement(resourceEl, ELEM_LAYER_2, vec(col + 1, row + 1))
 	end
 
-	function chestScene:addChestResourceEl(resource, inventory, canvasSize, idx, player, chest)
+	function chestScene:addChestResourceEl(resource, inventory, idx, player, chest)
 		local col = 3 + math.fmod(idx - 1, 3)
 		local row = math.floor((idx - 1) / 3)
 		if row > 2 then
 			return -- ultrapassou o limite do inventário
 		end
-		local topLeft = addVec(scaleVec(sizeToVec(canvasSize), 0.5), vec(108, -124))
+		local topLeft = addVec(vec(640, 360), vec(108, -124))
 		local resourceEl = newResourceItemElement(resource.name, idx, topLeft, 132, 3)
 		resourceEl.ctx = { resource = resource, player = player, chest = chest }
 		-- ao clicar, transfere o recurso do baú ao player e recarrega a UI (com openChest)
@@ -333,7 +333,7 @@ end
 -- Cenas da Sala
 ----------------------------------------
 
-function newBossLifeBarScene(canvasSize, room)
+function newBossLifeBarScene(room)
 	local lifeBarScene = UIScene.new(UI_BOSS_LIFE_BAR_SCENE, nil, false)
 	-- ELEMENTOS
 	local lifeCalc = function()
@@ -349,7 +349,7 @@ function newBossLifeBarScene(canvasSize, room)
 		return hp, maxHp
 	end
 
-	local lifeBarEl = UILifeBarElem.new("boss lifebar", vec(640, 50), size(640, 64), canvasSize, lifeCalc)
+	local lifeBarEl = UILifeBarElem.new("boss lifebar", vec(640, 50), size(640, 64), vec(1280, 720), lifeCalc)
 
 	-- SETUP DA CENA
 	lifeBarScene:addElement(lifeBarEl, ELEM_LAYER_1, vec(1, 1))

@@ -17,9 +17,9 @@ end
 
 function newPlayerUIManager(player)
 	local playerManager = UIManager.new(player)
-	local inventoryScene = newResourceInventoryScene(playerManager.canvasSize)
-	local craftingScene = newCraftingScene(playerManager.canvasSize, player)
-	local openChestScene = newChestScene(playerManager.canvasSize)
+	local inventoryScene = newResourceInventoryScene()
+	local craftingScene = newCraftingScene(player)
+	local openChestScene = newChestScene()
 	playerManager:addScene(inventoryScene)
 	playerManager:addScene(craftingScene)
 	playerManager:addScene(openChestScene)
@@ -29,7 +29,7 @@ end
 
 function newRoomUIManager(room)
 	local roomManager = UIManager.new()
-	local lifeBar = newBossLifeBarScene(roomManager.canvasSize, room)
+	local lifeBar = newBossLifeBarScene(room)
 	roomManager:addScene(lifeBar)
 	return roomManager
 end

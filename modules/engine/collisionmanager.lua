@@ -429,48 +429,76 @@ end
 ---@param nextPos Vec
 ---@return Vec correctedPos
 function CollisionManager:resolveSolidCollisions(entity, nextPos)
-	local finalPos = vec(nextPos.x, nextPos.y)
-	local collisionsDetected = 0
+	local finalPos = vec(entity.pos.x, entity.pos.y)
 
-	-- executa múltiplas passadas para resolver colisões em canto
-	for _ = 1, 5 do
-		-- itera sobre todas as entidades sólidas registradas
-		for solid, solidhbs in pairs(self.solids) do
-			if solid == entity then
-				goto nextsolid
-			end
-			-- para cada hitbox "default" da minha entidade
-			for _, entityhb in ipairs(entity.hb.default) do
-				local desiredhb = buildWorldHitbox(entityhb, finalPos)
+	-- registro para garantir que callbacks (como onAttackObstacle) rodem apenas 1x por sólido
+	local solidsHit = {}
 
-				-- contra cada hitbox sólida do outro objeto
-				for _, solidhb in ipairs(solidhbs) do
-					local worldSolidhb = buildWorldHitbox(solidhb, solid.pos)
-					local manifold = getCollisionManifold(desiredhb, worldSolidhb)
+	-- separamos o movimento em dois eixos para evitar o "Seam Catching"
+	-- primeiro movemos apenas em X e resolvemos colisões
+	-- depois movemos apenas em Y (com o X já corrigido) e resolvemos colisões
+	local steps = {
+		{ isX = true, pos = vec(nextPos.x, entity.pos.y) },
+		{ isX = false, pos = vec(0, nextPos.y) },
+	}
 
-					if manifold then
-						if collisionsDetected == 0 then
-							self:handleSolidCollisions(entity, solid)
-						end
-
-						collisionsDetected = collisionsDetected + 1
-						-- resolve a posição (Empurra para fora)
-						local pushOut = scaleVec(manifold.normal, manifold.depth)
-						finalPos = addVec(finalPos, pushOut)
-						-- Atualiza a hitbox para a nova posição (para a próxima iteração do loop i)
-						desiredhb = buildWorldHitbox(entityhb, finalPos)
-
-						-- para sólidos dinâmicos aplicamos impulso de contato obedecendo a 3ª lei.
-						local normalEntityToSolid = scaleVec(manifold.normal, -1)
-						applyContactImpulse(entity, solid, normalEntityToSolid, 1)
-					end
-				end
-			end
-			::nextsolid::
+	local pushOut = vec(0, 0) -- inicializando uma vez só aqui fora para reduzir alocações de vetores
+	for _, step in ipairs(steps) do
+		if not step.isX then
+			-- no passo Y, herdamos o X seguro que calculamos no passo anterior
+			step.pos.x = finalPos.x
 		end
 
-		if collisionsDetected == 0 then
-			break
+		finalPos = vec(step.pos.x, step.pos.y)
+
+		for _ = 1, 5 do
+			local collisionsDetected = 0
+
+			for solid, solidhbs in pairs(self.solids) do
+				if solid == entity then
+					goto nextsolid
+				end
+
+				for _, entityhb in ipairs(entity.hb.default) do
+					local desiredhb = buildWorldHitbox(entityhb, finalPos)
+
+					for _, solidhb in ipairs(solidhbs) do
+						local worldSolidhb = buildWorldHitbox(solidhb, solid.pos)
+						local manifold = getCollisionManifold(desiredhb, worldSolidhb)
+
+						if manifold then
+							if collisionsDetected == 0 and not solidsHit[solid] then
+								self:handleSolidCollisions(entity, solid)
+								solidsHit[solid] = true
+							end
+
+							collisionsDetected = collisionsDetected + 1
+
+							pushOut.x = manifold.normal.x * manifold.depth
+							pushOut.y = manifold.normal.y * manifold.depth
+
+							-- isso impede que uma parede lateral empurre o jogador para cima/baixo na quina
+							if step.isX then
+								pushOut.y = 0
+							else
+								pushOut.x = 0
+							end
+
+							finalPos.x = finalPos.x + pushOut.x
+							finalPos.y = finalPos.y + pushOut.y
+							desiredhb = buildWorldHitbox(entityhb, finalPos)
+
+							local normalEntityToSolid = scaleVec(manifold.normal, -1)
+							applyContactImpulse(entity, solid, normalEntityToSolid, 1)
+						end
+					end
+				end
+				::nextsolid::
+			end
+
+			if collisionsDetected == 0 then
+				break
+			end
 		end
 	end
 

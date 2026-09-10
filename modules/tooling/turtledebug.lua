@@ -9,6 +9,8 @@ require("modules.utils.types")
 -- Funções de debug
 ----------------------------------------
 
+local turtlesSpawned = 0
+
 function _turtleDebugHandler(numberKey)
 	local rPressed = love.keyboard.isDown("t")
 	local numTurtles = tonumber(numberKey)
@@ -24,5 +26,8 @@ function _turtleDebugHandler(numberKey)
 		newTurtle(spawnPosition, room)
 	end
 	collisionManager.roomsDirty = true
+	-- vendo quantas tartarugas já foram spawnadas
+	turtlesSpawned = turtlesSpawned + numTurtles
+	print("Tartarugas na sala: " .. turtlesSpawned)
 	return true
 end

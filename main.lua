@@ -166,28 +166,30 @@ function love.update(dt)
 	-- iniciando o profiling da função de update
 	-- updateProfile = appleCake.profileFunc(nil, updateProfile)
 
+	dt = math.min(dt, 1/30)
+
 	-- pulando o update de gameplay enquanto está no menu
 	if gameCtx == MENU_CTX then
 		goto uiupdate
 	end
 
 	DialogueManager:update(dt)
+	------------ Salas ------------
+	for _, r in activeRooms:iter() do
+		r:update(dt)
+	end
 	----------- Colisões ----------
 	collisionManager:update(dt)
 	---------- Jogadores ----------
 	for _, p in pairs(players) do
 		p:update(dt)
 	end
+	---------- Partículas ----------
+	globalVFXManager:update(dt)
 	----------- Cameras -----------
 	for _, c in pairs(cameras) do
 		c:updatePosition(dt)
 	end
-	------------ Salas ------------
-	for _, r in activeRooms:iter() do
-		r:update(dt)
-	end
-	---------- Partículas ----------
-	globalVFXManager:update(dt)
 
 	-------------- UI -------------
 	::uiupdate::

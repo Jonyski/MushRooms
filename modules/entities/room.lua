@@ -205,7 +205,7 @@ function Room:onPlayerEnter(player)
 	end
 
 	if not self.explored then
-		if not(self.roomType == BATTLE_ROOM or self.roomType == BOSS_ROOM) then
+		if not (self.roomType == BATTLE_ROOM or self.roomType == BOSS_ROOM) then
 			self:setExplored()
 		else
 			self.doorsTimer:startOrContinue()
@@ -249,12 +249,16 @@ end
 -- e com a conclusão de combates em sala de combate
 function Room:updateDoorsLogic(dt)
 	self.doorsTimer:update(dt)
-	if self.doorsTimer.goingOff then
-		self:closeDoors()
-	end
 	if not self.explored and not self:isInCombat() then
 		self:setExplored()
 		self:openDoors()
+		if self.doorsTimer.active then
+			self.doorsTimer:stop()
+			self.doorsTimer.goingOff = false
+		end
+	end
+	if self.doorsTimer.goingOff then
+		self:closeDoors()
 	end
 end
 

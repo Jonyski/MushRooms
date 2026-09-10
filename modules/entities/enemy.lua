@@ -59,29 +59,28 @@ function Enemy.new(name, hp, spawnPos, physics, move, attacks, hitboxes, room, a
 	enemy:init(name, spawnPos, hitboxes, room, physics, hp)
 
 	-- atributos que variam
-	enemy.move = move                            -- função de movimento do inimigo
-	enemy.atk = attacks                          -- objetos Attack associados ao inimigo (caso possua)
-	enemy.atkFrame = atkFrames                   -- frames para
-	enemy.room = room                            -- a sala onde o inimigo está
+	enemy.move = move -- função de movimento do inimigo
+	enemy.atk = attacks -- objetos Attack associados ao inimigo (caso possua)
+	enemy.atkFrame = atkFrames -- frames para
+	enemy.room = room -- a sala onde o inimigo está
 	-- atributos fixos na instanciação
-	enemy.selectedAtk = 1                        -- o primeiro ataque começa selecionado, os posteriores são aleatórios
-	enemy.state = IDLE                           -- define o estado atual do inimigo, estreitamente relacionado às animações
-	enemy.spriteSheets = {}                      -- no tipo imagem do love
-	enemy.animations = {}                        -- as chaves são estados e os valores são Animações
+	enemy.selectedAtk = 1 -- o primeiro ataque começa selecionado, os posteriores são aleatórios
+	enemy.state = IDLE -- define o estado atual do inimigo, estreitamente relacionado às animações
+	enemy.spriteSheets = {} -- no tipo imagem do love
+	enemy.animations = {} -- as chaves são estados e os valores são Animações
 	enemy.moveTargeting = TargetManager.new(enemy) -- um gerenciador de alvo do inimigo
 	enemy.atkTargeting = TargetManager.new(enemy) -- um gerenciador de alvo do inimigo
-	enemy.isAttacking = false                    -- indica se o inimigo está atualmente atacando
-	enemy.hasTriggeredAttackThisAnim = false     -- garante que cada animação de ataque dispare apenas uma vez
-	enemy.defaultInvulnerableTime = 0.2          -- tempo padrão de invulnerabilidade após levar dano
-	enemy.hasShadow = true                       -- indica se a entidade tem sombra (pode ser usada para efeitos visuais)
+	enemy.isAttacking = false -- indica se o inimigo está atualmente atacando
+	enemy.hasTriggeredAttackThisAnim = false -- garante que cada animação de ataque dispare apenas uma vez
+	enemy.defaultInvulnerableTime = 0.2 -- tempo padrão de invulnerabilidade após levar dano
+	enemy.hasShadow = true -- indica se a entidade tem sombra (pode ser usada para efeitos visuais)
 	enemy.shadowWidth = 25
-	enemy.isReallyDead = false                   -- indica se o inimigo já passou da animação de morte e pode ser considerado morto para efeitos de lógica de jogo
-	enemy.leavesBody = true                      -- indica se o inimigo deixa um corpo após morrer (pode ser usado para efeitos visuais ou mecânicas de jogo)
-	enemy.movementsBuilder = movementsBuilder or
-	{}                                           -- tabela de construtores de funções de movimento específicas para cada ataque, indexada pelo nome do ataque
-	enemy.scale = 3                              -- escala padrão do inimigo
-	enemy.isBoss = false                         -- indica se o inimigo é um chefe
-	enemy.attackMoveFunc = nil                   -- função de movimento específica para o ataque atual, se houver
+	enemy.isReallyDead = false -- indica se o inimigo já passou da animação de morte e pode ser considerado morto para efeitos de lógica de jogo
+	enemy.leavesBody = true -- indica se o inimigo deixa um corpo após morrer (pode ser usado para efeitos visuais ou mecânicas de jogo)
+	enemy.movementsBuilder = movementsBuilder or {} -- tabela de construtores de funções de movimento específicas para cada ataque, indexada pelo nome do ataque
+	enemy.scale = 3 -- escala padrão do inimigo
+	enemy.isBoss = false -- indica se o inimigo é um chefe
+	enemy.attackMoveFunc = nil -- função de movimento específica para o ataque atual, se houver
 
 	enemy.moveTargeting:applyStrats(TC_ON_INIT)
 	enemy.atkTargeting:applyStrats(TC_ON_INIT)
@@ -299,6 +298,8 @@ function Enemy:updateState(dt)
 		return
 	end
 
+	local prevState = self.state
+
 	if self.atk[self.selectedAtk] and self.isAttacking then
 		local dirVec = subVec(self.atkTargeting.targetPos, self.pos)
 
@@ -326,6 +327,15 @@ function Enemy:updateState(dt)
 		else
 			self.state = IDLE
 		end
+
+		if self.state ~= IDLE and self.state ~= initialState and isMovementState(initialState) then
+			self.animations[self.state].currFrame = self.animations[initialState].currFrame
+		end
+	end
+
+	if self.state ~= prevState then
+		-- resetando a animação anterior
+		self.animations[prevState]:reset()
 	end
 
 	self.animations[self.state]:update(dt)
@@ -340,19 +350,27 @@ end
 function Enemy:draw(camera)
 	self:drawShaders()
 
-	local viewPos = camera:viewPos(self.pos)
+	local viewX, viewY = camera:viewPos(self.pos)
 	local animation = self.animations[self.state]
-	local quad = animation.frames[animation.currFrame]
 	local p = (self.invulnerableTimer > 0 and self.state ~= DYING)
-		and (self.defaultInvulnerableTime - self.invulnerableTimer) / self.defaultInvulnerableTime
+			and (self.defaultInvulnerableTime - self.invulnerableTimer) / self.defaultInvulnerableTime
 		or 0
 	local scaleX = self.scale - 0.6 * math.sin(2 * math.pi * p)
 	local scaleY = self.scale + 0.6 * math.sin(2 * math.pi * p)
-	local offset = {
-		x = animation.offset.x,
-		y = (animation.frameDim.height * scaleY - animation.offset.y * self.scale) / scaleY,
-	}
-	love.graphics.draw(self.spriteSheets[self.state], quad, viewPos.x, viewPos.y, 0, scaleX, scaleY, offset.x, offset.y)
+	local offsetX = animation.offset.x
+	local offsetY = (animation.frameDim.height * scaleY - animation.offset.y * self.scale) / scaleY
+
+	love.graphics.draw(
+		self.spriteSheets[self.state],
+		animation.frames[animation.currFrame],
+		viewX,
+		viewY,
+		0,
+		scaleX,
+		scaleY,
+		offsetX,
+		offsetY
+	)
 
 	love.graphics.setShader()
 	love.graphics.setColor(1, 1, 1, 1)

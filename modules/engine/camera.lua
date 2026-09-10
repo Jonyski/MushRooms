@@ -195,10 +195,9 @@ end
 -- retorna a posição da entidade dada pelo parâmetro `entityPos`
 -- no frame de referência relativo à posição da câmera
 function Camera:viewPos(entityPos)
-	return {
-		x = entityPos.x - self.cx + self.viewport.width / 2,
-		y = entityPos.y - self.cy + self.viewport.height / 2,
-	}
+	local vx = entityPos.x - self.cx + self.viewport.width / 2
+	local vy = entityPos.y - self.cy + self.viewport.height / 2
+	return vx, vy
 end
 
 ----------------------------------------
@@ -219,8 +218,6 @@ function Camera:draw()
 
 	-- renderiza mundo
 	renderRooms(self)
-	-- renderiza links de todas as salas
-	renderLinks(self)
 	-- renderiza entidades com Y-sorting
 	renderEntities(self)
 	-- renderiza as hitboxes ativas (debug)

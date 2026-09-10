@@ -118,6 +118,7 @@ end
 ---@param dt number
 -- atualiza o estado de todas as cenas deste manager
 function UIManager:update(dt)
+	self:handleInput()
 	for _, scene in pairs(self.scenes) do
 		if scene.active then
 			scene:update(dt)
@@ -150,8 +151,8 @@ function UIManager:draw(camera)
 	end
 end
 
-function UIManager:keypressed(key, isrepeat)
+function UIManager:handleInput()
 	if self.activeScene then
-		self.scenes[self.activeScene]:keypressed(key, isrepeat)
+		self.scenes[self.activeScene]:handleInput()
 	end
 end

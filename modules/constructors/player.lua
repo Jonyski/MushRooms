@@ -1,3 +1,5 @@
+require("modules.systems.control")
+
 ---@return AnimSettings, AnimSettings, AnimSettings, AnimSettings
 -- retorna as configurações das animações de `Player`
 function getPlayersAnimSettings()
@@ -9,18 +11,19 @@ function getPlayersAnimSettings()
 	return idleAnimSettings, defAnimSettings, walkAnimSettings, dyingAnimSettings
 end
 
+
 -- inicializa o jogador 1 - Mush
 function initPlayer1()
 	local firstSpawnPoint = { x = rooms[0][0].pos.x, y = rooms[0][0].pos.y }
+	local keybinds = newKeybind("a", "d", "w", "s", "mouse1", "mouse2", "q", "mousewheel", "r", "i", "tab", "e", "mouse1", "escape", "lshift", "escape")
 	player1 = Player.new(
 		"Mush",
 		firstSpawnPoint,
-		{ up = "w", left = "a", down = "s", right = "d", act1 = "space", act2 = "lshift" },
+		keybinds,
 		getP1ColorPalette(),
 		rooms[0][0]
 	)
 	player1:addAnimations(getPlayersAnimSettings())
-	player1:addParticles()
 	player1.room:onPlayerEnter(player1)
 	table.insert(players, player1)
 end
@@ -35,7 +38,6 @@ function initPlayer2()
 		players[1].room
 	)
 	player2:addAnimations(getPlayersAnimSettings())
-	player2:addParticles()
 	player2.room:onPlayerEnter(player2)
 	table.insert(players, player2)
 end
@@ -50,7 +52,6 @@ function initPlayer3()
 		players[1].room
 	)
 	player3:addAnimations(getPlayersAnimSettings())
-	player3:addParticles()
 	player3.room:onPlayerEnter(player3)
 	table.insert(players, player3)
 end
@@ -65,7 +66,6 @@ function initPlayer4()
 		players[1].room
 	)
 	player4:addAnimations(getPlayersAnimSettings())
-	player4:addParticles()
 	player4.room:onPlayerEnter(player4)
 	table.insert(players, player4)
 end

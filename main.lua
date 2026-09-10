@@ -56,11 +56,8 @@ function love.keypressed(key, scancode, isrepeat)
 	end
 
 	for _, p in pairs(players) do
-		p.uiManager:keypressed(key, isrepeat)
+		p.uiManager:handleInput()
 	end
-
-	-- repassa para os UI managers
-	globalUIManager:keypressed(key, isrepeat)
 
 	-- n adiciona um player ao jogo
 	if key == "n" then
@@ -98,12 +95,6 @@ function love.keypressed(key, scancode, isrepeat)
 	end
 
 	-------- FIM DEBUG --------
-
-	if not isrepeat then
-		for _, p in pairs(players) do
-			p:processKeyInput(key)
-		end
-	end
 end
 
 function love.keyreleased(key, scancode)

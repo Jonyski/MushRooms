@@ -1,7 +1,6 @@
 ----------------------------------------
 -- Importações de Módulos
 ----------------------------------------
-require("modules.constructors.particles")
 require("modules.constructors.craftings")
 require("modules.engine.animation")
 require("modules.engine.audiomanager")
@@ -12,6 +11,7 @@ require("modules.systems.blessing")
 require("modules.systems.collision")
 require("modules.systems.inventory")
 require("modules.systems.inputbuffer")
+require("modules.systems.control")
 require("modules.utils.colors")
 require("modules.utils.constructors")
 require("modules.utils.shapes")
@@ -39,7 +39,7 @@ local MAX_HP = 100
 ---@field maxHp number
 ---@field size number
 ---@field scale number
----@field controls table<string, string>
+---@field controls Controls
 ---@field colors Color[]
 ---@field speed number
 ---@field movementVec Vec
@@ -54,7 +54,6 @@ local MAX_HP = 100
 ---@field invulnerableTimer number
 ---@field blinkTimer number
 ---@field addAnimations function
----@field addParticles function
 ---@field inDialogue boolean
 ---@field interactiveObj? Entity
 ---@field activeInteraction? Interactive|Npc[]
@@ -68,7 +67,6 @@ local MAX_HP = 100
 ---@field building any
 ---@field buildingModeTimer number
 ---@field startBuildingMode function
----@field inputBuffer InputBuffer
 ---@field age number
 ---@field defendingCooldownTimer Timer
 ---@field defendingDurationTimer Timer
@@ -79,12 +77,12 @@ Player.type = PLAYER
 
 ---@param name string
 ---@param spawnPos Vec
----@param controls table<string, string>
+---@param keybinds table<string, string>
 ---@param colors Color[]
 ---@param room Room
 ---@return Player
 -- cria uma instância de `Player` e o adiciona à lista global de `players`
-function Player.new(name, spawnPos, controls, colors, room)
+function Player.new(name, spawnPos, keybinds, colors, room)
 	---@type Player
 	local player = setmetatable({}, Player) ---@diagnostic disable-line
 
@@ -94,7 +92,7 @@ function Player.new(name, spawnPos, controls, colors, room)
 
 	-- atributos que variam
 	player.id = #players + 1 -- número do jogador
-	player.controls = controls -- os comandos para controlar o boneco, no formato {up = "", left = "", down = "", ...}
+	player.controls = Controls.new(keybinds, player) -- os comandos para controlar o boneco, no formato {up = "", left = "", down = "", ...}
 	player.colors = colors -- paleta de cores do jogador
 	-- atributos fixos na instanciação
 	player.movementVec = { x = 0, y = 0 } -- vetor de direção e magnitude do movimento do jogador
@@ -114,13 +112,11 @@ function Player.new(name, spawnPos, controls, colors, room)
 	player.uiManager = newPlayerUIManager(player) -- gerenciador da UI do jogador
 	player.audioManager = AudioManager.new({ AUDIO_MOVEMENT, AUDIO_GET_HIT }, player) -- gerenciador de áudios do jogador
 	player.blessingManager = BlessingManager.new(player) -- gerenciador de bênçãos do jogador
-	player.vfxManager = VFXManager.new(nil, player) -- gerenciador de partículas do jogador
 	player.building = nil -- construção que o player está posicionando para construir
 	player.buildingModeTimer = 0
 	player.defaultInvulnerableTime = 0.3
 	player.hasShadow = true -- indica se a entidade tem sombra (pode ser usada para efeitos visuais)
 	player.shadowWidth = 25
-	player.inputBuffer = InputBuffer.new(player)
 	player.atkSpeed = 1 -- porcentagem de velocidade de ataque do jogador (1 = 100%)
 	player.age = 0
 	player.defendingCooldownTimer = Timer.new(0.5)
@@ -164,15 +160,6 @@ function Player:addAnimations(idleSettings, defSettings, WalkSettings, dyingSett
 	addAnimation(self, path, WALKING_RIGHT, WalkSettings)
 end
 
--- adiciona os efeitos de partícula à tabela do `Player`,
--- associando-os aos seus estados respectivos
-function Player:addParticles()
-	-- Efeito de partícula do player se defendendo
-	self.vfxManager:addParticle(PARTICLE_DEFENSE, newDefenseParticles(self.colors[1], self.colors[3]))
-	-- Efeito de partícula do player caminhando
-	self.vfxManager:addParticle(PARTICLE_WALKING, newWalkingParticles())
-end
-
 function Player:calcHitboxes()
 	local hb = hitbox(Circle.new(self.size))
 	local hbs = hitboxes({ hb })
@@ -182,25 +169,24 @@ end
 ---@param dt number
 -- move o `Player`, atualiza seu estado e o de suas animações e efeitos de partícula
 function Player:update(dt)
+	self.controls:update(dt)
 	if self.state == DYING then
 		self.candidateInteractives = {}
 		self.interactiveObj = nil
+		self:tryRespawn()
 	else
 		self:move(dt)
-		self.inputBuffer:update(dt)
 		self:updateBuildingMode(dt)
-		self:updateDefense(dt)
 		self:updateState()
 		self:resolveInteractive()
 		self.uiManager:update(dt)
 	end
 
+	self:processInput()
+	self:checkEndDefense(dt)
 	Mortal.update(self, dt)
 	self.age = self.age + dt
 	self.animations[self.state]:update(dt)
-	self:updateParticles(dt)
-	self.defendingCooldownTimer:update(dt)
-	self.defendingDurationTimer:update(dt)
 
 	for _, w in pairs(self.weapons) do
 		-- atualizando a animação da arma equipada
@@ -226,16 +212,16 @@ function Player:move(dt)
 	if self.state == DEFENDING or self.inDialogue then
 		return
 	end
-	if love.keyboard.isDown(self.controls.up) then
+	if self.controls:checkAction(ACT_MU) then
 		movementDir.y = -1
 	end
-	if love.keyboard.isDown(self.controls.down) then
+	if self.controls:checkAction(ACT_MD) then
 		movementDir.y = 1
 	end
-	if love.keyboard.isDown(self.controls.left) then
+	if self.controls:checkAction(ACT_ML) then
 		movementDir.x = -1
 	end
-	if love.keyboard.isDown(self.controls.right) then
+	if self.controls:checkAction(ACT_MR) then
 		movementDir.x = 1
 	end
 
@@ -258,7 +244,6 @@ function Player:move(dt)
 
 	-- atualizando objetos cujo movimento depende do Player
 	self:updateBuildingPos()
-	self:updateParticlesPos()
 	if self.weapon then
 		-- separa a orientação da arma em dois casos para amenizar o bug ao colidir com paredes
 		if not nullVec(self.vel) then
@@ -269,20 +254,11 @@ function Player:move(dt)
 	end
 end
 
-function Player:updateDefense(dt)
-	if love.keyboard.isDown(self.controls.act2) then
-		self.keyPressing = self.controls.act2
-		-- só defende se está completamente parado, não está interagindo e não está em cooldown
-	else
-		if
-			self.keyPressing == self.controls.act2
-			and not self.defendingCooldownTimer.active
-			and not self.defendingCooldownTimer.completed
-		then
-			self.keyPressing = nil
-			self.defendingCooldownTimer:start()
-			self.defendingDurationTimer:stop()
-		end
+function Player:checkEndDefense(dt)
+	self.defendingCooldownTimer:update(dt)
+	self.defendingDurationTimer:update(dt)
+	if not self.controls:checkAction(ACT_DEF) or self.state == DYING then
+		self.defendingDurationTimer:stop()
 	end
 end
 
@@ -311,10 +287,9 @@ function Player:updateState()
 
 	-- atualizando a situação do sistema de partículas de caminhada
 	if isMoving then
-		self.vfxManager:setDirection(PARTICLE_WALKING, math.atan2(self.vel.y, self.vel.x) + math.pi)
-		self.vfxManager:playParticle(PARTICLE_WALKING)
+		globalVFXManager:playParticle(PARTICLE_WALKING, self, vec(0, 24), true)
 	else
-		self.vfxManager:stopParticle(PARTICLE_WALKING)
+		globalVFXManager:stopParticle(PARTICLE_WALKING, self)
 	end
 
 	-- situações que ocorrem em troca de estado
@@ -323,7 +298,7 @@ function Player:updateState()
 		self.animations[prevState]:reset()
 		-- parando efeito de partículas
 		if prevState == DEFENDING then
-			self.vfxManager:stopParticle(PARTICLE_DEFENSE)
+			globalVFXManager:stopParticle(PARTICLE_DEFENSE, self)
 		end
 		-- iniciando ou parando áudio de movimento
 		local wasMoving = isMovementState(prevState)
@@ -333,18 +308,6 @@ function Player:updateState()
 			self.audioManager:stop(AUDIO_MOVEMENT)
 		end
 	end
-end
-
----@param dt number
--- atualiza os efeitos de partícula do `Player`
-function Player:updateParticles(dt)
-	self.vfxManager:update(dt)
-end
-
--- atualiza as posições dos efeitos de partícula do `Player`
-function Player:updateParticlesPos()
-	self.vfxManager:setPos(PARTICLE_DEFENSE, self.pos.x, self.pos.y)
-	self.vfxManager:setPos(PARTICLE_WALKING, self.pos.x, self.pos.y + 24)
 end
 
 -- faz com que a construção fique na direção aproximada em que o player está olhando (considera colisões)
@@ -373,10 +336,14 @@ end
 -- posiciona a construção e
 function Player:build()
 	-- timer necessário para não bugar e construir imediatamente ao comprar
-	if self.building and self.buildingModeTimer > 0.5 then
+	if self.building and self.buildingModeTimer > 0.3 then
 		-- !TODO: consumir recursos do player
 		self.building.actualized = true
 		self.room:addBuilding(self.building)
+		if self.building.name == FIRECAMP.name then
+			respawnRoom = self.room.arrPos
+			respawnPos = self.building.pos
+		end
 		self.building = nil
 	end
 end
@@ -391,81 +358,39 @@ end
 
 ---@param key any
 -- trata inputs de teclado. Se `key` não fizer parte dos controles do player, é ignorado
-function Player:processKeyInput(key)
+function Player:processInput()
 	-- DEBUG -------------
 	if key == "i" and self.artifact then
 		self.artifact:use()
 	end
+	self:checkSpecialActions()
 	----------------------
-	self:checkSpecialActions(key)
-	self:checkAction1(key, false)
-	self:checkAction2(key)
-end
-
----@param key string
----@param isBuffered boolean
--- verifica se o `Player` está pressionando a tecla de ação 1, e então
--- realiza a ação correta de acordo com o contexto
-function Player:checkAction1(key, isBuffered)
-	-- casos em que ignoramos o input
-	if key ~= self.controls.act1 or self.uiManager.activeScene or self.state == DYING then
+	
+	if self.state == DYING then
 		return
 	end
 
-	if self.building then
-		self:build()
-		return
-	end
-
-	-- daqui pra frente APENAS ações que não podem ser feitas
-	-- quando defendendo
-	if self.state == DEFENDING then
-		return
-	end
-
-	-- imagino que não queremos que o buffer afete o diálogo
-	if self.inDialogue and not isBuffered then
-		DialogueManager:getDialogueByPlayer(self):advance()
-		return
-	end
-
-	-- controlará se iremos bufferizar o input atual ou não
-	local shouldBuffer = false
-
-	if self.weapon then
-		if not isBuffered then
-			shouldBuffer = not self.weapon:attack()
-		else
-			if self.weapon:attack() then
-				self.inputBuffer:pop(self.controls.act1)
+	if self.uiManager.activeScene then
+		if self.controls:checkAction(ACT_EXT) then
+			self.uiManager:deactivateAllScenes()
+			if self.activeInteraction then
+				self.activeInteraction:onCloseInteract(self)
+				self.activeInteraction = nil
 			end
 		end
-	end
-
-	if shouldBuffer then
-		self.inputBuffer:buffer(key)
-	end
-end
-
----@param key string
--- verifica se o `Player` está pressionando a tecla de ação 2
--- caso positivo, executa a ação correta dependendo do contexto
-function Player:checkAction2(key)
-	if key ~= self.controls.act2 or self.state == DYING then
 		return
 	end
-	if self.uiManager.activeScene then
-		self.uiManager:deactivateAllScenes()
-		if self.activeInteraction then
-			self.activeInteraction:onCloseInteract(self)
-			self.activeInteraction = nil
+
+	if self.building then 
+		if self.controls:checkAction(ACT_CON) then
+			self:build()
+			return
+		elseif self.controls:checkAction(ACT_EXT) then
+			self:endBuildingMode()
 		end
-		return
 	end
-
-	if self.building then
-		self:endBuildingMode()
-	elseif self.interactiveObj then
+	
+	if self.interactiveObj and self.controls:checkAction(ACT_INT) then
 		if self.interactiveObj.type == NPC then
 			DialogueManager:start(self.interactiveObj.dialogue, self.interactiveObj, self)
 		elseif self.interactiveObj.type == INTERACTIVE then
@@ -473,30 +398,25 @@ function Player:checkAction2(key)
 			self.activeInteraction = self.interactiveObj.onInteract(self.interactiveObj, self)
 		end
 		stopMovement(self)
-	elseif self.vel.x ~= 0 then
-		local len = #self.weapons
-		if len <= 1 then
-			return
-		end
-		local indexWeapon = tableIndexOf(self.weapons, self.weapon)
-		local nextIndex = indexWeapon
-		-- caminha ciclicamente entre as armas
-		if self.vel.x > 0 then
-			nextIndex = (indexWeapon % len) + 1
-		else
-			nextIndex = ((indexWeapon - 2 + len) % len) + 1
-		end
+	end
 
-		self:equipWeapon(self.weapons[nextIndex].name)
-	else
-		if
-			not self.defendingDurationTimer.active
-			and not self.defendingDurationTimer.completed
-			and not self.defendingCooldownTimer.active
-		then
-			self.vfxManager:playParticle(PARTICLE_DEFENSE)
+	if self.inDialogue and self.controls:checkAction(ACT_CON) then 
+		DialogueManager:getDialogueByPlayer(self):advance()
+		return
+	end
+
+	if self.controls:checkAction(ACT_ATK) then
+		self.weapon:attack()
+	end
+
+	if self.controls:checkAction(ACT_DEF) then
+		if not self.defendingDurationTimer.active and not self.defendingDurationTimer.completed and not self.defendingCooldownTimer.active then
+			globalVFXManager:playParticle(PARTICLE_DEFENSE, self, vec(0, 0), true, self.colors[1], self.colors[3])
 			self.defendingDurationTimer:start()
-			self.defendingCooldownTimer.completed = false
+			self.defendingCooldownTimer:stop()
+		elseif not self.defendingCooldownTimer.active and not self.defendingCooldownTimer.completed and self.defendingDurationTimer.completed then
+			self.defendingCooldownTimer:start()
+			self.defendingDurationTimer:stop()
 		end
 	end
 end
@@ -504,16 +424,12 @@ end
 -- DEB UG --
 ---@param key string
 -- verifica se o `Player` está pressionando a combinação de teclas para abrir o inventário
-function Player:checkSpecialActions(key)
+function Player:checkSpecialActions()
 	if self.state == DYING then
 		return
 	end
 
-	if key == "i" and love.keyboard.isDown(self.controls.act1) then
-		self.uiManager:toggleScene(UI_INVENTORY_SCENE)
-		stopMovement(self)
-	end
-	if key == "c" and love.keyboard.isDown(self.controls.act1) then
+	if self.controls:checkAction(ACT_OUI) then
 		self.uiManager:toggleScene(UI_CRAFTING_SCENE)
 		stopMovement(self)
 	end
@@ -592,13 +508,6 @@ function Player:hasArtifact(artifactName)
 	return false
 end
 
----@return boolean
--- coleta uma moeda; função não séria
-function Player:collectCoin()
-	print("moedinhaaa")
-	return true
-end
-
 ---@param resource Resource
 ---@return boolean
 function Player:collectResource(resource)
@@ -619,8 +528,6 @@ function Player:collectDrop(drop)
 		if result then
 			self:equipWeapon(drop.object.name)
 		end
-	elseif drop.object.type == drop then
-		result = self:collectCoin()
 	elseif drop.object.type == RESOURCE then
 		result = self:collectResource(drop.object)
 	elseif drop.object.type == BLESSING then
@@ -641,7 +548,7 @@ function Player:tryCollectDrop(drop)
 	if drop.autoPick then
 		self:collectDrop(drop)
 		return
-	elseif love.keyboard.isDown(self.controls.act2) then
+	elseif love.controls:checkInput(ACT_INT) then
 		self:collectDrop(drop)
 		return
 	end
@@ -699,6 +606,24 @@ function Player:takeDamage(damage)
 	self.audioManager:play(AUDIO_GET_HIT)
 end
 
+-- tenta reespawnar quando está morto
+function Player:tryRespawn()
+	if self.deathTimer < 2 then
+		return
+	end
+	-- movendo player de uma sala para a outra
+	self.pos = respawnPos
+	collisionManager:onPlayerRoom(self, rooms[respawnRoom.y][respawnRoom.x])
+	-- resetando os estados e
+	collisionManager:register(self)
+	if #self.weapons > 0 then
+		self:equipWeapon(self.weapons[1].name)
+	end
+	self.state = IDLE
+	self.hp = MAX_HP
+	self.deathTimer = 0
+end
+
 ---@param chest Interactive
 -- abre a UI do baú e a preenche com os recursos necessários
 function Player:openChest(chest)
@@ -743,29 +668,19 @@ end
 ---@param camera Camera
 -- renderiza o `Player` na perspectiva da `camera`
 function Player:draw(camera)
-	-- desenhando o efeito de partículas de caminhada atrás do player
-	local particles_offset = {
-		x = -camera.cx + camera.viewport.width / 2,
-		y = -camera.cy + camera.viewport.height / 2,
-	}
-	self.vfxManager:drawParticle(PARTICLE_WALKING, particles_offset.x, particles_offset.y)
-
 	-- TODO: usar algum tipo de "vinheta" na tela para indicar que o player está com pouca vida (igual no Deadly Encounter)
 
 	-- desenhando o player em si
-	local viewPos = camera:viewPos(self.pos)
+	local viewX, viewY = camera:viewPos(self.pos)
 	local animation = self.animations[self.state]
-	local quad = animation.frames[animation.currFrame]
 	local p = self.invulnerableTimer > 0
 			and (self.defaultInvulnerableTime - self.invulnerableTimer) / self.defaultInvulnerableTime
 		or 0
 	local defaultScale = self.scale
 	local scaleX = defaultScale - 0.8 * math.sin(2 * math.pi * p)
 	local scaleY = defaultScale + 0.8 * math.sin(2 * math.pi * p)
-	local offset = {
-		x = animation.frameDim.width / 2,
-		y = (animation.frameDim.height * scaleY - (animation.frameDim.height / 2) * defaultScale) / scaleY,
-	}
+	local offsetX = animation.frameDim.width / 2
+	local offsetY = (animation.frameDim.height * scaleY - (animation.frameDim.height / 2) * defaultScale) / scaleY
 
 	self:drawShaders()
 
@@ -773,16 +688,24 @@ function Player:draw(camera)
 
 	-- rotaciona o player em torno de um ponto de rotação (offset) para dar o efeito de "tremor" ao defender
 	love.graphics.push()
-	love.graphics.translate(viewPos.x + rotateOffset.x, viewPos.y + rotateOffset.y)
+	love.graphics.translate(viewX + rotateOffset.x, viewY + rotateOffset.y)
 	love.graphics.rotate(angle)
-	love.graphics.translate(-viewPos.x - rotateOffset.x, -viewPos.y - rotateOffset.y)
+	love.graphics.translate(-viewX - rotateOffset.x, -viewY - rotateOffset.y)
 
-	love.graphics.draw(self.spriteSheets[self.state], quad, viewPos.x, viewPos.y, 0, scaleX, scaleY, offset.x, offset.y)
+	love.graphics.draw(
+		self.spriteSheets[self.state],
+		animation.frames[animation.currFrame],
+		viewX,
+		viewY,
+		0,
+		scaleX,
+		scaleY,
+		offsetX,
+		offsetY
+	)
 
 	love.graphics.pop()
 
-	-- desenhando o efeito de partículas da defesa em cima do player
-	self.vfxManager:drawParticle(PARTICLE_DEFENSE, particles_offset.x, particles_offset.y)
 	love.graphics.setShader()
 end
 

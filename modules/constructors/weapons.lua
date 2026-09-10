@@ -14,11 +14,9 @@ function newKatana()
 
 		atkEvent.pos = origin
 	end
-	local onHitFunc = function(atkEvent, target)
-		-- print("Katana acertou um " .. target.type .. " por " .. atkEvent.dmg .. " de dano!")
-	end
-	local rotationFunc = function (e)
-		return e.dire
+	local onHitFunc = function(e, target) end
+	local rotationFunc = function(e) 
+		return e.direction
 	end
 	local hb = hitbox(Circle.new(100))
 	local hbs = hitboxes({ hb })
@@ -29,10 +27,11 @@ function newKatana()
 		dmg = 15,
 		dur = 0.4,
 		hb = hbs,
-		cooldown = cooldown
+		cooldown = cooldown,
 	})
 	local atkAnimSettings = newAnimSetting(12, { width = 64, height = 64 }, 0.03, false, 1)
-	local attack = Attack.new("Katana Slice", atkSettings, updateFunc, onHitFunc)
+	local particles = atkParticles(PARTICLE_KATANA)
+	local attack = Attack.new("Katana Slice", atkSettings, updateFunc, onHitFunc, nil, nil, rotationFunc, particles)
 	attack:addAnimations(atkAnimSettings, atkAnimSettings)
 
 	-- Inicialicação da arma em si
@@ -70,10 +69,12 @@ end
 -- cria uma arma do tipo Skull Shooter
 function newSkullShooter()
 	local cooldown = constCooldown(0.2)
-	local trajectoryFuncBuilder = function() return followTargetMovement(5) end
+	local trajectoryFuncBuilder = function()
+		return followTargetMovement(5)
+	end
 	local attack = newSkullAttack(true, 10, cooldown, 400, trajectoryFuncBuilder)
 	attack:setOnHit(onHitApplyFear)
-	local skullshooter = Weapon.new(SKULL_SHOOTER.name, math.huge, attack, vec(25, 20),  vec(30, -5))
+	local skullshooter = Weapon.new(SKULL_SHOOTER.name, math.huge, attack, vec(25, 20), vec(30, -5))
 	local idleAnimSettings = newAnimSetting(4, { width = 36, height = 36 }, 0.5, true, 1)
 	local weaponAtkAnimSettings = newAnimSetting(12, { width = 36, height = 36 }, 0.05, false, 1)
 	skullshooter:addAnimations(idleAnimSettings, weaponAtkAnimSettings)
@@ -119,7 +120,6 @@ function onHitLinkTwoEnemies(atkEvent, enemy)
 	if target and room then
 		room.linkManager:addLink(enemy, target, 200, 5)
 	end
-
 end
 
 function onHitApplyFear(atkEvent, enemy)

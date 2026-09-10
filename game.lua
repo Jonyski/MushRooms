@@ -14,6 +14,9 @@ MENU_CTX = "Menu Context"
 GAMEPLAY_CTX = "In-game Context"
 QUITTING_CTX = "Quitting Context"
 
+respawnRoom = vec(0, 0)
+respawnPos = vec(0, 0)
+
 ----------------------------------------
 -- Funções globais
 ----------------------------------------
@@ -21,6 +24,7 @@ QUITTING_CTX = "Quitting Context"
 function startGame()
 	collisionManager = CollisionManager.init()
 	createInitialRooms()
+	respawnPos = vec(rooms[0][0].pos.x, rooms[0][0].pos.y)
 	newPlayer()
 	-- debug -------------------------------------------------
 	players[1]:collectWeapon(newSlingShot())

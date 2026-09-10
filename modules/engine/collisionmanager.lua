@@ -77,7 +77,9 @@ function CollisionManager:fetchHitboxesByRoom(room)
 		if enemy.state ~= DYING then
 			for _, attack in pairs(enemy.atk) do
 				for _, atkEvent in pairs(attack.events) do
-					self:register(atkEvent)
+					if atkEvent.active then
+						self:register(atkEvent)
+					end
 				end
 			end
 			self:register(enemy)

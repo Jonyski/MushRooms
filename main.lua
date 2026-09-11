@@ -55,8 +55,13 @@ function love.keypressed(key, scancode, isrepeat)
 		quitGame()
 	end
 
+	globalUIManager:handleInput(key)
 	for _, p in pairs(players) do
-		p.uiManager:handleInput()
+		p.uiManager:handleInput(key)
+	end
+
+	if gameCtx ~= GAMEPLAY_CTX then
+		return
 	end
 
 	-- n adiciona um player ao jogo
@@ -103,6 +108,13 @@ function love.keyreleased(key, scancode)
 	end
 end
 
+function love.textinput(t)
+	globalUIManager:handleTextInput(t)
+	for _, p in pairs(players) do
+		p.uiManager:handleTextInput(t)
+	end
+end
+
 function love.resize(w, h)
 	local sx = w / window.initialW
 	local sy = h / window.initialH
@@ -145,6 +157,7 @@ function love.load()
 
 	-- definindo a fonte padrão do jogo
 	mushFont = love.graphics.newFont("assets/fonts/Tiny5-Regular.ttf", 16)
+	mushBigFont = love.graphics.newFont("assets/fonts/Tiny5-Regular.ttf", 32)
 	love.graphics.setFont(mushFont)
 
 	-- definindo as dimensões iniciais do jogo

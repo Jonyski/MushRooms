@@ -118,7 +118,8 @@ function UIScene:draw()
 	end
 end
 
-function UIScene:handleInput()
+---@param key string
+function UIScene:handleInput(key)
 	-- lidando com movimentação pela UI
 	local dir = vec(0, 0)
 	if self.controls:justPressed(ACT_MU) then
@@ -180,6 +181,16 @@ function UIScene:handleInput()
 			end
 		end
 	end
+
+	-- lidando com teclas especiais de textbox
+	if key and (key == "backspace" or key == "insert") then
+		for _, l in pairs(interactionLayers) do
+			local el = self.layers[l][self.selectionPos.y] and self.layers[l][self.selectionPos.y][self.selectionPos.x]
+			if el and el.subtype == UI_TEXTBOX_ELEM then
+				el:keyPressed(key)
+			end
+		end
+	end
 end
 
 -- acha o elemento mais próximo da linha `row` na coluna `column`
@@ -219,5 +230,15 @@ function UIScene:closestElemInColumn(col, row)
 			end
 		end
 		return closestEl, closestElPos
+	end
+end
+
+function UIScene:handleTextInput(t)
+	local interactionLayers = { ELEM_LAYER_1, ELEM_LAYER_2 }
+	for _, l in pairs(interactionLayers) do
+		local el = self.layers[l][self.selectionPos.y] and self.layers[l][self.selectionPos.y][self.selectionPos.x]
+		if el and el.subtype == UI_TEXTBOX_ELEM then
+			el:handleTextInput(t)
+		end
 	end
 end

@@ -6,6 +6,7 @@ require("modules.UI.elements.button")
 require("modules.UI.elements.image")
 require("modules.UI.elements.lifebar")
 require("modules.UI.elements.text")
+require("modules.UI.elements.textbox")
 require("modules.constructors.uielements")
 
 ----------------------------------------
@@ -16,13 +17,15 @@ function initMenuScene()
 	local menuScene = UIScene.new(UI_MENU_SCENE)
 	-- ELEMENTOS
 	local menuBg = UIImageElem.new("menu bg", vec(640, 360), size(1280, 720))
-	local startBtn = UIButtonElem.new("menu play btn", vec(280, 400), size(120, 120), nil, function()
+	local startBtn = UIButtonElem.new("menu play btn", vec(300, 400), size(120, 120), nil, function()
 		startGame()
 	end)
-	local settingsBtn = UIButtonElem.new("menu opt btn", vec(620, 400), size(120, 120), nil, function() end)
-	local quitBtn = UIButtonElem.new("menu quit btn", vec(960, 400), size(120, 120), nil, function()
+	local settingsBtn = UIButtonElem.new("menu opt btn", vec(640, 400), size(120, 120), nil, function() end)
+	local quitBtn = UIButtonElem.new("menu quit btn", vec(980, 400), size(120, 120), nil, function()
 		quitGame()
 	end)
+	local seedTextbox =
+		UITextBox.new("menu seed textbox", vec(640, 600), size(320, 72), nil, Color.new(1, 1, 1, 1), 10, setWorldSeed)
 
 	-- ANIMAÇÕES
 	local animSettings = {}
@@ -34,12 +37,17 @@ function initMenuScene()
 	local bgAnimSettings = {}
 	bgAnimSettings[IDLE] = newAnimSetting(1, size(320, 180), 1, true, 1)
 	menuBg:addAnimations(bgAnimSettings)
+	local boxAnimSettings = {}
+	boxAnimSettings[IDLE] = newAnimSetting(1, size(80, 16), 1000000, true, 1)
+	boxAnimSettings[SELECTED] = newAnimSetting(1, size(80, 16), 1000000, true, 1)
+	seedTextbox:addAnimations(boxAnimSettings)
 
 	-- SETUP DA CENA
 	menuScene:addElement(menuBg, BG_LAYER_1, vec(1, 1))
 	menuScene:addElement(startBtn, ELEM_LAYER_1, vec(1, 1))
 	menuScene:addElement(settingsBtn, ELEM_LAYER_1, vec(2, 1))
 	menuScene:addElement(quitBtn, ELEM_LAYER_1, vec(3, 1))
+	menuScene:addElement(seedTextbox, ELEM_LAYER_1, vec(2, 2))
 
 	return menuScene
 end

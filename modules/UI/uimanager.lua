@@ -146,8 +146,15 @@ function UIManager:draw(camera)
 	end
 end
 
-function UIManager:handleInput()
+---@param key? string
+function UIManager:handleInput(key)
 	if self.activeScene then
-		self.scenes[self.activeScene]:handleInput()
+		self.scenes[self.activeScene]:handleInput(key)
+	end
+end
+
+function UIManager:handleTextInput(t)
+	if self.activeScene then
+		self.scenes[self.activeScene]:handleTextInput(t)
 	end
 end

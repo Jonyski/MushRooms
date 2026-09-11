@@ -18,6 +18,7 @@ QUITTING_CTX = "Quitting Context"
 respawnRoom = vec(0, 0)
 respawnPos = vec(0, 0)
 
+DEFAULT_WORLD_SEED = "MU5HR00M5"
 worldSeed = 0
 
 ----------------------------------------
@@ -25,7 +26,9 @@ worldSeed = 0
 ----------------------------------------
 
 function startGame()
-	setWorldSeed("MU5HR00M5")
+	if worldSeed == 0 then
+		setWorldSeed(DEFAULT_WORLD_SEED)
+	end
 	collisionManager = CollisionManager.init()
 	createInitialRooms()
 	respawnPos = vec(rooms[0][0].pos.x, rooms[0][0].pos.y)
@@ -50,9 +53,4 @@ end
 function quitGame()
 	gameCtx = QUITTING_CTX
 	love.event.quit()
-end
-
----@param seed string
-function setWorldSeed(seed)
-	worldSeed = base36to10(seed)
 end

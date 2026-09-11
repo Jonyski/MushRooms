@@ -166,10 +166,10 @@ end
 
 function _newDefaultControl()
 	local keybinds = newKeybind(
-		"a",
-		"d",
-		"w",
-		"s",
+		"left",
+		"right",
+		"up",
+		"down",
 		"mouse1",
 		"mouse2",
 		"q",

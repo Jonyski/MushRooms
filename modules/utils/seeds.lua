@@ -18,6 +18,15 @@ function base36to10(str)
 	return sum
 end
 
+---@param seed string
+function setWorldSeed(seed)
+	if not seed or #seed == 0 then
+		setWorldSeed(DEFAULT_WORLD_SEED)
+	else
+		worldSeed = base36to10(seed)
+	end
+end
+
 ---@param globalSeed number
 ---@param x number
 ---@param y number

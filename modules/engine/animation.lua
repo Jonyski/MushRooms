@@ -36,16 +36,16 @@ function Animation.new(frames, frameDur, looping, loopFrame, frameDim, offset, o
 	local animation = setmetatable({}, Animation)
 
 	-- atributos que variam
-	animation.frames = frames -- número de frames na animação
+	animation.frames = frames    -- número de frames na animação
 	animation.frameDur = frameDur -- duração de cada frame em segundos
-	animation.looping = looping -- se a animação é ciclica ou não
+	animation.looping = looping  -- se a animação é ciclica ou não
 	animation.loopFrame = loopFrame -- a partir de qual frame a animação é ciclica
 	animation.frameDim = frameDim -- dimensões de cada frame
 	animation.isFinished = false -- se a animação terminou ou não
 	animation.onFinish = onFinish -- callback chamado quando a animação não-loop termina
 	-- atributos fixos na instanciação
-	animation.currFrame = 1 -- frame atual
-	animation.timer = 0 -- tempo decorrido desde a última mudança de frame
+	animation.currFrame = 1      -- frame atual
+	animation.timer = 0          -- tempo decorrido desde a última mudança de frame
 
 	local center = vec(frameDim.width / 2, frameDim.height / 2)
 	animation.offset = offset and addVec(offset, center) or center -- offset do centro do sprite

@@ -3,6 +3,7 @@
 ----------------------------------------
 require("modules.systems.blueprint")
 require("modules.utils.constructors")
+require("modules.utils.seeds")
 require("modules.utils.types")
 require("modules.utils.utils")
 require("table")
@@ -85,28 +86,28 @@ function Room.new(pos, dimensions, hitboxes, limits, blueprint, sprites)
 	local room = setmetatable({}, Room)
 
 	-- atributos que variam
-	room.arrPos = pos -- posição da sala na array de salas
-	room.dimensions = dimensions -- largura e altura da sala
-	room.hb = hitboxes -- hitbox da sala
-	room.limits = limits -- limites da sala nas coordenadas de mundo
+	room.arrPos = pos                                -- posição da sala na array de salas
+	room.dimensions = dimensions                     -- largura e altura da sala
+	room.hb = hitboxes                               -- hitbox da sala
+	room.limits = limits                             -- limites da sala nas coordenadas de mundo
 	room.pos = midpoint(room.limits.p1, room.limits.p2) -- centro da sala nas coordenadas de mundo
-	room.color = blueprint.color -- cor da sala
-	room.roomType = blueprint.roomType -- tipo da sala
-	room.name = blueprint.roomName -- nome da sala
-	room.sprites = sprites -- os sprites da sala em camadas
+	room.color = blueprint.color                     -- cor da sala
+	room.roomType = blueprint.roomType               -- tipo da sala
+	room.name = blueprint.roomName                   -- nome da sala
+	room.sprites = sprites                           -- os sprites da sala em camadas
 	-- atributos fixos na instanciação
-	room.adjacentRooms = {} -- salas adjacentes
-	room.explored = false -- se algum jogador já entrou na sala ou não
-	room.destructibles = {} -- lista de objetos destrutíveis da sala
-	room.interactives = {} -- lista de objetos interativos na sala
-	room.drops = {} -- lista de itens dropados na sala
-	room.enemies = {} -- lista de inimigos na sala
-	room.npcs = {} -- lista de NPCs na sala
-	room.obstacles = {} -- lista de obstáculos na sala
-	room.playersInRoom = Set.new() -- lista de jogadores na sala
-	room.linkManager = LinkManager.new() -- gerenciador de links da sala
-	room.uiManager = newRoomUIManager(room) -- gerenciador de UI da sala
-	room.doorsTimer = Timer.new(3) -- timer para fechar a sala
+	room.adjacentRooms = {}                          -- salas adjacentes
+	room.explored = false                            -- se algum jogador já entrou na sala ou não
+	room.destructibles = {}                          -- lista de objetos destrutíveis da sala
+	room.interactives = {}                           -- lista de objetos interativos na sala
+	room.drops = {}                                  -- lista de itens dropados na sala
+	room.enemies = {}                                -- lista de inimigos na sala
+	room.npcs = {}                                   -- lista de NPCs na sala
+	room.obstacles = {}                              -- lista de obstáculos na sala
+	room.playersInRoom = Set.new()                   -- lista de jogadores na sala
+	room.linkManager = LinkManager.new()             -- gerenciador de links da sala
+	room.uiManager = newRoomUIManager(room)          -- gerenciador de UI da sala
+	room.doorsTimer = Timer.new(3)                   -- timer para fechar a sala
 
 	room:addWallsAndDoors()
 
@@ -263,10 +264,11 @@ function Room:updateDoorsLogic(dt)
 end
 
 ---@param spawnpoints SpawnPoint[]
+---@param rng RNG
 -- geração dos conteúdos de uma sala
-function Room:populate(spawnpoints)
+function Room:populate(spawnpoints, rng)
 	for _, sp in pairs(spawnpoints) do
-		local n = math.random()
+		local n = rng:random()
 		for _, sd in ipairs(sp.spawns) do
 			if n < sd.chance then
 				self:spawn(sd.entity, sp.pos)
@@ -433,9 +435,11 @@ function newRoom(pos, dimensions, roomType)
 		end
 	end
 
+	-- criando um gerador de números pseudo-aleatórios para a sala
+	local roomRNG = love.math.newRandomGenerator(getRoomSeed(worldSeed, pos.x, pos.y))
 	-- escolhendo uma blueprint para a sala
-	roomType = roomType or randRoomType()
-	local blueprint = randRoomBlueprint(roomType)
+	roomType = roomType or randRoomType(roomRNG)
+	local blueprint = randRoomBlueprint(roomType, roomRNG)
 
 	-- posicionando a sala
 	local leftLimit = pos.x * (dimensions.width + Room.spacingH) - Room.spacingH
@@ -455,7 +459,7 @@ function newRoom(pos, dimensions, roomType)
 
 	-- instanciando e populando com entidades (inimigos, destrutíveis, etc)
 	local room = Room.new(pos, dimensions, hbs, limits, blueprint, sprites)
-	room:populate(blueprint.spawnpoints)
+	room:populate(blueprint.spawnpoints, roomRNG)
 	rooms[pos.y]:insert(pos.x, room)
 end
 

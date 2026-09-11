@@ -121,6 +121,7 @@ end
 -- Funções globais
 ----------------------------------------
 
+---@param rng RNG
 ---@return string
 -- escolhe um tipo de sala aleatóriamente
 -- - Sala de combate: `66%`
@@ -129,8 +130,8 @@ end
 -- - Sala de NPC: `8%`
 -- - Sala de puzzle: `4%`
 -- - Sala de boss: `2%`
-function randRoomType()
-	local r = math.random()
+function randRoomType(rng)
+	local r = rng:random()
 	if r < 0.66 then
 		return BATTLE_ROOM
 	elseif r < 0.78 then
@@ -147,9 +148,10 @@ function randRoomType()
 end
 
 ---@param roomType any
+---@param rng RNG
 ---@return Blueprint
 -- retorna um `Blueprint` de uma sala aleatória do tipo `roomType`
-function randRoomBlueprint(roomType)
+function randRoomBlueprint(roomType, rng)
 	local n = #BLUEPRINTS[roomType]
-	return BLUEPRINTS[roomType][math.random(n)]()
+	return BLUEPRINTS[roomType][rng:random(n)](rng)
 end

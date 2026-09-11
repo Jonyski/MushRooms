@@ -5,6 +5,7 @@ require("modules.systems.collision")
 require("modules.systems.links")
 require("modules.entities.player")
 require("modules.entities.room")
+require("modules.utils.seeds")
 
 ----------------------------------------
 -- Enums
@@ -17,11 +18,14 @@ QUITTING_CTX = "Quitting Context"
 respawnRoom = vec(0, 0)
 respawnPos = vec(0, 0)
 
+worldSeed = 0
+
 ----------------------------------------
 -- Funções globais
 ----------------------------------------
 
 function startGame()
+	setWorldSeed("MU5HR00M5")
 	collisionManager = CollisionManager.init()
 	createInitialRooms()
 	respawnPos = vec(rooms[0][0].pos.x, rooms[0][0].pos.y)
@@ -46,4 +50,9 @@ end
 function quitGame()
 	gameCtx = QUITTING_CTX
 	love.event.quit()
+end
+
+---@param seed string
+function setWorldSeed(seed)
+	worldSeed = base36to10(seed)
 end

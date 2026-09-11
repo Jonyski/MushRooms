@@ -25,7 +25,7 @@ function newTurtle(spawnPos, room)
 			turtle.state = IDLE
 		end
 	end
-	local turtle = Interactive.new("turtle", spawnPos, hbs, room, physics, onInteract, update)
+	local turtle = Interactive.new("turtle", spawnPos, hbs, room, physics, onInteract, nil, update)
 	local animSettings = {}
 	animSettings[IDLE] = newAnimSetting(2, { width = 32, height = 32 }, 0.2, true, 1)
 	animSettings[MOVING] = newAnimSetting(8, { width = 32, height = 32 }, 0.08, true, 1)

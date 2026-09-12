@@ -103,6 +103,99 @@ function newResourceInventoryScene()
 	return invScene
 end
 
+function newEquipmentScene(player)
+	local equipScene = UIScene.new(UI_EQUIPMENT_SCENE, player)
+	local canvasCenter = vec(640, 360)
+
+	local bgAnimSettings = {}
+	bgAnimSettings[IDLE] = newAnimSetting(1, size(256, 140), 1, true, 1)
+
+	local signatureSettings = {}
+	signatureSettings[IDLE] = newAnimSetting(1, size(56, 56), 1, true, 1)
+
+	local slotSettings = {}
+	slotSettings[IDLE] = newAnimSetting(1, size(32, 32), 1, true, 1)
+	slotSettings[SELECTED] = newAnimSetting(1, size(32, 32), 1, true, 1)
+
+	local decorationSettings = {}
+	decorationSettings[IDLE] = newAnimSetting(1, size(15, 39), 1, true, 1)
+
+	-- local ref = UIImageElem.new("equip ref", canvasCenter, size(768, 768))
+	-- ref:addAnimations(bgAnimSettings)
+	-- equipScene:addElement(ref, BG_LAYER_1, vec(1, 1))
+
+	-- BACKGROUND
+	local bg = UIImageElem.new("equip bg", canvasCenter, size(768, 768))
+	bg:addAnimations(bgAnimSettings)
+	equipScene:addElement(bg, BG_LAYER_1, vec(1, 2))
+
+	-- ASSINATURA PLAYER
+	local signature = UIImageElem.new("equip signature " .. player.name, vec(canvasCenter.x, canvasCenter.y + 90), size(168, 168))
+	signature:addAnimations(signatureSettings)
+	equipScene:addElement(signature, BG_LAYER_1, vec(1, 3))
+
+	---------------
+	-- ARMAS
+	---------------
+
+	-- SLOTS DE ARMAS
+	local weaponCenter = vec(canvasCenter.x - 240, canvasCenter.y)
+	local padding = 60
+
+	for i = -1, 1 do -- 3 linhas
+		for j = -1, 1, 2 do -- 2 colunas
+			local slot = UIImageElem.new("equip slot weapon", vec(weaponCenter.x + j * padding, weaponCenter.y + i * padding*2), size(96, 96))
+			slot:addAnimations(slotSettings)
+			equipScene:addElement(slot, ELEM_LAYER_1, vec((j+1)/2, i + 1))
+		end
+	end
+
+	---------------
+	-- ARTEFATOS
+	---------------
+
+	-- DECORAÇÃO DE ARTEFATO
+	local decorationArtifact = UIImageElem.new("equip decoration artifact", vec(canvasCenter.x, canvasCenter.y - 75), size(15*3, 39*3))
+	decorationArtifact:addAnimations(decorationSettings)
+	equipScene:addElement(decorationArtifact, BG_LAYER_1, vec(1, 4))
+
+	-- SLOTS DE ARTEFATOS
+	for j = -1, 1, 2 do
+		local slot = UIImageElem.new("equip slot artifact", vec(canvasCenter.x + j * 65, canvasCenter.y - 65), size(96, 96))
+		slot:addAnimations(slotSettings)
+		equipScene:addElement(slot, ELEM_LAYER_1, vec((j+1)/2 + 2, 1))
+	end
+
+	---------------
+	-- BENÇÃOS
+	---------------
+
+	local blessingCenter = vec(canvasCenter.x + 240, canvasCenter.y)
+
+	-- SLOTS DE BENÇÃOS
+	for i = -2, 2 do -- 5 linhas
+		local j = (i + 2) % 2 == 0 and 1 or -1 -- 2 colunas
+
+		local slot = UIImageElem.new("equip slot blessing", vec(blessingCenter.x + j * 40, blessingCenter.y + i * 60), size(96, 96))
+		slot:addAnimations(slotSettings)
+		equipScene:addElement(slot, ELEM_LAYER_1, vec((j+1)/2 + 4, i + 2))
+	end
+
+	---------------
+	-- LIFE BAR
+	---------------
+	
+	local calcFunc = function()
+		return player.hp, player.maxHp
+	end
+	local offset = { l = 11, r = 3 }
+
+	local lifebar = UILifeBarElem.new("equip player lifebar", vec(canvasCenter.x, canvasCenter.y - 170), size(74, 14), calcFunc, offset, 3)
+	equipScene:addElement(lifebar, ELEM_LAYER_1, vec(1, 5))
+
+	return equipScene
+end
+
 function newCraftingScene(player)
 	local invScene = UIScene.new(UI_CRAFTING_SCENE, player)
 	local canvasCenter = vec(640, 360)
@@ -357,7 +450,7 @@ function newBossLifeBarScene(room)
 		return hp, maxHp
 	end
 
-	local lifeBarEl = UILifeBarElem.new("boss lifebar", vec(640, 50), size(640, 64), vec(1280, 720), lifeCalc)
+	local lifeBarEl = UILifeBarElem.new("boss lifebar", vec(640, 50), size(640, 64), lifeCalc)
 
 	-- SETUP DA CENA
 	lifeBarScene:addElement(lifeBarEl, ELEM_LAYER_1, vec(1, 1))

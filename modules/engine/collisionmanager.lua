@@ -24,8 +24,10 @@ function CollisionManager.init()
 	local cm = setmetatable({}, CollisionManager)
 
 	cm.registry = cm:startRegistry() -- tabela mestre de hitboxes registradas
-	cm.roomsDirty = false -- flag para indicar se as listas de hitboxes precisam ser atualizadas
-	cm.solids = {} -- hitboxes sólidas
+	cm.roomsDirty = false         -- flag para indicar se as listas de hitboxes precisam ser atualizadas
+	cm.solids = {}                -- tabela que liga entidades com seus hitboxes sólidos
+	cm.solidList = {}             -- lista com índices numéricos de hitboxes sólidas
+	cm.solidIndices = {}          -- mapa de entidade para índice da lista `solids`
 
 	-- otimização: manter uma cópia das salas ativas
 	-- para minimizar o número de colisões checadas
@@ -220,6 +222,11 @@ function CollisionManager:register(entity)
 	end
 
 	if entity.hb.solids and #entity.hb.solids > 0 then
+		-- só insere no array se ainda não existir
+		if not self.solidIndices[entity] then
+			table.insert(self.solidList, entity)
+			self.solidIndices[entity] = #self.solidList
+		end
 		self.solids[entity] = entity.hb.solids
 	end
 
@@ -236,6 +243,19 @@ function CollisionManager:unregister(entity)
 	end
 
 	if data.solids and #data.solids > 0 then
+		local idx = self.solidIndices[entity]
+		if idx then
+			-- pega o último elemento da lista
+			local lastEntity = self.solidList[#self.solidList]
+
+			-- o último elemento toma a posição do elemento que está sendo removido
+			self.solidList[idx] = lastEntity
+			self.solidIndices[lastEntity] = idx
+
+			-- limpa a última posição (agora duplicada) e o índice da entidade apagada
+			self.solidList[#self.solidList] = nil
+			self.solidIndices[entity] = nil
+		end
 		self.solids[entity] = nil
 	end
 
@@ -438,7 +458,7 @@ function CollisionManager:resolveSolidCollisions(entity, nextPos)
 	-- primeiro movemos apenas em X e resolvemos colisões
 	-- depois movemos apenas em Y (com o X já corrigido) e resolvemos colisões
 	local steps = {
-		{ isX = true, pos = vec(nextPos.x, entity.pos.y) },
+		{ isX = true,  pos = vec(nextPos.x, entity.pos.y) },
 		{ isX = false, pos = vec(0, nextPos.y) },
 	}
 
@@ -454,7 +474,10 @@ function CollisionManager:resolveSolidCollisions(entity, nextPos)
 		for _ = 1, 5 do
 			local collisionsDetected = 0
 
-			for solid, solidhbs in pairs(self.solids) do
+			for i = 1, #self.solidList do
+				local solid = self.solidList[i]
+				local solidhbs = self.solids[solid]
+
 				if solid == entity then
 					goto nextsolid
 				end
@@ -474,8 +497,8 @@ function CollisionManager:resolveSolidCollisions(entity, nextPos)
 
 							collisionsDetected = collisionsDetected + 1
 
-							pushOut.x = manifold.normal.x * manifold.depth
-							pushOut.y = manifold.normal.y * manifold.depth
+							pushOut.x = manifold.normal.x * (manifold.depth + 0.01)
+							pushOut.y = manifold.normal.y * (manifold.depth + 0.01)
 
 							-- isso impede que uma parede lateral empurre o jogador para cima/baixo na quina
 							if step.isX then
